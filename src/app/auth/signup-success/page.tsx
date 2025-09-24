@@ -1,87 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
 
-export default function SignUpPage() {
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+export default function SignUpSuccessPage() {
   const router = useRouter();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
-
-    if (!username || !email || !password || !confirmPassword) {
-      setError('Please fill in all fields');
-      setIsLoading(false);
-      return;
-    }
-
-    // Username validation
-    if (username.length < 3) {
-      setError('Username must be at least 3 characters');
-      setIsLoading(false);
-      return;
-    }
-
-    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-      setError('Username can only contain letters, numbers, and underscores');
-      setIsLoading(false);
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      setIsLoading(false);
-      return;
-    }
-
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      // Create user account
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username,
-          email,
-          password,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || 'Failed to create account. Please try again.');
-        return;
-      }
-
-      // Redirect to success page
-      setError(''); // Clear any previous errors
-      router.push('/auth/signup-success');
-    } catch {
-      setError('An error occurred. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black relative overflow-hidden p-4">
@@ -261,102 +186,57 @@ export default function SignUpPage() {
       `}</style>
 
       <Card className="w-full max-w-md relative z-10 bg-gray-900/90 backdrop-blur-sm border-gray-700">
-        <div className="p-6">
-          <div className="text-center mb-6">
-            <h1 className="text-3xl font-bold text-white mb-2 font-pixel">Start Your Adventure</h1>
-            <p className="text-gray-300 font-pixel">Create your account to begin</p>
-          </div>
+        <div className="p-6 text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="mb-6"
+          >
+            <div className="text-6xl mb-4">✅</div>
+            <h1 className="text-3xl font-bold text-white mb-2 font-pixel">Account Created!</h1>
+            <p className="text-gray-300 font-pixel">Welcome to Quillia</p>
+          </motion.div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2 font-pixel">
-                Username
-              </label>
-              <Input
-                id="username"
-                type="text"
-                value={username}
-                onChange={setUsername}
-                placeholder="Choose a unique username"
-                className="w-full"
-              />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="mb-8"
+          >
+            <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-4 mb-4">
+              <p className="text-green-300 font-pixel text-sm leading-relaxed">
+                🎉 <strong>Account created successfully!</strong><br/><br/>
+                Please check your email to verify your account before signing in. 
+                Look for an email from Quillia with a verification link.
+              </p>
             </div>
-
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2 font-pixel">
-                Email
-              </label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={setEmail}
-                placeholder="Enter your email"
-                className="w-full"
-              />
+            
+            <div className="text-gray-400 font-pixel text-xs">
+              <p>📧 Check your inbox (and spam folder)</p>
+              <p>🔗 Click the verification link in the email</p>
+              <p>🚀 Then come back to sign in and start your adventure!</p>
             </div>
+          </motion.div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2 font-pixel">
-                Password
-              </label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={setPassword}
-                placeholder="Enter your password"
-                className="w-full"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2 font-pixel">
-                Confirm Password
-              </label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={setConfirmPassword}
-                placeholder="Confirm your password"
-                className="w-full"
-              />
-            </div>
-
-            {error && (
-              <div className="text-red-400 text-sm text-center font-pixel">
-                {error}
-              </div>
-            )}
-
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
             <Button
-              type="submit"
-              disabled={isLoading}
-              className="w-full"
+              onClick={() => router.push('/auth/signin')}
+              className="w-full mb-4"
             >
-              {isLoading ? 'Creating Account...' : 'Create Account'}
+              Back to Sign In
             </Button>
-          </form>
-
-          <div className="mt-4 text-center">
-            <a href="/auth/forgot-password" className="text-blue-400 hover:text-blue-300 text-sm font-pixel">
-              Forgot your password?
-            </a>
-          </div>
-
-          <div className="mt-6 text-center">
-            <p className="text-gray-300 font-pixel">
-              Already have an account?{' '}
-              <a href="/auth/signin" className="text-blue-400 hover:text-blue-300">
-                Sign in
-              </a>
+            
+            <p className="text-gray-500 font-pixel text-xs">
+              Didn&apos;t receive the email? Check your spam folder or try signing up again.
             </p>
-          </div>
-
+          </motion.div>
         </div>
       </Card>
-
     </div>
   );
 }
