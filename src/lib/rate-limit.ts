@@ -14,94 +14,52 @@ const redis = env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN &&
 // In-memory fallback for development
 const memoryStore = new Map<string, { count: number; resetTime: number }>();
 
+// In-memory rate limiter fallback
+const createMemoryRateLimiter = (limit: number, windowMs: number, prefix: string) => ({
+  async limit(identifier: string) {
+    const key = `${prefix}:${identifier}`;
+    const now = Date.now();
+    
+    const current = memoryStore.get(key);
+    if (!current || now > current.resetTime) {
+      memoryStore.set(key, { count: 1, resetTime: now + windowMs });
+      return { success: true, limit, remaining: limit - 1, reset: new Date(now + windowMs) };
+    }
+    
+    if (current.count >= limit) {
+      return { success: false, limit, remaining: 0, reset: new Date(current.resetTime) };
+    }
+    
+    current.count++;
+    return { success: true, limit, remaining: limit - current.count, reset: new Date(current.resetTime) };
+  }
+});
+
 // Rate limiters for different endpoint types
 export const rateLimiters = {
   // AI generation endpoints (expensive operations) - now subscription-aware
-  aiGeneration: new Ratelimit({
-    redis: redis!,
+  aiGeneration: redis ? new Ratelimit({
+    redis: redis,
     limiter: Ratelimit.slidingWindow(env.RATE_LIMIT_AI_GENERATION, '1 h'),
     analytics: true,
     prefix: 'quillia:ai',
-    // Fallback for when Redis is not available
-    ...(redis ? {} : {
-      async exec(identifier: string) {
-        const key = `ai:${identifier}`;
-        const now = Date.now();
-        const windowMs = 60 * 60 * 1000; // 1 hour
-        
-        const current = memoryStore.get(key);
-        if (!current || now > current.resetTime) {
-          memoryStore.set(key, { count: 1, resetTime: now + windowMs });
-          return { success: true, limit: env.RATE_LIMIT_AI_GENERATION, remaining: env.RATE_LIMIT_AI_GENERATION - 1, reset: new Date(now + windowMs) };
-        }
-        
-        if (current.count >= env.RATE_LIMIT_AI_GENERATION) {
-          return { success: false, limit: env.RATE_LIMIT_AI_GENERATION, remaining: 0, reset: new Date(current.resetTime) };
-        }
-        
-        current.count++;
-        return { success: true, limit: env.RATE_LIMIT_AI_GENERATION, remaining: env.RATE_LIMIT_AI_GENERATION - current.count, reset: new Date(current.resetTime) };
-      }
-    })
-  }),
+  }) : createMemoryRateLimiter(env.RATE_LIMIT_AI_GENERATION, 60 * 60 * 1000, 'quillia:ai'),
 
   // Authentication endpoints (sensitive operations)
-  auth: new Ratelimit({
-    redis: redis!,
+  auth: redis ? new Ratelimit({
+    redis: redis,
     limiter: Ratelimit.slidingWindow(env.RATE_LIMIT_AUTH, '15 m'),
     analytics: true,
     prefix: 'quillia:auth',
-    // Fallback for when Redis is not available
-    ...(redis ? {} : {
-      async exec(identifier: string) {
-        const key = `auth:${identifier}`;
-        const now = Date.now();
-        const windowMs = 15 * 60 * 1000; // 15 minutes
-        
-        const current = memoryStore.get(key);
-        if (!current || now > current.resetTime) {
-          memoryStore.set(key, { count: 1, resetTime: now + windowMs });
-          return { success: true, limit: env.RATE_LIMIT_AUTH, remaining: env.RATE_LIMIT_AUTH - 1, reset: new Date(now + windowMs) };
-        }
-        
-        if (current.count >= env.RATE_LIMIT_AUTH) {
-          return { success: false, limit: env.RATE_LIMIT_AUTH, remaining: 0, reset: new Date(current.resetTime) };
-        }
-        
-        current.count++;
-        return { success: true, limit: env.RATE_LIMIT_AUTH, remaining: env.RATE_LIMIT_AUTH - current.count, reset: new Date(current.resetTime) };
-      }
-    })
-  }),
+  }) : createMemoryRateLimiter(env.RATE_LIMIT_AUTH, 15 * 60 * 1000, 'quillia:auth'),
 
   // General API endpoints
-  general: new Ratelimit({
-    redis: redis!,
+  general: redis ? new Ratelimit({
+    redis: redis,
     limiter: Ratelimit.slidingWindow(env.RATE_LIMIT_GENERAL, '1 h'),
     analytics: true,
     prefix: 'quillia:general',
-    // Fallback for when Redis is not available
-    ...(redis ? {} : {
-      async exec(identifier: string) {
-        const key = `general:${identifier}`;
-        const now = Date.now();
-        const windowMs = 60 * 60 * 1000; // 1 hour
-        
-        const current = memoryStore.get(key);
-        if (!current || now > current.resetTime) {
-          memoryStore.set(key, { count: 1, resetTime: now + windowMs });
-          return { success: true, limit: env.RATE_LIMIT_GENERAL, remaining: env.RATE_LIMIT_GENERAL - 1, reset: new Date(now + windowMs) };
-        }
-        
-        if (current.count >= env.RATE_LIMIT_GENERAL) {
-          return { success: false, limit: env.RATE_LIMIT_GENERAL, remaining: 0, reset: new Date(current.resetTime) };
-        }
-        
-        current.count++;
-        return { success: true, limit: env.RATE_LIMIT_GENERAL, remaining: env.RATE_LIMIT_GENERAL - current.count, reset: new Date(current.resetTime) };
-      }
-    })
-  })
+  }) : createMemoryRateLimiter(env.RATE_LIMIT_GENERAL, 60 * 60 * 1000, 'quillia:general')
 };
 
 // Helper function to get client identifier
