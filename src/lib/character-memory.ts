@@ -42,6 +42,7 @@ export async function getCharacterMemory(characterId: string): Promise<Character
     memory = await db.characterMemory.create({
       data: {
         characterId,
+        content: 'Initial character memory created',
         worldState: JSON.stringify({
           relationships: {},
           locations: [],
