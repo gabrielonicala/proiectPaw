@@ -5,10 +5,11 @@
   "scripts": {
     "dev": "next dev",
     "dev:turbo": "next dev --turbopack",
-    "build": "next build",
-    "build:turbo": "next build --turbopack",
+    "build": "npx prisma migrate deploy && next build",
+    "build:turbo": "npx prisma migrate deploy && next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "npx prisma generate"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",
