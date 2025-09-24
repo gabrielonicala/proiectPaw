@@ -24,6 +24,9 @@ ALTER TABLE "CharacterMemory" ADD COLUMN IF NOT EXISTS "recentEntries" TEXT;
 ALTER TABLE "CharacterMemory" ADD COLUMN IF NOT EXISTS "lastUpdated" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
 ALTER TABLE "CharacterMemory" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
+-- Handle the old 'memory' field - make it nullable and migrate data if it exists
+ALTER TABLE "CharacterMemory" ALTER COLUMN "memory" DROP NOT NULL;
+
 -- If the old 'content' column exists, we can drop it since we're using the new structure
 -- ALTER TABLE "CharacterMemory" DROP COLUMN IF EXISTS "content";
 
