@@ -3,7 +3,6 @@ import { GoogleGenAI, Modality } from '@google/genai';
 import { generateAvatarDescription } from '@/lib/avatar-utils';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { checkAIRateLimit, getClientIdentifier, getUserIdentifier } from '@/lib/rate-limit';
 import { canCreateEntry } from '@/lib/subscription-limits';
 
 export async function POST(request: NextRequest) {
@@ -14,19 +13,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Rate limiting - use user ID for authenticated requests, IP for others
-    const identifier = session.user.id ? getUserIdentifier(session.user.id) : getClientIdentifier(request);, 
-        { 
-          status: 429,
-          headers: {
-            'X-RateLimit-Limit': rateLimitResult.limit.toString(),
-            'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
-            'X-RateLimit-Reset': rateLimitResult.reset instanceof Date ? rateLimitResult.reset.toISOString() : new Date(rateLimitResult.reset).toISOString(),
-            'Retry-After': Math.ceil(((rateLimitResult.reset instanceof Date ? rateLimitResult.reset.getTime() : rateLimitResult.reset) - Date.now()) / 1000).toString()
-          }
-        }
-      );
-    }
 
     const { originalText, themeConfig, character } = await request.json();
 

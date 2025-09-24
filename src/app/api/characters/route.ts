@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { checkGeneralRateLimit, getUserIdentifier } from '@/lib/rate-limit';
 import { getCharacterAccess } from '@/lib/character-access';
 import { createErrorResponse } from '@/lib/error-utils';
 
@@ -63,19 +62,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Rate limiting for character creation
-    const identifier = getUserIdentifier(session.user.id);, 
-        { 
-          status: 429,
-          headers: {
-            'X-RateLimit-Limit': rateLimitResult.limit.toString(),
-            'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
-            'X-RateLimit-Reset': rateLimitResult.reset instanceof Date ? rateLimitResult.reset.toISOString() : new Date(rateLimitResult.reset).toISOString(),
-            'Retry-After': Math.ceil(((rateLimitResult.reset instanceof Date ? rateLimitResult.reset.getTime() : rateLimitResult.reset) - Date.now()) / 1000).toString()
-          }
-        }
-      );
-    }
 
     const { name, description, theme, avatar, appearance, pronouns, customPronouns } = await request.json();
 

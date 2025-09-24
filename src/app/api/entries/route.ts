@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { saveEntryToDatabase, loadEntriesFromDatabase } from '@/lib/server-utils';
-import { checkGeneralRateLimit, getClientIdentifier, getUserIdentifier } from '@/lib/rate-limit';
 import { createErrorResponse } from '@/lib/error-utils';
 
 export async function GET() {
@@ -29,19 +28,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Rate limiting for entry creation
-    const identifier = getUserIdentifier(session.user.id);, 
-        { 
-          status: 429,
-          headers: {
-            'X-RateLimit-Limit': rateLimitResult.limit.toString(),
-            'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
-            'X-RateLimit-Reset': rateLimitResult.reset instanceof Date ? rateLimitResult.reset.toISOString() : new Date(rateLimitResult.reset).toISOString(),
-            'Retry-After': Math.ceil(((rateLimitResult.reset instanceof Date ? rateLimitResult.reset.getTime() : rateLimitResult.reset) - Date.now()) / 1000).toString()
-          }
-        }
-      );
-    }
 
     const body = await request.json();
     const { originalText, reimaginedText, imageUrl, videoUrl, outputType, characterId, pastContext } = body;

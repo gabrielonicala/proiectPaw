@@ -4,7 +4,6 @@ import { ThemeConfig } from '@/types';
 import { getCharacterMemoryForStory, createStoryPromptWithMemory, updateCharacterMemory } from '@/lib/character-memory';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { checkSubscriptionAwareRateLimit, getClientIdentifier, getUserIdentifier } from '@/lib/rate-limit';
 import { canCreateEntry } from '@/lib/subscription-limits';
 import { db } from '@/lib/db';
 
@@ -26,23 +25,6 @@ export async function POST(request: NextRequest) {
       select: { subscriptionPlan: true }
     });
 
-    // Subscription-aware rate limiting (more permissive since subscription limits handle the real restrictions)
-    const rateLimitResult = await checkSubscriptionAwareRateLimit(
-      session.user.id, 
-      'generate-story', 
-      user?.subscriptionPlan || 'free'
-    );, 
-        { 
-          status: 429,
-          headers: {
-            'X-RateLimit-Limit': rateLimitResult.limit.toString(),
-            'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
-            'X-RateLimit-Reset': rateLimitResult.reset instanceof Date ? rateLimitResult.reset.toISOString() : new Date(rateLimitResult.reset).toISOString(),
-            'Retry-After': Math.ceil(((rateLimitResult.reset instanceof Date ? rateLimitResult.reset.getTime() : rateLimitResult.reset) - Date.now()) / 1000).toString()
-          }
-        }
-      );
-    }
 
     const { originalText, themeConfig, outputType, pastContext, character } = await request.json();
 

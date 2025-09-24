@@ -3,23 +3,9 @@ import { db } from '@/lib/db';
 import { sendEmail, createPasswordResetEmail } from '@/lib/email-resend';
 import { env } from '@/lib/env';
 import crypto from 'crypto';
-import { checkAuthRateLimit, getClientIdentifier } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
-    // Rate limiting for password reset attempts
-    const identifier = getClientIdentifier(request);, 
-        { 
-          status: 429,
-          headers: {
-            'X-RateLimit-Limit': rateLimitResult.limit.toString(),
-            'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
-            'X-RateLimit-Reset': rateLimitResult.reset instanceof Date ? rateLimitResult.reset.toISOString() : new Date(rateLimitResult.reset).toISOString(),
-            'Retry-After': Math.ceil(((rateLimitResult.reset instanceof Date ? rateLimitResult.reset.getTime() : rateLimitResult.reset) - Date.now()) / 1000).toString()
-          }
-        }
-      );
-    }
 
     const { email } = await request.json();
 
