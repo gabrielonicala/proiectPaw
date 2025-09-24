@@ -194,8 +194,7 @@ export default function SignUpSuccessPage() {
             className="mb-6"
           >
             <div className="text-6xl mb-4">✅</div>
-            <h1 className="text-3xl font-bold text-white mb-2 font-pixel">Account Created!</h1>
-            <p className="text-gray-300 font-pixel">Welcome to Quillia</p>
+            <h1 className="text-3xl font-bold text-white mb-2 font-pixel">Welcome to Quillia!</h1>
           </motion.div>
 
           <motion.div
@@ -206,16 +205,16 @@ export default function SignUpSuccessPage() {
           >
             <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-4 mb-4">
               <p className="text-green-300 font-pixel text-sm leading-relaxed">
-                🎉 <strong>Account created successfully!</strong><br/><br/>
+                🎉 <strong>Account created!</strong><br/><br/>
                 Please check your email to verify your account before signing in. 
                 Look for an email from Quillia with a verification link.
               </p>
             </div>
             
             <div className="text-gray-400 font-pixel text-xs">
-              <p>📧 Check your inbox (and spam folder)</p>
+              <p>📧 Check your inbox and spam folder</p>
               <p>🔗 Click the verification link in the email</p>
-              <p>🚀 Then come back to sign in and start your adventure!</p>
+              <p>🚀 Sign in and start your adventure!</p>
             </div>
           </motion.div>
 
