@@ -112,7 +112,7 @@ export default function OfflineWarning() {
                   <p className="text-sm font-pixel text-yellow-100">
                     You&apos;re offline! Currently using local storage...
                   </p>
-                  <p className="text-xs text-yellow-200 mt-1">
+                  <p className="text-xs font-pixel text-yellow-200 mt-1">
                     Data will sync when connection is restored
                   </p>
                 </div>

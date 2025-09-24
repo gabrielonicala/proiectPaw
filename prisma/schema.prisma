@@ -96,6 +96,8 @@ model CharacterMemory {
   id          String   @id @default(cuid())
   characterId String   @unique // One memory per character
   memory      String?  // Legacy field - kept for compatibility
+  content     String?  // General content field for character memory
+  importance  Int      @default(1) // Importance level of the memory (1-10 scale)
   worldState  String?  // JSON string of world state (relationships, locations, ongoing plots)
   summaryLog  String?  // Compressed summary of key events and character growth
   recentEntries String? // JSON array of last 2-3 full entries for tone/style reference

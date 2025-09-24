@@ -442,7 +442,7 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
                   <span className="font-pixel text-yellow-300">{characterStats.totalWordsWritten.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-pixel text-sm text-gray-300">Avg Story Length:</span>
+                  <span className="font-pixel text-sm text-gray-300">Avg Chapter Length:</span>
                   <span className="font-pixel text-yellow-300">{characterStats.averageStoryLength.toFixed(0)} words</span>
                 </div>
               </div>

@@ -295,7 +295,7 @@ function generateAchievements(
     {
       id: 'storyteller',
       name: 'Storyteller',
-      description: 'Created 5 stories',
+      description: 'Wrote 5 chapters',
       icon: '📖',
       unlockedAt: stats.storiesCreated >= 5 ? new Date() : null,
       category: 'content',
@@ -304,7 +304,7 @@ function generateAchievements(
     {
       id: 'master-storyteller',
       name: 'Master Storyteller',
-      description: 'Created 25 stories',
+      description: 'Wrote 25 chapters',
       icon: '📚',
       unlockedAt: stats.storiesCreated >= 25 ? new Date() : null,
       category: 'content',
@@ -314,7 +314,7 @@ function generateAchievements(
     {
       id: 'artist',
       name: 'Artist',
-      description: 'Generated 5 scenes',
+      description: 'Captured 5 scenes',
       icon: '🎨',
       unlockedAt: stats.scenesGenerated >= 5 ? new Date() : null,
       category: 'content',
@@ -323,7 +323,7 @@ function generateAchievements(
     {
       id: 'master-artist',
       name: 'Master Artist',
-      description: 'Generated 25 scenes',
+      description: 'Captured 25 scenes',
       icon: '🖼️',
       unlockedAt: stats.scenesGenerated >= 25 ? new Date() : null,
       category: 'content',
@@ -406,7 +406,7 @@ function generateAchievements(
       {
         id: 'premium-storyteller',
         name: 'Premium Storyteller',
-        description: 'Created 15 stories',
+        description: 'Wrote 15 chapters',
         icon: '📚',
         unlockedAt: stats.storiesCreated >= 15 ? new Date() : null,
         category: 'content',
@@ -416,7 +416,7 @@ function generateAchievements(
       {
         id: 'premium-artist',
         name: 'Premium Artist',
-        description: 'Generated 10 scenes',
+        description: 'Captured 10 scenes',
         icon: '🎨',
         unlockedAt: stats.scenesGenerated >= 10 ? new Date() : null,
         category: 'content',
@@ -550,7 +550,7 @@ function generateAchievements(
       {
         id: 'story-master',
         name: 'Story Master',
-        description: 'Created 100 stories',
+        description: 'Wrote 100 chapters',
         icon: '📚',
         unlockedAt: stats.storiesCreated >= 100 ? new Date() : null,
         category: 'content',
@@ -560,7 +560,7 @@ function generateAchievements(
       {
         id: 'art-master',
         name: 'Art Master',
-        description: 'Generated 100 scenes',
+        description: 'Captured 100 scenes',
         icon: '🎨',
         unlockedAt: stats.scenesGenerated >= 100 ? new Date() : null,
         category: 'content',
