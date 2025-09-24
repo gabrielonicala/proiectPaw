@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
@@ -14,6 +15,7 @@ export default function SignUpPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -75,8 +77,13 @@ export default function SignUpPage() {
 
       // Show success message about email verification
       setError(''); // Clear any previous errors
-      alert('Account created successfully! Please check your email to verify your account before signing in.');
-      router.push('/auth/signin');
+      setShowSuccessToast(true);
+      
+      // Auto-hide toast and redirect after 3 seconds
+      setTimeout(() => {
+        setShowSuccessToast(false);
+        router.push('/auth/signin');
+      }, 3000);
     } catch {
       setError('An error occurred. Please try again.');
     } finally {
@@ -357,6 +364,20 @@ export default function SignUpPage() {
 
         </div>
       </Card>
+
+      {/* Success Toast Notification */}
+      <AnimatePresence>
+        {showSuccessToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.8 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.8 }}
+            className="fixed bottom-16 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-lg pixelated border-2 border-green-400 z-[10001] max-w-md text-center"
+          >
+            <p className="font-pixel text-sm">✅ Account created successfully! Please check your email to verify your account before signing in.</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
