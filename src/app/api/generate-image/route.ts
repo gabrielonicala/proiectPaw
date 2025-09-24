@@ -26,24 +26,6 @@ export async function POST(request: NextRequest) {
       select: { subscriptionPlan: true }
     });
 
-    // Subscription-aware rate limiting
-    const rateLimitResult = await checkSubscriptionAwareRateLimit(
-      session.user.id, 
-      'generate-image', 
-      user?.subscriptionPlan || 'free'
-    );, 
-        { 
-          status: 429,
-          headers: {
-            'X-RateLimit-Limit': rateLimitResult.limit.toString(),
-            'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
-            'X-RateLimit-Reset': rateLimitResult.reset instanceof Date ? rateLimitResult.reset.toISOString() : new Date(rateLimitResult.reset).toISOString(),
-            'Retry-After': Math.ceil(((rateLimitResult.reset instanceof Date ? rateLimitResult.reset.getTime() : rateLimitResult.reset) - Date.now()) / 1000).toString()
-          }
-        }
-      );
-    }
-
     const { originalText, themeConfig, character } = await request.json();
 
     // Check subscription limits for image generation
