@@ -31,15 +31,7 @@ export async function POST(request: NextRequest) {
       session.user.id, 
       'generate-story', 
       user?.subscriptionPlan || 'free'
-    );
-    
-    if (!rateLimitResult.success) {
-      return NextResponse.json(
-        { 
-          error: 'Rate limit exceeded', 
-          message: 'Too many requests. Please try again later.',
-          resetTime: rateLimitResult.reset
-        }, 
+    );, 
         { 
           status: 429,
           headers: {

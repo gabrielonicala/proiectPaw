@@ -15,16 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Rate limiting - use user ID for authenticated requests, IP for others
-    const identifier = session.user.id ? getUserIdentifier(session.user.id) : getClientIdentifier(request);
-    const rateLimitResult = await checkAIRateLimit(identifier, 'generate-image-gemini');
-    
-    if (!rateLimitResult.success) {
-      return NextResponse.json(
-        { 
-          error: 'Rate limit exceeded', 
-          message: 'Too many image generation requests. Please try again later.',
-          resetTime: rateLimitResult.reset
-        }, 
+    const identifier = session.user.id ? getUserIdentifier(session.user.id) : getClientIdentifier(request);, 
         { 
           status: 429,
           headers: {

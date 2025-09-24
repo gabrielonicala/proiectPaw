@@ -64,16 +64,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Rate limiting for character creation
-    const identifier = getUserIdentifier(session.user.id);
-    const rateLimitResult = await checkGeneralRateLimit(identifier, 'create-character');
-    
-    if (!rateLimitResult.success) {
-      return NextResponse.json(
-        { 
-          error: 'Rate limit exceeded', 
-          message: 'Too many character creation requests. Please try again later.',
-          resetTime: rateLimitResult.reset
-        }, 
+    const identifier = getUserIdentifier(session.user.id);, 
         { 
           status: 429,
           headers: {

@@ -9,16 +9,7 @@ import { env } from '@/lib/env';
 export async function POST(request: NextRequest) {
   try {
     // Rate limiting for signup attempts
-    const identifier = getClientIdentifier(request);
-    const rateLimitResult = await checkAuthRateLimit(identifier, 'signup');
-    
-    if (!rateLimitResult.success) {
-      return NextResponse.json(
-        { 
-          error: 'Rate limit exceeded', 
-          message: 'Too many signup attempts. Please try again later.',
-          resetTime: rateLimitResult.reset
-        }, 
+    const identifier = getClientIdentifier(request);, 
         { 
           status: 429,
           headers: {

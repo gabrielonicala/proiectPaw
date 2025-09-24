@@ -3,7 +3,6 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { checkAIRateLimit, getClientIdentifier, getUserIdentifier } from '@/lib/rate-limit';
 import { canCreateEntry } from '@/lib/subscription-limits';
 
 export async function POST(request: NextRequest) {
@@ -15,16 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Rate limiting - use user ID for authenticated requests, IP for others
-    const identifier = session.user.id ? getUserIdentifier(session.user.id) : getClientIdentifier(request);
-    const rateLimitResult = await checkAIRateLimit(identifier, 'generate-image-sd-advanced');
-    
-    if (!rateLimitResult.success) {
-      return NextResponse.json(
-        { 
-          error: 'Rate limit exceeded', 
-          message: 'Too many image generation requests. Please try again later.',
-          resetTime: rateLimitResult.reset
-        }, 
+    const identifier = session.user.id ? getUserIdentifier(session.user.id) : getClientIdentifier(request);, 
         { 
           status: 429,
           headers: {

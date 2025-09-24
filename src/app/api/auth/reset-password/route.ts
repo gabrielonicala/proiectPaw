@@ -6,16 +6,7 @@ import { checkAuthRateLimit, getClientIdentifier } from '@/lib/rate-limit';
 export async function POST(request: NextRequest) {
   try {
     // Rate limiting for password reset attempts
-    const identifier = getClientIdentifier(request);
-    const rateLimitResult = await checkAuthRateLimit(identifier, 'reset-password');
-    
-    if (!rateLimitResult.success) {
-      return NextResponse.json(
-        { 
-          error: 'Rate limit exceeded', 
-          message: 'Too many password reset attempts. Please try again later.',
-          resetTime: rateLimitResult.reset
-        }, 
+    const identifier = getClientIdentifier(request);, 
         { 
           status: 429,
           headers: {

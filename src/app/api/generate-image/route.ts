@@ -5,7 +5,6 @@ import { getAvatarDescription } from '@/lib/avatar-descriptions';
 import { generateAvatarDescription } from '@/lib/avatar-utils';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { checkSubscriptionAwareRateLimit, getClientIdentifier, getUserIdentifier } from '@/lib/rate-limit';
 import { db } from '@/lib/db';
 import { canCreateEntry } from '@/lib/subscription-limits';
 
@@ -32,15 +31,7 @@ export async function POST(request: NextRequest) {
       session.user.id, 
       'generate-image', 
       user?.subscriptionPlan || 'free'
-    );
-    
-    if (!rateLimitResult.success) {
-      return NextResponse.json(
-        { 
-          error: 'Rate limit exceeded', 
-          message: 'Too many requests. Please try again later.',
-          resetTime: rateLimitResult.reset
-        }, 
+    );, 
         { 
           status: 429,
           headers: {
