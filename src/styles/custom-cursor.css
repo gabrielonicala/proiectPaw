@@ -1,0 +1,91 @@
+/* Custom Fantasy Cursor Styles */
+
+/* Base cursor - pixelated golden arrow */
+.cursor-default {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" fill="%23FFD700" stroke="%23FFA500" stroke-width="1" stroke-linejoin="round"/><path d="M13 13l6 6" stroke="%23FFD700" stroke-width="2" stroke-linecap="round"/></svg>') 12 12, auto;
+}
+
+/* Hover cursor - glowing golden arrow */
+.cursor-hover {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><defs><filter id="glow"><feGaussianBlur stdDeviation="2" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" fill="%23FFD700" stroke="%23FFA500" stroke-width="1" stroke-linejoin="round" filter="url(%23glow)"/><path d="M13 13l6 6" stroke="%23FFD700" stroke-width="2" stroke-linecap="round" filter="url(%23glow)"/></svg>') 12 12, auto;
+}
+
+/* Click cursor - magical sparkle */
+.cursor-click {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="%23FFD700" stroke="%23FFA500" stroke-width="2"/><path d="M8 8l8 8M16 8l-8 8" stroke="%23FFA500" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="2" fill="%23FFA500"/></svg>') 12 12, auto;
+}
+
+/* Loading cursor - spinning magical orb */
+.cursor-loading {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="%23FFD700" stroke-width="2" stroke-dasharray="31.416" stroke-dashoffset="31.416"><animate attributeName="stroke-dasharray" dur="2s" values="0 31.416;15.708 15.708;0 31.416" repeatCount="indefinite"/><animate attributeName="stroke-dashoffset" dur="2s" values="0;-15.708;-31.416" repeatCount="indefinite"/></circle><circle cx="12" cy="12" r="3" fill="%23FFA500"/></svg>') 12 12, auto;
+}
+
+/* Disabled cursor - grayed out arrow */
+.cursor-disabled {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" fill="%23666" stroke="%23444" stroke-width="1" stroke-linejoin="round"/><path d="M13 13l6 6" stroke="%23666" stroke-width="2" stroke-linecap="round"/></svg>') 12 12, not-allowed;
+}
+
+/* Text cursor - magical quill */
+.cursor-text {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="%23FFD700" stroke="%23FFA500" stroke-width="1"/></svg>') 12 12, text;
+}
+
+/* Pixelated cursor for buttons */
+.cursor-button {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" fill="%23FFD700" stroke="%23FFA500" stroke-width="2" stroke-linejoin="round"/><path d="M8 8h8M8 12h8M8 16h8" stroke="%23FFA500" stroke-width="2" stroke-linecap="round"/></svg>') 12 12, pointer;
+}
+
+/* Magical trail effect */
+.cursor-trail {
+  position: fixed;
+  width: 20px;
+  height: 20px;
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.8) 0%, rgba(255, 165, 0, 0.4) 50%, transparent 100%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  animation: sparkle 0.6s ease-out forwards;
+}
+
+@keyframes sparkle {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.5) rotate(180deg);
+    opacity: 0;
+  }
+}
+
+/* Cursor glow effect */
+.cursor-glow {
+  position: fixed;
+  width: 40px;
+  height: 40px;
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.3) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9998;
+  transition: all 0.1s ease;
+}
+
+/* Apply custom cursor to the entire app */
+body {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" fill="%23FFD700" stroke="%23FFA500" stroke-width="1" stroke-linejoin="round"/><path d="M13 13l6 6" stroke="%23FFD700" stroke-width="2" stroke-linecap="round"/></svg>') 12 12, auto;
+}
+
+/* Button hover states */
+button:hover {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><defs><filter id="glow"><feGaussianBlur stdDeviation="2" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" fill="%23FFD700" stroke="%23FFA500" stroke-width="1" stroke-linejoin="round" filter="url(%23glow)"/><path d="M13 13l6 6" stroke="%23FFD700" stroke-width="2" stroke-linecap="round" filter="url(%23glow)"/></svg>') 12 12, pointer;
+}
+
+/* Input fields */
+input, textarea {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="%23FFD700" stroke="%23FFA500" stroke-width="1"/><path d="M12 6v12M8 10h8" stroke="%23FFA500" stroke-width="2" stroke-linecap="round"/></svg>') 12 12, text;
+}
+
+/* Disabled elements */
+button:disabled, input:disabled, textarea:disabled {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" fill="%23666" stroke="%23444" stroke-width="1" stroke-linejoin="round"/><path d="M13 13l6 6" stroke="%23666" stroke-width="2" stroke-linecap="round"/></svg>') 12 12, not-allowed;
+}
