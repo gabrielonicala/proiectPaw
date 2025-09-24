@@ -3,7 +3,8 @@ import { Redis } from '@upstash/redis';
 import { env } from './env';
 
 // Create Redis client if credentials are available, otherwise use in-memory fallback
-const redis = env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN
+const redis = env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN && 
+  !env.UPSTASH_REDIS_REST_URL.includes('your-redis-instance')
   ? new Redis({
       url: env.UPSTASH_REDIS_REST_URL,
       token: env.UPSTASH_REDIS_REST_TOKEN,
