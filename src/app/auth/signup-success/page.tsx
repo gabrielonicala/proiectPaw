@@ -212,9 +212,9 @@ export default function SignUpSuccessPage() {
             </div>
             
             <div className="text-gray-400 font-pixel text-xs">
-              <p>📧 Check your inbox and spam folder</p>
-              <p>🔗 Click the verification link in the email</p>
-              <p>🚀 Sign in and start your adventure!</p>
+              <p>📧 Check your inbox and spam</p>
+              <p>🔗 Click the verification link</p>
+              <p>🚀 You&apos;re all set to sign in!</p>
             </div>
           </motion.div>
 
@@ -231,7 +231,7 @@ export default function SignUpSuccessPage() {
             </Button>
             
             <p className="text-gray-500 font-pixel text-xs">
-              Didn&apos;t receive the email? Check your spam folder or try signing up again.
+              Didn&apos;t receive the email? Check the spam folder. If it&apos;s not there, try signing up again.
             </p>
           </motion.div>
         </div>
