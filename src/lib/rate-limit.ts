@@ -122,15 +122,15 @@ export async function checkRateLimit(
 
 // Convenience functions for different endpoint types
 export async function checkAIRateLimit(identifier: string, endpoint: string) {
-  return checkRateLimit(rateLimiters.aiGeneration, identifier, endpoint);
+  return rateLimiters.aiGeneration.limit(identifier);
 }
 
 export async function checkAuthRateLimit(identifier: string, endpoint: string) {
-  return checkRateLimit(rateLimiters.auth, identifier, endpoint);
+  return rateLimiters.auth.limit(identifier);
 }
 
 export async function checkGeneralRateLimit(identifier: string, endpoint: string) {
-  return checkRateLimit(rateLimiters.general, identifier, endpoint);
+  return rateLimiters.general.limit(identifier);
 }
 
 // Subscription-aware rate limiting
