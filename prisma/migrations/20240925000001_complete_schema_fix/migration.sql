@@ -25,7 +25,18 @@ ALTER TABLE "CharacterMemory" ADD COLUMN IF NOT EXISTS "lastUpdated" TIMESTAMP(3
 ALTER TABLE "CharacterMemory" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
 -- Handle the old 'memory' field - make it nullable and migrate data if it exists
-ALTER TABLE "CharacterMemory" ALTER COLUMN "memory" DROP NOT NULL;
+-- First check if the column exists and is NOT NULL, then make it nullable
+DO $$ 
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'CharacterMemory' 
+        AND column_name = 'memory' 
+        AND is_nullable = 'NO'
+    ) THEN
+        ALTER TABLE "CharacterMemory" ALTER COLUMN "memory" DROP NOT NULL;
+    END IF;
+END $$;
 
 -- If the old 'content' column exists, we can drop it since we're using the new structure
 -- ALTER TABLE "CharacterMemory" DROP COLUMN IF EXISTS "content";

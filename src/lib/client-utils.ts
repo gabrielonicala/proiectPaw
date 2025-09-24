@@ -173,8 +173,9 @@ export async function generateReimaginedText(
     return data.reimaginedText;
   } catch (error) {
     console.error('Error generating story:', error);
-    // Fallback to a simple message if API fails
-    return `I'm sorry, I couldn't generate a story right now. Please try again later. Your original text was: "${originalText}"`;
+    // Throw the error instead of returning a fallback message
+    // This prevents the frontend from saving failed generations to the database
+    throw error;
   }
 }
 
