@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Send verification email
-    const verificationUrl = `https://quillia-psi.vercel.app/auth/verify-email?token=${verificationToken}`;
+    const verificationUrl = `${env.NEXTAUTH_URL}/auth/verify-email?token=${verificationToken}`;
     const { html, text } = createEmailVerificationEmail(verificationUrl, username);
     
     const emailResult = await sendEmail({
