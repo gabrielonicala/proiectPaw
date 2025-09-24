@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendEmail, createPasswordResetEmail } from '@/lib/email';
+import { sendEmail, createPasswordResetEmail } from '@/lib/email-resend';
 
 export async function POST(request: NextRequest) {
   try {
