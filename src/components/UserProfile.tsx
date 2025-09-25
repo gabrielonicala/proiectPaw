@@ -515,6 +515,7 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
               {/* Debug: statsHeight = {statsHeight} */}
               <Card theme={activeCharacter.theme} effect="glow" className="flex flex-col h-full">
             <h3 className="font-pixel text-xl text-white mb-6">🏆 Achievements</h3>
+            <hr className="border-gray-600 -mt-1 mb-4" />
             {/* <div className="flex flex-col gap-4 flex-1 overflow-y-auto min-h-0"> */}
             <div className="flex-1 overflow-y-auto min-h-0">
               <div className="space-y-4">
