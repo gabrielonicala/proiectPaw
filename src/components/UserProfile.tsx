@@ -412,7 +412,8 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
 
            {/* Column 2: Stats */}
           <div className="lg:col-span-1 flex flex-col h-full">
-            <div ref={statsRef} className="flex flex-col gap-6 h-full">
+            <div ref={statsRef}>
+              <div className="flex flex-col gap-6 h-full">
           {/* Adventure Stats */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -499,6 +500,7 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
               </div>
             </Card>
           </motion.div>
+              </div>
             </div>
           </div>
 
