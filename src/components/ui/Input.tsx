@@ -125,13 +125,13 @@ export default function Input({
         <div className="text-sm">
           <div className="flex justify-between items-center">
             <span className="font-pixel text-yellow-400">
-              {minLength && value.length < minLength ? `Minimum <span className="font-pixel-numbers">${minLength}</span> ${charCountLabel}` : ''}
+              {minLength && value.length < minLength ? `Minimum <span className="font-pixel">${minLength}</span> ${charCountLabel}` : ''}
             </span>
             <span 
               className="font-pixel"
               style={{ color: getCharCountColor() }}
             >
-              <span className="font-pixel-numbers">{value.length}{maxLength ? `/${maxLength}` : ''}</span> {charCountLabel}
+              <span className="font-pixel">{value.length}{maxLength ? `/${maxLength}` : ''}</span> {charCountLabel}
             </span>
           </div>
         </div>

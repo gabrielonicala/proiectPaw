@@ -526,7 +526,7 @@ export default function CharacterSelector({
         >
            <Card theme={activeCharacter?.theme || 'obsidian-veil'} className="max-w-md mx-auto">
              <p className="font-pixel text-white">
-               Characters: <span className="font-pixel-numbers">{characters.length}/{user.characterSlots}</span>
+               Characters: <span className="font-pixel">{characters.length}/{user.characterSlots}</span>
              </p>
              {user.characterSlots < 3 && (
                <div className="mt-2">
