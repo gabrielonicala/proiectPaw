@@ -513,6 +513,7 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
             <h3 className="font-pixel text-xl text-white mb-6">🏆 Achievements</h3>
             {/* <div className="flex flex-col gap-4 flex-1 overflow-y-auto min-h-0"> */}
             <div className="flex-1 overflow-y-auto min-h-0">
+              <div className="space-y-4">
               {characterStats.achievements.map((achievement) => (
                 <motion.div
                   key={achievement.id}
@@ -564,6 +565,7 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
                   )}
                 </motion.div>
               ))}
+              </div>
             </div>
               </Card>
             </div>
