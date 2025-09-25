@@ -71,6 +71,7 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
     const measureStatsHeight = () => {
       if (statsRef.current) {
         const height = statsRef.current.offsetHeight;
+        console.log('Stats height measured:', height);
         setStatsHeight(height);
       }
     };
@@ -509,6 +510,7 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
             className="lg:col-span-1 flex flex-col"
           >
             <div style={{ height: statsHeight > 0 ? `${statsHeight}px` : 'auto' }}>
+              {/* Debug: statsHeight = {statsHeight} */}
               <Card theme={activeCharacter.theme} effect="glow" className="flex flex-col h-full">
             <h3 className="font-pixel text-xl text-white mb-6">🏆 Achievements</h3>
             {/* <div className="flex flex-col gap-4 flex-1 overflow-y-auto min-h-0"> */}
