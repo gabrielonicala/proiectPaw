@@ -514,7 +514,7 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
               >
                 <Card theme={activeCharacter.theme} effect="glow" className="h-full flex flex-col">
             <h3 className="font-pixel text-xl text-white mb-6">🏆 Achievements</h3>
-            <div className="flex flex-col gap-4 flex-1 overflow-y-auto">
+            <div className="flex flex-col gap-4 flex-1 overflow-y-auto min-h-0">
               {characterStats.achievements.map((achievement) => (
                 <motion.div
                   key={achievement.id}
