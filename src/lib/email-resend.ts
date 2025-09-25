@@ -254,7 +254,7 @@ export function createPasswordResetEmail(resetUrl: string, userName: string) {
           </div>
           
           <div class="content">
-            <p>Hello <strong>${userName || 'adventurer'}</strong>,</p>
+            <p>Hello <strong>adventurer</strong>!</p>
             
             <p>We received a request to reset your password for your Quillia account. If you made this request, click the button below to create a new password and secure your adventure:</p>
             
