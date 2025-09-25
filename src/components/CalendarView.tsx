@@ -133,7 +133,7 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
             transition={{ duration: 0.5, delay: 0.2 }}
             className="lg:col-span-2 flex flex-col"
           >
-            <Card theme={activeCharacter.theme} className="flex flex-col h-full">
+            <Card theme={activeCharacter.theme} className="flex flex-col">
               {/* Month Navigation */}
               <div className="flex justify-between items-center mb-6">
                 <Button
@@ -190,7 +190,7 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
                 ))}
               </div>
 
-              <div className="grid grid-cols-7 gap-1 flex-1">
+              <div className="grid grid-cols-7 gap-1">
                 {daysInMonth.map((day, index) => {
                   const dayEntries = getEntriesForDate(day);
                   const isSelected = selectedDate && isSameDay(day, selectedDate);
@@ -245,7 +245,7 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
             transition={{ duration: 0.5, delay: 0.4 }}
             className="flex flex-col"
           >
-            <Card theme={activeCharacter.theme} className="flex flex-col h-full">
+            <Card theme={activeCharacter.theme} className="flex flex-col h-[500px]">
               <h3 className="font-pixel text-lg text-white mb-4">
                 {selectedDate ? format(selectedDate, 'MMMM d, yyyy') : 'Today\'s Adventures'}
               </h3>
