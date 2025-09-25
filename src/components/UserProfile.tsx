@@ -502,10 +502,10 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
           </div>
 
           {/* Column 3: Achievements */}
-          <div className="lg:col-span-1 flex flex-col">
-            <div 
-              style={{ height: statsHeight > 0 ? `${statsHeight}px` : 'auto' }}
-            >
+          <div 
+            className="lg:col-span-1 flex flex-col"
+            style={{ height: statsHeight > 0 ? `${statsHeight}px` : 'auto' }}
+          >
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -569,7 +569,6 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
             </div>
           </Card>
         </motion.div>
-            </div>
           </div>
         </div>
       </div>
