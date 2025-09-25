@@ -502,18 +502,17 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
           </div>
 
           {/* Column 3: Achievements */}
-          <div 
-            className="lg:col-span-1 flex flex-col"
-            style={{ height: statsHeight > 0 ? `${statsHeight}px` : 'auto' }}
-          >
-        {/* Achievements Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
-          className="h-full flex flex-col"
-        >
-          <Card theme={activeCharacter.theme} effect="glow" className="h-full flex flex-col">
+          <div className="lg:col-span-1 flex flex-col">
+            <div 
+              style={{ height: statsHeight > 0 ? `${statsHeight}px` : 'auto' }}
+            >
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.6 }}
+                className="h-full flex flex-col"
+              >
+                <Card theme={activeCharacter.theme} effect="glow" className="h-full flex flex-col">
             <h3 className="font-pixel text-xl text-white mb-6">🏆 Achievements</h3>
             <div className="flex flex-col gap-4 flex-1 overflow-y-auto">
               {characterStats.achievements.map((achievement) => (
@@ -570,6 +569,7 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
             </div>
           </Card>
         </motion.div>
+            </div>
           </div>
         </div>
       </div>
