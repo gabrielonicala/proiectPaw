@@ -3,7 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "../styles/custom-cursor.css";
 import SessionProvider from "@/components/SessionProvider";
-import VercelAnalytics from "@/components/VercelAnalytics";
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,7 +39,8 @@ export default function RootLayout({
         <SessionProvider>
           {children}
         </SessionProvider>
-        <VercelAnalytics />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
