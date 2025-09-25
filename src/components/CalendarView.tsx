@@ -125,13 +125,13 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
           </motion.div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="flex flex-col lg:flex-row gap-6">
           {/* Calendar */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="lg:col-span-2 flex flex-col"
+            className="lg:w-2/3 flex flex-col"
           >
             <Card theme={activeCharacter.theme} className="flex flex-col">
               {/* Month Navigation */}
@@ -243,16 +243,18 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.4 }}
-            className="flex flex-col"
+            className="lg:w-1/3 flex flex-col"
           >
             <Card theme={activeCharacter.theme} className="flex flex-col h-full">
-              <h3 className="font-pixel text-lg text-white mb-4">
-                {selectedDate ? format(selectedDate, 'MMMM d, yyyy') : 'Today\'s Adventures'}
-              </h3>
+              <div className="flex-shrink-0">
+                <h3 className="font-pixel text-lg text-white mb-4">
+                  {selectedDate ? format(selectedDate, 'MMMM d, yyyy') : 'Today\'s Adventures'}
+                </h3>
+                
+                <hr className="border-gray-600 -mt-1 mb-4" />
+              </div>
               
-              <hr className="border-gray-600 -mt-1 mb-4" />
-              
-              <div className="space-y-4 flex-1 overflow-y-auto">
+              <div className="space-y-4 flex-1 overflow-y-auto min-h-0">
                 {getEntriesForSelectedDate().length > 0 ? (
                   getEntriesForSelectedDate().map((entry, index) => (
                     <motion.div
