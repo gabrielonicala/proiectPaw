@@ -131,9 +131,9 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="lg:col-span-2"
+            className="lg:col-span-2 flex flex-col"
           >
-            <Card theme={activeCharacter.theme}>
+            <Card theme={activeCharacter.theme} className="flex flex-col h-full">
               {/* Month Navigation */}
               <div className="flex justify-between items-center mb-6">
                 <Button
@@ -190,7 +190,7 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
                 ))}
               </div>
 
-              <div className="grid grid-cols-7 gap-1">
+              <div className="grid grid-cols-7 gap-1 flex-1">
                 {daysInMonth.map((day, index) => {
                   const dayEntries = getEntriesForDate(day);
                   const isSelected = selectedDate && isSameDay(day, selectedDate);
@@ -243,13 +243,16 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.4 }}
+            className="flex flex-col"
           >
-            <Card theme={activeCharacter.theme}>
+            <Card theme={activeCharacter.theme} className="flex flex-col h-full">
               <h3 className="font-pixel text-lg text-white mb-4">
                 {selectedDate ? format(selectedDate, 'MMMM d, yyyy') : 'Today\'s Adventures'}
               </h3>
               
-              <div className="space-y-4 max-h-96 overflow-y-auto">
+              <hr className="border-gray-600 -mt-1 mb-4" />
+              
+              <div className="space-y-4 flex-1 overflow-y-auto">
                 {getEntriesForSelectedDate().length > 0 ? (
                   getEntriesForSelectedDate().map((entry, index) => (
                     <motion.div
@@ -298,14 +301,26 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
                       </div>
                     </motion.div>
                   ))
-                ) : selectedDate ? (
-                  <div className="text-center text-gray-400 py-8">
-                    <p className="font-pixel">No adventures on this day</p>
-                  </div>
                 ) : (
-                  <div className="text-center text-gray-400 py-8">
-                    <p className="font-pixel">No adventures today</p>
-                    <p className="font-pixel text-sm mt-2">Click on other dates to explore</p>
+                  <div className="flex flex-col items-center justify-center h-full text-center text-gray-400 py-8">
+                    <div className="text-6xl mb-4 opacity-50">📅</div>
+                    <p className="font-pixel text-lg mb-2">
+                      {selectedDate ? 'No adventures on this day' : 'No adventures today'}
+                    </p>
+                    <p className="font-pixel text-sm mb-4 opacity-75">
+                      {!selectedDate && 'Click on other dates to explore'}
+                    </p>
+                    
+                    {/* Character stats or tips */}
+                    <div className="-mt-2 p-4 border border-gray-600 rounded-lg bg-gray-800/50 w-full text-left">
+                      <h4 className="font-pixel text-base text-yellow-300 mb-2 text-left">💡 Quick Tips</h4>
+                      <div className="text-sm space-y-1 text-gray-300 text-left">
+                        <p>• Click a day to see its adventures</p>
+                        <p>• Green days have adventures</p>
+                        <p>• The blue day is today</p>
+                        <p>• The yellow day is selected</p>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

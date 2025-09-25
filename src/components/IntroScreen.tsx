@@ -120,9 +120,7 @@ export default function IntroScreen({ onStart, theme = 'velour-nights' }: IntroS
           transition={{ delay: 0.5, duration: 1 }}
           className="font-pixel text-xl md:text-2xl lg:text-3xl mb-8 font-semibold tracking-wide"
           style={{ 
-            color: colors?.accent || '#fbbf24',
-            textShadow: `0 0 10px ${colors?.accent || '#fbbf24'}, 0 0 20px ${colors?.accent || '#fbbf24'}, 0 0 30px ${colors?.accent || '#fbbf24'}`,
-            filter: 'drop-shadow(0 0 5px rgba(251,191,36,0.5))'
+            color: colors?.accent || '#fbbf24'
           }}
         >
           Transform Your Days Into Adventures
