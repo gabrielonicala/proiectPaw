@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import Button from './ui/Button';
 import Card from './ui/Card';
 import Input from './ui/Input';
@@ -45,6 +45,9 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
     }
   });
   const [isChangingUsername, setIsChangingUsername] = useState(false);
+  const [statsHeight, setStatsHeight] = useState<number>(0);
+  
+  const statsRef = useRef<HTMLDivElement>(null);
   const [newUsername, setNewUsername] = useState(user.username || '');
   const [usernameError, setUsernameError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -62,6 +65,24 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
       } : undefined
     );
   }, [activeCharacter, entries, user.subscriptionPlan, user.subscriptionStatus]);
+
+  useEffect(() => {
+    // Measure stats height and update achievements column height
+    const measureStatsHeight = () => {
+      if (statsRef.current) {
+        const height = statsRef.current.offsetHeight;
+        setStatsHeight(height);
+      }
+    };
+
+    // Measure on mount and when content changes
+    measureStatsHeight();
+    
+    // Re-measure when character changes
+    const timeoutId = setTimeout(measureStatsHeight, 100);
+    
+    return () => clearTimeout(timeoutId);
+  }, [activeCharacter, characterStats]);
   
   // Get available characters for selection
   const availableCharacters = user.characters || [];
@@ -389,7 +410,7 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
               </div>
 
            {/* Column 2: Stats */}
-          <div className="lg:col-span-1 flex flex-col h-full">
+          <div ref={statsRef} className="lg:col-span-1 flex flex-col h-full">
             <div className="flex flex-col gap-6 h-full">
           {/* Adventure Stats */}
           <motion.div
@@ -481,7 +502,10 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
           </div>
 
           {/* Column 3: Achievements */}
-          <div className="lg:col-span-1 flex flex-col h-full">
+          <div 
+            className="lg:col-span-1 flex flex-col"
+            style={{ height: statsHeight > 0 ? `${statsHeight}px` : 'auto' }}
+          >
         {/* Achievements Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
