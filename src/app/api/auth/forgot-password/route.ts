@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { sendEmail, createPasswordResetEmail } from '@/lib/email-resend';
+import { sendEmail, createPasswordResetEmail } from '@/lib/email-smtp';
 import { env } from '@/lib/env';
 import crypto from 'crypto';
 

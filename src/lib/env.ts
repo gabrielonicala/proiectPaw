@@ -3,8 +3,8 @@
 
 // Environment configuration with secure defaults
 export const env = {
-  // Database - allow fallback for development
-  DATABASE_URL: process.env.DATABASE_URL || 'file:./dev.db',
+  // Database - require in production, allow fallback for development
+  DATABASE_URL: process.env.DATABASE_URL,
   
   // Authentication - require in production
   NEXTAUTH_URL: process.env.NEXTAUTH_URL || 'http://localhost:3000',
@@ -13,6 +13,11 @@ export const env = {
   // Email - require in production
   RESEND_API_KEY: process.env.RESEND_API_KEY,
   RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL || 'Quillia <noreply@resend.dev>',
+  
+  // SMTP Configuration for Namecheap email
+  SMTP_USERNAME: process.env.SMTP_USERNAME,
+  SMTP_PASSWORD: process.env.SMTP_PASSWORD,
+  SMTP_FROM_EMAIL: process.env.SMTP_FROM_EMAIL || 'Quillia <contact@quillia.app>',
   
   // AI Services - optional but recommended
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
