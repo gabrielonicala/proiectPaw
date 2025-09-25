@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday } from 'date-fns';
 import Button from './ui/Button';
 import Card from './ui/Card';
@@ -23,13 +23,33 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [calendarHeight, setCalendarHeight] = useState<number>(0);
   
+  const calendarRef = useRef<HTMLDivElement>(null);
   const { entries, isLoading: entriesLoading } = useEntries();
 
   useEffect(() => {
     // Automatically select today's date when entering calendar view
     setSelectedDate(new Date());
   }, []);
+
+  useEffect(() => {
+    // Measure calendar height and update entries column height
+    const measureCalendarHeight = () => {
+      if (calendarRef.current) {
+        const height = calendarRef.current.offsetHeight;
+        setCalendarHeight(height);
+      }
+    };
+
+    // Measure on mount and when calendar content changes
+    measureCalendarHeight();
+    
+    // Re-measure when currentDate changes (month navigation)
+    const timeoutId = setTimeout(measureCalendarHeight, 100);
+    
+    return () => clearTimeout(timeoutId);
+  }, [currentDate]);
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
@@ -133,7 +153,8 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
             transition={{ duration: 0.5, delay: 0.2 }}
             className="lg:col-span-2 flex flex-col"
           >
-            <Card theme={activeCharacter.theme} className="flex flex-col">
+            <div ref={calendarRef}>
+              <Card theme={activeCharacter.theme} className="flex flex-col">
               {/* Month Navigation */}
               <div className="flex justify-between items-center mb-6">
                 <Button
@@ -236,6 +257,7 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
                 })}
               </div>
             </Card>
+            </div>
           </motion.div>
 
           {/* Selected Date Entries */}
@@ -245,7 +267,11 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
             transition={{ duration: 0.5, delay: 0.4 }}
             className="flex flex-col"
           >
-            <Card theme={activeCharacter.theme} className="flex flex-col h-full">
+            <div style={{ height: calendarHeight > 0 ? `${calendarHeight}px` : 'auto' }}>
+              <Card 
+                theme={activeCharacter.theme} 
+                className="flex flex-col h-full"
+              >
               <h3 className="font-pixel text-lg text-white mb-4">
                 {selectedDate ? format(selectedDate, 'MMMM d, yyyy') : 'Today\'s Adventures'}
               </h3>
@@ -327,6 +353,7 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
                 </div>
               </div>
             </Card>
+            </div>
           </motion.div>
         </div>
       </div>
