@@ -45,9 +45,9 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
     }
   });
   const [isChangingUsername, setIsChangingUsername] = useState(false);
-  const [leftColumnHeight, setLeftColumnHeight] = useState<number>(0);
+  const [statsHeight, setStatsHeight] = useState<number>(0);
   
-  const leftColumnRef = useRef<HTMLDivElement>(null);
+  const statsRef = useRef<HTMLDivElement>(null);
   const [newUsername, setNewUsername] = useState(user.username || '');
   const [usernameError, setUsernameError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -67,19 +67,19 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
   }, [activeCharacter, entries, user.subscriptionPlan, user.subscriptionStatus]);
 
   useEffect(() => {
-    // Measure left column height and update achievements column height
-    const measureLeftColumnHeight = () => {
-      if (leftColumnRef.current) {
-        const height = leftColumnRef.current.offsetHeight;
-        setLeftColumnHeight(height);
+    // Measure stats height and update achievements column height
+    const measureStatsHeight = () => {
+      if (statsRef.current) {
+        const height = statsRef.current.offsetHeight;
+        setStatsHeight(height);
       }
     };
 
     // Measure on mount and when content changes
-    measureLeftColumnHeight();
+    measureStatsHeight();
     
     // Re-measure when character changes
-    const timeoutId = setTimeout(measureLeftColumnHeight, 100);
+    const timeoutId = setTimeout(measureStatsHeight, 100);
     
     return () => clearTimeout(timeoutId);
   }, [activeCharacter, characterStats]);
@@ -214,8 +214,8 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
-            {/* Column 1: Character Header */}
-            <div ref={leftColumnRef} className="lg:col-span-1 flex flex-col h-full">
+          {/* Column 1: Character Header */}
+          <div className="lg:col-span-1 flex flex-col h-full">
 
         {/* Character Selector */}
         {/* {availableCharacters.length > 1 && (
@@ -409,8 +409,8 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
          </motion.div>
               </div>
 
-            {/* Column 2: Stats */}
-            <div className="lg:col-span-1 flex flex-col h-full">
+           {/* Column 2: Stats */}
+          <div ref={statsRef} className="lg:col-span-1 flex flex-col h-full">
             <div className="flex flex-col gap-6 h-full">
           {/* Adventure Stats */}
           <motion.div
@@ -504,7 +504,7 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
           {/* Column 3: Achievements */}
           <div 
             className="lg:col-span-1 flex flex-col"
-            style={{ height: leftColumnHeight > 0 ? `${leftColumnHeight}px` : 'auto' }}
+            style={{ height: statsHeight > 0 ? `${statsHeight}px` : 'auto' }}
           >
         {/* Achievements Section */}
         <motion.div
@@ -515,7 +515,7 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
         >
           <Card theme={activeCharacter.theme} effect="glow" className="h-full flex flex-col">
             <h3 className="font-pixel text-xl text-white mb-6">🏆 Achievements</h3>
-            <div className="flex flex-col gap-4 h-[77vh] overflow-y-auto">
+            <div className="flex flex-col gap-4 flex-1 overflow-y-auto">
               {characterStats.achievements.map((achievement) => (
                 <motion.div
                   key={achievement.id}
