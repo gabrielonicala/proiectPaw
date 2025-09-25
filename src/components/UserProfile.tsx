@@ -410,8 +410,8 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
               </div>
 
            {/* Column 2: Stats */}
-          <div ref={statsRef} className="lg:col-span-1 flex flex-col h-full">
-            <div className="flex flex-col gap-6 h-full">
+          <div className="lg:col-span-1 flex flex-col h-full">
+            <div ref={statsRef} className="flex flex-col gap-6 h-full">
           {/* Adventure Stats */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
