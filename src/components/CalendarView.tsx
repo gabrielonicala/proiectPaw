@@ -252,7 +252,7 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
               
               <hr className="border-gray-600 -mt-1 mb-4" />
               
-              <div className="flex-1 overflow-y-auto">
+              <div className="flex-1 overflow-y-auto min-h-0">
                 <div className="space-y-4">
                 {getEntriesForSelectedDate().length > 0 ? (
                   getEntriesForSelectedDate().map((entry, index) => (
