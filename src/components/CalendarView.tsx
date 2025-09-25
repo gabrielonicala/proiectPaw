@@ -245,7 +245,7 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
             transition={{ duration: 0.5, delay: 0.4 }}
             className="flex flex-col"
           >
-            <Card theme={activeCharacter.theme} className="flex flex-col h-[600px]">
+            <Card theme={activeCharacter.theme} className="flex flex-col h-full">
               <h3 className="font-pixel text-lg text-white mb-4">
                 {selectedDate ? format(selectedDate, 'MMMM d, yyyy') : 'Today\'s Adventures'}
               </h3>
