@@ -48,10 +48,8 @@ export function createPasswordResetEmail(resetUrl: string, userName: string) {
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Reset Your Password - Quillia</title>
       <style>
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;700;900&display=swap');
-        
         body {
-          font-family: 'Press Start 2P', 'Orbitron', monospace;
+          font-family: 'Courier New', 'Monaco', 'Lucida Console', monospace;
           line-height: 1.6;
           color: #ffffff;
           margin: 0;
@@ -108,9 +106,9 @@ export function createPasswordResetEmail(resetUrl: string, userName: string) {
           margin-bottom: 40px;
         }
         .logo {
-          font-family: 'Press Start 2P', monospace;
+          font-family: 'Courier New', 'Monaco', 'Lucida Console', monospace;
           font-size: 32px;
-          font-weight: normal;
+          font-weight: bold;
           background: linear-gradient(135deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
           background-size: 400% 400%;
           -webkit-background-clip: text;
@@ -129,11 +127,11 @@ export function createPasswordResetEmail(resetUrl: string, userName: string) {
           50% { background-position: 100% 50%; }
         }
         .title {
-          font-family: 'Press Start 2P', monospace;
+          font-family: 'Courier New', 'Monaco', 'Lucida Console', monospace;
           font-size: 20px;
           color: #ffffff;
           margin-bottom: 20px;
-          font-weight: normal;
+          font-weight: bold;
           text-shadow: 
             1px 1px 0px rgba(0, 0, 0, 0.8),
             -1px -1px 0px rgba(0, 0, 0, 0.8),
@@ -149,11 +147,11 @@ export function createPasswordResetEmail(resetUrl: string, userName: string) {
           border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .content p {
-          font-family: 'Orbitron', monospace;
+          font-family: 'Courier New', 'Monaco', 'Lucida Console', monospace;
           color: #e0e0e0;
           font-size: 14px;
           margin-bottom: 20px;
-          font-weight: 400;
+          font-weight: normal;
         }
         .button {
           display: inline-block;
@@ -162,8 +160,8 @@ export function createPasswordResetEmail(resetUrl: string, userName: string) {
           padding: 18px 40px;
           text-decoration: none;
           border-radius: 8px;
-          font-family: 'Press Start 2P', monospace;
-          font-weight: normal;
+          font-family: 'Courier New', 'Monaco', 'Lucida Console', monospace;
+          font-weight: bold;
           font-size: 12px;
           text-align: center;
           margin: 30px 0;
@@ -185,7 +183,7 @@ export function createPasswordResetEmail(resetUrl: string, userName: string) {
           border: 1px solid rgba(255, 255, 255, 0.2);
         }
         .link-box p {
-          font-family: 'Orbitron', monospace;
+          font-family: 'Courier New', 'Monaco', 'Lucida Console', monospace;
           color: #b0b0b0;
           font-size: 12px;
           margin-bottom: 10px;
@@ -195,7 +193,7 @@ export function createPasswordResetEmail(resetUrl: string, userName: string) {
           background: rgba(0, 0, 0, 0.3);
           padding: 15px;
           border-radius: 8px;
-          font-family: 'Press Start 2P', monospace;
+          font-family: 'Courier New', 'Monaco', 'Lucida Console', monospace;
           color: #4ecdc4;
           font-size: 8px;
           border: 1px solid rgba(78, 205, 196, 0.3);
@@ -220,16 +218,16 @@ export function createPasswordResetEmail(resetUrl: string, userName: string) {
           text-align: center;
         }
         .footer p {
-          font-family: 'Orbitron', monospace;
+          font-family: 'Courier New', 'Monaco', 'Lucida Console', monospace;
           margin: 5px 0;
         }
         .security-text {
-          font-family: 'Orbitron', monospace;
+          font-family: 'Courier New', 'Monaco', 'Lucida Console', monospace;
           font-style: italic;
           color: #ff6b6b;
           font-size: 14px;
           margin: 20px 0;
-          font-weight: 400;
+          font-weight: normal;
         }
       </style>
     </head>
@@ -311,10 +309,8 @@ export function createEmailVerificationEmail(verificationUrl: string, userName: 
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Verify Your Email - Quillia</title>
       <style>
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;700;900&display=swap');
-        
         body {
-          font-family: 'Press Start 2P', 'Orbitron', monospace;
+          font-family: 'Courier New', 'Monaco', 'Lucida Console', monospace;
           line-height: 1.6;
           color: #ffffff;
           margin: 0;
@@ -371,9 +367,9 @@ export function createEmailVerificationEmail(verificationUrl: string, userName: 
           margin-bottom: 40px;
         }
         .logo {
-          font-family: 'Press Start 2P', monospace;
+          font-family: 'Courier New', 'Monaco', 'Lucida Console', monospace;
           font-size: 32px;
-          font-weight: normal;
+          font-weight: bold;
           background: linear-gradient(135deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
           background-size: 400% 400%;
           -webkit-background-clip: text;
@@ -392,11 +388,11 @@ export function createEmailVerificationEmail(verificationUrl: string, userName: 
           50% { background-position: 100% 50%; }
         }
         .title {
-          font-family: 'Press Start 2P', monospace;
+          font-family: 'Courier New', 'Monaco', 'Lucida Console', monospace;
           font-size: 20px;
           color: #ffffff;
           margin-bottom: 20px;
-          font-weight: normal;
+          font-weight: bold;
           text-shadow: 
             1px 1px 0px rgba(0, 0, 0, 0.8),
             -1px -1px 0px rgba(0, 0, 0, 0.8),
@@ -412,11 +408,11 @@ export function createEmailVerificationEmail(verificationUrl: string, userName: 
           border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .content p {
-          font-family: 'Orbitron', monospace;
+          font-family: 'Courier New', 'Monaco', 'Lucida Console', monospace;
           color: #e0e0e0;
           font-size: 14px;
           margin-bottom: 20px;
-          font-weight: 400;
+          font-weight: normal;
         }
         .button {
           display: inline-block;
@@ -425,8 +421,8 @@ export function createEmailVerificationEmail(verificationUrl: string, userName: 
           padding: 18px 40px;
           text-decoration: none;
           border-radius: 8px;
-          font-family: 'Press Start 2P', monospace;
-          font-weight: normal;
+          font-family: 'Courier New', 'Monaco', 'Lucida Console', monospace;
+          font-weight: bold;
           font-size: 12px;
           text-align: center;
           margin: 30px 0;
@@ -448,7 +444,7 @@ export function createEmailVerificationEmail(verificationUrl: string, userName: 
           border: 1px solid rgba(255, 255, 255, 0.2);
         }
         .link-box p {
-          font-family: 'Orbitron', monospace;
+          font-family: 'Courier New', 'Monaco', 'Lucida Console', monospace;
           color: #b0b0b0;
           font-size: 12px;
           margin-bottom: 10px;
@@ -458,7 +454,7 @@ export function createEmailVerificationEmail(verificationUrl: string, userName: 
           background: rgba(0, 0, 0, 0.3);
           padding: 15px;
           border-radius: 8px;
-          font-family: 'Press Start 2P', monospace;
+          font-family: 'Courier New', 'Monaco', 'Lucida Console', monospace;
           color: #4ecdc4;
           font-size: 8px;
           border: 1px solid rgba(78, 205, 196, 0.3);
@@ -483,16 +479,16 @@ export function createEmailVerificationEmail(verificationUrl: string, userName: 
           text-align: center;
         }
         .footer p {
-          font-family: 'Orbitron', monospace;
+          font-family: 'Courier New', 'Monaco', 'Lucida Console', monospace;
           margin: 5px 0;
         }
         .adventure-text {
-          font-family: 'Orbitron', monospace;
+          font-family: 'Courier New', 'Monaco', 'Lucida Console', monospace;
           font-style: italic;
           color: #4ecdc4;
           font-size: 14px;
           margin: 20px 0;
-          font-weight: 400;
+          font-weight: normal;
         }
       </style>
     </head>
