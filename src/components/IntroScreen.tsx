@@ -88,21 +88,16 @@ export default function IntroScreen({ onStart, theme = 'velour-nights' }: IntroS
         transition={{ duration: 1 }}
         className="text-center z-10"
       >
-        {/* App Title */}
-        <motion.h1
-          className="font-pixel text-6xl md:text-8xl lg:text-9xl mb-6 font-bold tracking-wider"
-          style={{ 
-            color: colors?.text || '#ffffff',
-            textShadow: `0 0 20px ${colors?.text || '#fff'}, 0 0 40px ${colors?.text || '#fff'}, 0 0 60px ${colors?.text || '#fff'}, 0 0 80px ${colors?.accent || '#fbbf24'}`,
-            filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.5))'
-          }}
+        {/* App Logo */}
+        <motion.div
+          className="mb-0"
           animate={{
-            textShadow: [
-              `0 0 20px ${colors?.text || '#fff'}, 0 0 40px ${colors?.text || '#fff'}, 0 0 60px ${colors?.text || '#fff'}, 0 0 80px ${colors?.accent || '#fbbf24'}`,
-              `0 0 30px ${colors?.text || '#fff'}, 0 0 50px ${colors?.text || '#fff'}, 0 0 70px ${colors?.text || '#fff'}, 0 0 100px ${colors?.accent || '#fbbf24'}`,
-              `0 0 20px ${colors?.text || '#fff'}, 0 0 40px ${colors?.text || '#fff'}, 0 0 60px ${colors?.text || '#fff'}, 0 0 80px ${colors?.accent || '#fbbf24'}`
-            ],
-            scale: [1, 1.02, 1]
+            scale: [1, 1.02, 1],
+            filter: [
+              'drop-shadow(0 0 20px rgba(255,255,255,0.5))',
+              'drop-shadow(0 0 30px rgba(255,255,255,0.7))',
+              'drop-shadow(0 0 20px rgba(255,255,255,0.5))'
+            ]
           }}
           transition={{
             duration: 3,
@@ -110,21 +105,32 @@ export default function IntroScreen({ onStart, theme = 'velour-nights' }: IntroS
             ease: "easeInOut"
           }}
         >
-          QUILLIA
-        </motion.h1>
+          <img 
+            src="/logo.png" 
+            alt="Quillia" 
+            className="w-48 md:w-64 lg:w-80 h-auto mx-auto pixelated"
+            style={{
+              filter: 'drop-shadow(0 0 20px rgba(255,255,255,0.5))',
+              imageRendering: 'pixelated'
+            }}
+            loading="eager"
+            decoding="sync"
+          />
+        </motion.div>
 
         {/* Subtitle */}
-        <motion.p
+        {/* <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5, duration: 1 }}
-          className="font-pixel text-xl md:text-2xl lg:text-3xl mb-8 font-semibold tracking-wide"
+          className="font-pixel text-3xl md:text-4xl lg:text-5xl mb-8 font-semibold tracking-wide"
           style={{ 
-            color: colors?.accent || '#fbbf24'
+            color: '#d4af37',
+            textShadow: '2px 2px 0px rgba(0, 0, 0, 0.8), -2px -2px 0px rgba(0, 0, 0, 0.8), 2px -2px 0px rgba(0, 0, 0, 0.8), -2px 2px 0px rgba(0, 0, 0, 0.8)'
           }}
         >
-          Transform Your Days Into Adventures
-        </motion.p>
+          Turn Your Days Into Adventures
+        </motion.p> */}
 
         {/* Decorative border */}
         <motion.div
@@ -159,7 +165,7 @@ export default function IntroScreen({ onStart, theme = 'velour-nights' }: IntroS
                 onClick={onStart}
                 variant="primary"
                 size="lg"
-                className="text-lg px-12 py-4"
+                className="text-lg px-12 py-4 font-pixel"
                 style={{ 
                   background: 'transparent',
                   border: 'none',

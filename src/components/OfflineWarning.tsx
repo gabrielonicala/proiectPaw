@@ -100,7 +100,28 @@ export default function OfflineWarning() {
           exit={{ opacity: 0, y: -50 }}
           className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50"
         >
-          <div className="bg-yellow-600 border border-yellow-500 rounded-lg px-4 py-3 shadow-lg max-w-md mx-4">
+          <>
+            <style jsx>{`
+              .offline-banner {
+                width: calc(100vw - 3rem);
+                max-width: calc(100vw - 3rem);
+              }
+              .offline-banner .close-button {
+                margin-right: -2rem;
+              }
+              @media (min-width: 640px) {
+                .offline-banner {
+                  width: auto;
+                  max-width: 28rem;
+                }
+                .offline-banner .close-button {
+                  margin-right: 0;
+                }
+              }
+            `}</style>
+            <div 
+              className="offline-banner bg-yellow-600 border border-yellow-500 rounded-lg px-4 py-3 shadow-lg mx-4"
+            >
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -109,10 +130,24 @@ export default function OfflineWarning() {
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm font-pixel text-yellow-100">
+                  <p className="text-sm text-yellow-100" style={{ 
+                    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                    fontSize: '14px',
+                    lineHeight: '1.4',
+                    fontWeight: '500'
+                  }}>
                     You&apos;re offline! Currently using local storage...
                   </p>
-                  <p className="text-xs font-pixel text-yellow-200 mt-1">
+                  <p className="text-sm text-yellow-200 mt-1" style={{ 
+                    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                    fontSize: '14px',
+                    lineHeight: '1.4',
+                    fontWeight: '400',
+                    border: 'none',
+                    outline: 'none',
+                    textShadow: 'none',
+                    boxShadow: 'none'
+                  }}>
                     Data will sync when connection is restored
                   </p>
                 </div>
@@ -120,7 +155,7 @@ export default function OfflineWarning() {
               <div className="ml-4 flex-shrink-0">
                 <button
                   onClick={handleDismiss}
-                  className="text-yellow-200 hover:text-yellow-100 transition-colors"
+                  className="close-button text-yellow-200 hover:text-yellow-100 transition-colors"
                 >
                   <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -128,9 +163,10 @@ export default function OfflineWarning() {
                 </button>
               </div>
             </div>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-}
+            </div>
+            </>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    );
+  }

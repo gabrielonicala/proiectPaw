@@ -1,0 +1,27 @@
+{
+  "name": "Quillia - Turn Your Day Into Adventure",
+  "short_name": "Quillia",
+  "description": "A magical journal app that turns your daily experiences into fantasy adventures with AI-generated stories, images, and animations.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#581c87",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "lifestyle", "entertainment"],
+  "lang": "en",
+  "dir": "ltr"
+}

@@ -17,8 +17,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Quillia - Transform Your Day Into Adventure",
-  description: "A magical journal app that transforms your daily experiences into fantasy adventures with AI-generated stories, images, and animations.",
+  title: "Quillia - Turn Your Day Into Adventure",
+  description: "A magical journal app that turns your daily experiences into fantasy adventures with AI-generated stories, images, and animations.",
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({

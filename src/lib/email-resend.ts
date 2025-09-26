@@ -106,25 +106,15 @@ export function createPasswordResetEmail(resetUrl: string, userName: string) {
           margin-bottom: 40px;
         }
         .logo {
-          font-family: 'Courier New', 'Monaco', 'Lucida Console', monospace;
-          font-size: 32px;
-          font-weight: bold;
-          background: linear-gradient(135deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
-          background-size: 400% 400%;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          animation: gradientShift 3s ease-in-out infinite;
           margin-bottom: 20px;
-          text-shadow: 
-            2px 2px 0px rgba(0, 0, 0, 0.8),
-            -2px -2px 0px rgba(0, 0, 0, 0.8),
-            2px -2px 0px rgba(0, 0, 0, 0.8),
-            -2px 2px 0px rgba(0, 0, 0, 0.8);
         }
-        @keyframes gradientShift {
-          0%, 100% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
+        .logo img {
+          width: 120px;
+          height: auto;
+          max-width: 100%;
+          image-rendering: pixelated;
+          image-rendering: -moz-crisp-edges;
+          image-rendering: crisp-edges;
         }
         .title {
           font-family: 'Courier New', 'Monaco', 'Lucida Console', monospace;
@@ -248,7 +238,9 @@ export function createPasswordResetEmail(resetUrl: string, userName: string) {
         
         <div class="container">
           <div class="header">
-            <div class="logo">🔐 QUILLIA</div>
+            <div class="logo">
+              <img src="https://quillia.app/logo.png" alt="Quillia" />
+            </div>
             <h1 class="title">RESET PASSWORD</h1>
             <p class="security-text">Secure your adventure...</p>
           </div>
@@ -367,25 +359,15 @@ export function createEmailVerificationEmail(verificationUrl: string, userName: 
           margin-bottom: 40px;
         }
         .logo {
-          font-family: 'Courier New', 'Monaco', 'Lucida Console', monospace;
-          font-size: 32px;
-          font-weight: bold;
-          background: linear-gradient(135deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
-          background-size: 400% 400%;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          animation: gradientShift 3s ease-in-out infinite;
           margin-bottom: 20px;
-          text-shadow: 
-            2px 2px 0px rgba(0, 0, 0, 0.8),
-            -2px -2px 0px rgba(0, 0, 0, 0.8),
-            2px -2px 0px rgba(0, 0, 0, 0.8),
-            -2px 2px 0px rgba(0, 0, 0, 0.8);
         }
-        @keyframes gradientShift {
-          0%, 100% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
+        .logo img {
+          width: 120px;
+          height: auto;
+          max-width: 100%;
+          image-rendering: pixelated;
+          image-rendering: -moz-crisp-edges;
+          image-rendering: crisp-edges;
         }
         .title {
           font-family: 'Courier New', 'Monaco', 'Lucida Console', monospace;
@@ -509,7 +491,9 @@ export function createEmailVerificationEmail(verificationUrl: string, userName: 
         
         <div class="container">
           <div class="header">
-            <div class="logo">✨ QUILLIA</div>
+            <div class="logo">
+              <img src="https://quillia.app/logo.png" alt="Quillia" />
+            </div>
             <h1 class="title">WELCOME ADVENTURER</h1>
             <p class="adventure-text">Your quest begins now...</p>
           </div>
