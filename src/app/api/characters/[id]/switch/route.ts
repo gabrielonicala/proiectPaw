@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { canAccessCharacter } from '@/lib/character-access';
+import { validateUserSession } from '@/lib/auth';
 
 export async function POST(
   request: NextRequest,
@@ -15,13 +16,25 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const userId = (session as { user: { id: string } }).user.id;
+    
+    // Validate that the user still exists in the database
+    const userExists = await validateUserSession(userId);
+    if (!userExists) {
+      return NextResponse.json({ 
+        error: 'Your account has been deleted. You will be signed out automatically.',
+        code: 'USER_ACCOUNT_DELETED',
+        autoLogout: true
+      }, { status: 401 });
+    }
+
     const { id } = await params;
 
     // Verify the character belongs to the user
     const character = await db.character.findFirst({
       where: { 
         id: id,
-        userId: (session as { user: { id: string } }).user.id 
+        userId: userId 
       }
     });
 
@@ -30,7 +43,7 @@ export async function POST(
     }
 
     // Check if user can access this character (not locked)
-    const canAccess = await canAccessCharacter((session as { user: { id: string } }).user.id, id);
+    const canAccess = await canAccessCharacter(userId, id);
     if (!canAccess) {
       return NextResponse.json({ 
         error: 'Character locked', 
@@ -40,7 +53,7 @@ export async function POST(
 
     // Update user's active character
     const updatedUser = await db.user.update({
-      where: { id: (session as { user: { id: string } }).user.id },
+      where: { id: userId },
       data: { activeCharacterId: id },
       include: {
         activeCharacter: true

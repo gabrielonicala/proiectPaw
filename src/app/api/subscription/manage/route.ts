@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { stripe } from '@/lib/stripe';
 import { db } from '@/lib/db';
 import Stripe from 'stripe';
+import { validateUserSession } from '@/lib/auth';
 
 export async function GET() {
   try {
@@ -13,9 +14,21 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const userId = (session as { user: { id: string } }).user.id;
+    
+    // Validate that the user still exists in the database
+    const userExists = await validateUserSession(userId);
+    if (!userExists) {
+      return NextResponse.json({ 
+        error: 'Your account has been deleted. You will be signed out automatically.',
+        code: 'USER_ACCOUNT_DELETED',
+        autoLogout: true
+      }, { status: 401 });
+    }
+
     // Get user from database
     const user = await db.user.findUnique({
-      where: { id: (session as { user: { id: string } }).user.id }
+      where: { id: userId }
     });
 
     if (!user) {
@@ -65,9 +78,21 @@ export async function DELETE() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const userId = (session as { user: { id: string } }).user.id;
+    
+    // Validate that the user still exists in the database
+    const userExists = await validateUserSession(userId);
+    if (!userExists) {
+      return NextResponse.json({ 
+        error: 'Your account has been deleted. You will be signed out automatically.',
+        code: 'USER_ACCOUNT_DELETED',
+        autoLogout: true
+      }, { status: 401 });
+    }
+
     // Get user from database
     const user = await db.user.findUnique({
-      where: { id: (session as { user: { id: string } }).user.id }
+      where: { id: userId }
     });
 
     if (!user || !user.subscriptionId) {

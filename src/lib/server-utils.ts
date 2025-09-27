@@ -1,8 +1,15 @@
 import { JournalEntry } from "@/types";
 import { db } from "./db";
+import { validateUserSession } from "./auth";
 
 // Database functions for journal entries
 export async function saveEntryToDatabase(entry: Omit<JournalEntry, 'id' | 'createdAt' | 'updatedAt'> & { userId: string }): Promise<JournalEntry> {
+  // Validate that the user still exists in the database
+  const userExists = await validateUserSession(entry.userId);
+  if (!userExists) {
+    throw new Error('USER_ACCOUNT_DELETED');
+  }
+
   const dbEntry = await db.journalEntry.create({
     data: {
       userId: entry.userId,
@@ -33,6 +40,12 @@ export async function saveEntryToDatabase(entry: Omit<JournalEntry, 'id' | 'crea
 }
 
 export async function loadEntriesFromDatabase(userId: string): Promise<JournalEntry[]> {
+  // Validate that the user still exists in the database
+  const userExists = await validateUserSession(userId);
+  if (!userExists) {
+    throw new Error('USER_ACCOUNT_DELETED');
+  }
+
   const dbEntries = await db.journalEntry.findMany({
     where: { userId },
     orderBy: { createdAt: 'desc' },
@@ -54,6 +67,12 @@ export async function loadEntriesFromDatabase(userId: string): Promise<JournalEn
 }
 
 export async function deleteEntryFromDatabase(entryId: string, userId: string): Promise<void> {
+  // Validate that the user still exists in the database
+  const userExists = await validateUserSession(userId);
+  if (!userExists) {
+    throw new Error('USER_ACCOUNT_DELETED');
+  }
+
   await db.journalEntry.delete({
     where: { 
       id: entryId,

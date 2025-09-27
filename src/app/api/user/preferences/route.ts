@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { User, Theme, Character } from '@/types';
 import { migrateTheme } from '@/lib/theme-migration';
+import { validateUserSession } from '@/lib/auth';
 
 // Type for database character with all fields
 type DatabaseCharacter = {
@@ -28,8 +29,20 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const userId = (session as { user: { id: string } }).user.id;
+    
+    // Validate that the user still exists in the database
+    const userExists = await validateUserSession(userId);
+    if (!userExists) {
+      return NextResponse.json({ 
+        error: 'Your account has been deleted. You will be signed out automatically.',
+        code: 'USER_ACCOUNT_DELETED',
+        autoLogout: true
+      }, { status: 401 });
+    }
+
     const user = await db.user.findUnique({
-      where: { id: (session as { user: { id: string } }).user.id },
+      where: { id: userId },
       select: {
         id: true,
         name: true,
@@ -134,6 +147,18 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const userId = (session as { user: { id: string } }).user.id;
+    
+    // Validate that the user still exists in the database
+    const userExists = await validateUserSession(userId);
+    if (!userExists) {
+      return NextResponse.json({ 
+        error: 'Your account has been deleted. You will be signed out automatically.',
+        code: 'USER_ACCOUNT_DELETED',
+        autoLogout: true
+      }, { status: 401 });
+    }
+
     const { characterSlots } = await request.json();
 
     // Only allow updating character slots (for subscription upgrades)
@@ -144,7 +169,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const updatedUser = await db.user.update({
-      where: { id: (session as { user: { id: string } }).user.id },
+      where: { id: userId },
       data: updateData,
       select: {
         id: true,
