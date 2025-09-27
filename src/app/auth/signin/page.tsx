@@ -312,6 +312,29 @@ export default function SignInPage() {
             </p>
           </div>
 
+          {/* Test Account Message */}
+          <div className="mt-8 p-4 bg-gray-800/50 border border-gray-600 rounded-lg">
+            <div className="text-center">
+              <p className="text-gray-300 text-sm font-pixel mb-2">
+                Thank you for trying out Quillia!
+              </p>
+              <p className="text-gray-400 text-xs font-pixel mb-3">
+                If you don&apos;t want to go through the whole sign-up process, use this test account:
+              </p>
+              <div className="bg-gray-900/50 p-3 rounded border border-gray-700">
+                <p className="text-green-400 text-sm font-pixel font-mono">
+                  Username: <span className="text-white">test</span>
+                </p>
+                <p className="text-green-400 text-sm font-pixel font-mono">
+                  Password: <span className="text-white">123456</span>
+                </p>
+              </div>
+              <p className="text-gray-300 text-xs font-pixel mt-3">
+                Hope you enjoy Quillia!
+              </p>
+            </div>
+          </div>
+
         </div>
       </Card>
     </div>
