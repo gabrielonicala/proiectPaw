@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import Card from './ui/Card';
 import Button from './ui/Button';
 import { AvatarPiece, LayeredAvatar, headPieces, torsoPieces, legsPieces, createLayeredAvatar } from '@/lib/layered-avatars';
+import { getCachedImageUrl } from '@/lib/asset-cache';
 
 interface LayeredAvatarBuilderProps {
   onSave: (avatar: LayeredAvatar) => void;
@@ -83,7 +84,7 @@ export default function LayeredAvatarBuilder({ onSave, onCancel, currentAvatar }
                 {/* Head Layer (top) */}
                 <div className="flex-shrink-0 h-8 sm:h-16">
                   <img
-                    src={selectedHead.imagePath}
+                    src={getCachedImageUrl(selectedHead.imagePath)}
                     alt={selectedHead.name}
                     className="w-full h-full object-contain pixelated"
                     style={{ imageRendering: 'pixelated' }}
@@ -92,7 +93,7 @@ export default function LayeredAvatarBuilder({ onSave, onCancel, currentAvatar }
                 {/* Torso Layer (middle) */}
                 <div className="flex-shrink-0 h-8 sm:h-12">
                   <img
-                    src={selectedTorso.imagePath}
+                    src={getCachedImageUrl(selectedTorso.imagePath)}
                     alt={selectedTorso.name}
                     className="w-full h-full object-contain pixelated"
                     style={{ imageRendering: 'pixelated' }}
@@ -101,7 +102,7 @@ export default function LayeredAvatarBuilder({ onSave, onCancel, currentAvatar }
                 {/* Legs Layer (bottom) */}
                 <div className="flex-shrink-0 h-8 sm:h-12">
                   <img
-                    src={selectedLegs.imagePath}
+                    src={getCachedImageUrl(selectedLegs.imagePath)}
                     alt={selectedLegs.name}
                     className="w-full h-full object-contain pixelated"
                     style={{ imageRendering: 'pixelated' }}
@@ -169,7 +170,7 @@ export default function LayeredAvatarBuilder({ onSave, onCancel, currentAvatar }
                       <Card className="p-1 sm:p-2 text-center">
                         <div className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-1 relative">
                           <img
-                            src={piece.imagePath}
+                            src={getCachedImageUrl(piece.imagePath)}
                             alt={piece.name}
                             className="w-full h-full object-contain pixelated"
                             style={{ imageRendering: 'pixelated' }}
@@ -208,7 +209,7 @@ export default function LayeredAvatarBuilder({ onSave, onCancel, currentAvatar }
                       <Card className="p-1 sm:p-2 text-center">
                         <div className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-1 relative">
                           <img
-                            src={piece.imagePath}
+                            src={getCachedImageUrl(piece.imagePath)}
                             alt={piece.name}
                             className="w-full h-full object-contain pixelated"
                             style={{ imageRendering: 'pixelated' }}
@@ -247,7 +248,7 @@ export default function LayeredAvatarBuilder({ onSave, onCancel, currentAvatar }
                       <Card className="p-1 sm:p-2 text-center">
                         <div className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-1 relative">
                           <img
-                            src={piece.imagePath}
+                            src={getCachedImageUrl(piece.imagePath)}
                             alt={piece.name}
                             className="w-full h-full object-contain pixelated"
                             style={{ imageRendering: 'pixelated' }}

@@ -14,6 +14,7 @@ import { useEntries } from '@/hooks/useEntries';
 import LayeredAvatarBuilder from './LayeredAvatarBuilder';
 import { LayeredAvatar } from '@/lib/layered-avatars';
 import { calculateCharacterStats } from '@/lib/character-stats';
+import { getCachedImageUrl } from '@/lib/asset-cache';
 
 interface UserProfileProps {
   user: User;
@@ -264,7 +265,7 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
                   <div className="relative w-40 h-40 flex flex-col">
                     <div className="flex-shrink-0 h-14">
                       <img
-                        src={activeCharacter.avatar?.options?.layeredAvatar?.head.imagePath}
+                        src={getCachedImageUrl(activeCharacter.avatar?.options?.layeredAvatar?.head.imagePath || '')}
                         alt={activeCharacter.avatar?.options?.layeredAvatar?.head.name}
                           className="w-full h-full object-contain pixelated"
                           style={{ imageRendering: 'pixelated' }}
@@ -272,7 +273,7 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
                       </div>
                     <div className="flex-shrink-0 h-12">
                         <img
-                        src={activeCharacter.avatar?.options?.layeredAvatar.torso.imagePath}
+                        src={getCachedImageUrl(activeCharacter.avatar?.options?.layeredAvatar.torso.imagePath || '')}
                         alt={activeCharacter.avatar?.options?.layeredAvatar.torso.name}
                           className="w-full h-full object-contain pixelated"
                           style={{ imageRendering: 'pixelated' }}
@@ -280,7 +281,7 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
                       </div>
                     <div className="flex-shrink-0 h-10">
                         <img
-                        src={activeCharacter.avatar?.options?.layeredAvatar.legs.imagePath}
+                        src={getCachedImageUrl(activeCharacter.avatar?.options?.layeredAvatar.legs.imagePath || '')}
                         alt={activeCharacter.avatar?.options?.layeredAvatar.legs.name}
                           className="w-full h-full object-contain pixelated"
                           style={{ imageRendering: 'pixelated' }}
@@ -289,14 +290,14 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
                     </div>
                 ) : activeCharacter.avatar?.options?.imagePath ? (
                   <img 
-                    src={activeCharacter.avatar?.options?.imagePath} 
+                    src={getCachedImageUrl(activeCharacter.avatar?.options?.imagePath || '')} 
                     alt={activeCharacter.avatar?.name}
                     className="w-40 h-40 pixelated"
                       style={{ imageRendering: 'pixelated' }}
                     />
                 ) : activeCharacter.avatar?.pixelArt ? (
                   <img 
-                    src={activeCharacter.avatar?.pixelArt} 
+                    src={getCachedImageUrl(activeCharacter.avatar?.pixelArt || '')} 
                     alt={activeCharacter.avatar?.name}
                     className="w-40 h-40 pixelated"
                       style={{ imageRendering: 'pixelated' }}
