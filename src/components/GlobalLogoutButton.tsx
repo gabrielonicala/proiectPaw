@@ -38,7 +38,7 @@ export default function GlobalLogoutButton({ theme = 'obsidian-veil', currentPag
         whileTap={{ scale: 0.9 }}
         onClick={handleLogout}
         disabled={isLoggingOut}
-        className="fixed bottom-4 left-4 z-50 w-12 h-12 border-2 font-pixel text-lg transition-all duration-200 hover:shadow-lg pixelated"
+        className="fixed bottom-4 left-4 z-50 w-12 h-12 border-2 font-pixel text-2xl transition-all duration-200 hover:shadow-lg pixelated"
         style={{
           backgroundColor: '#1a1a1a',
           borderColor: '#8B4513',
