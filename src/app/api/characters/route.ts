@@ -49,6 +49,16 @@ export async function GET() {
       }
     });
   } catch (error) {
+    console.error('Error in GET /api/characters:', error);
+    
+    // If it's a "User not found" error, return a more specific error
+    if (error instanceof Error && error.message === 'User not found') {
+      return NextResponse.json({ 
+        error: 'User session is invalid. Please sign out and sign in again.',
+        code: 'USER_NOT_FOUND'
+      }, { status: 401 });
+    }
+    
     const errorResponse = createErrorResponse(error, 'GET /api/characters', 500);
     return NextResponse.json(errorResponse, { status: 500 });
   }
@@ -77,7 +87,11 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      console.error('User not found during character creation:', (session as { user: { id: string } }).user.id);
+      return NextResponse.json({ 
+        error: 'User session is invalid. Please sign out and sign in again.',
+        code: 'USER_NOT_FOUND'
+      }, { status: 401 });
     }
 
     const existingCharacters = await db.character.count({

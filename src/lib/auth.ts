@@ -90,3 +90,20 @@ export const authOptions = {
     },
   },
 };
+
+/**
+ * Validate that a user session corresponds to an existing user in the database
+ * This helps catch cases where the session contains a stale user ID
+ */
+export async function validateUserSession(userId: string): Promise<boolean> {
+  try {
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      select: { id: true }
+    });
+    return !!user;
+  } catch (error) {
+    console.error('Error validating user session:', error);
+    return false;
+  }
+}

@@ -9,6 +9,10 @@ export async function GET() {
     await db.$queryRaw`SELECT 1`;
     const dbLatency = Date.now() - startTime;
     
+    // Check if we can query the User table
+    const userCount = await db.user.count();
+    console.log('Database health check - User count:', userCount);
+    
     // Check environment variables
     const envStatus = {
       NEXTAUTH_SECRET: !!process.env.NEXTAUTH_SECRET,
@@ -35,6 +39,7 @@ export async function GET() {
         database: {
           status: 'healthy',
           latency: `${dbLatency}ms`,
+          userCount: userCount,
         },
         environment: {
           status: allRequiredEnvVars ? 'healthy' : 'degraded',

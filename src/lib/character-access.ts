@@ -15,6 +15,21 @@ export async function getCharacterAccess(userId: string): Promise<CharacterAcces
   try {
     console.log('Getting character access for user:', userId);
     
+    // First, let's check if the user exists at all
+    const userExists = await db.user.findUnique({
+      where: { id: userId },
+      select: { id: true }
+    });
+
+    if (!userExists) {
+      console.error('User not found in database:', userId);
+      console.error('This could indicate:');
+      console.error('1. User was deleted from database');
+      console.error('2. Database connection issue');
+      console.error('3. Session contains stale user ID');
+      throw new Error('User not found');
+    }
+    
     const user = await db.user.findUnique({
       where: { id: userId },
       include: {
@@ -25,7 +40,7 @@ export async function getCharacterAccess(userId: string): Promise<CharacterAcces
     });
 
     if (!user) {
-      console.error('User not found:', userId);
+      console.error('User found but query with includes failed:', userId);
       throw new Error('User not found');
     }
 
