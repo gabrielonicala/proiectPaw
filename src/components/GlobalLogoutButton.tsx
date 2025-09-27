@@ -12,10 +12,10 @@ interface GlobalLogoutButtonProps {
 export default function GlobalLogoutButton({ theme = 'obsidian-veil', currentPage }: GlobalLogoutButtonProps) {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  // Don't show on profile page since it already has logout in navigation
-  if (currentPage === 'profile') {
-    return null;
-  }
+  // Show on all pages now (including profile page)
+  // if (currentPage === 'profile') {
+  //   return null;
+  // }
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -38,15 +38,19 @@ export default function GlobalLogoutButton({ theme = 'obsidian-veil', currentPag
         whileTap={{ scale: 0.9 }}
         onClick={handleLogout}
         disabled={isLoggingOut}
-        className="fixed bottom-4 left-4 z-50 w-12 h-12 border-2 font-pixel text-2xl transition-all duration-200 hover:shadow-lg pixelated"
+        className="fixed bottom-4 left-4 z-50 w-12 h-12 border-2 font-pixel transition-all duration-200 hover:shadow-lg pixelated flex items-center justify-center"
         style={{
           backgroundColor: '#1a1a1a',
-          borderColor: '#8B4513',
-          color: '#fff'
+          borderColor: '#ef4444',
+          color: '#ef4444'
         }}
         title="Logout"
       >
-        {isLoggingOut ? '⏳' : '🚪'}
+        {isLoggingOut ? '⏳' : (
+          <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+          </svg>
+        )}
       </motion.button>
 
       {/* Logout Loading Overlay */}

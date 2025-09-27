@@ -143,7 +143,8 @@ export default function AppNavigation({
         ) : (
           // Other pages: Back button and optional logout
           <>
-            {showLogout && (
+            {/* Logout button commented out - now using global logout button */}
+            {/* {showLogout && (
               <>
                 <Button 
                   onClick={handleLogout}
@@ -164,7 +165,7 @@ export default function AppNavigation({
                   {isLoggingOut ? '⏳' : '🚪'}
                 </Button>
               </>
-            )}
+            )} */}
             {onBack && (
               <>
                 <Button onClick={onBack} variant="secondary" className="hidden md:flex" theme={theme}>

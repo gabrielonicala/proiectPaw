@@ -92,16 +92,28 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
   const isMobileRef = useRef<boolean>(false);
   const [currentTrack, setCurrentTrack] = useState(themeMusic[theme as keyof typeof themeMusic] || themeMusic.default);
 
-  // Detect mobile device once on mount and set volume
+  // Detect mobile device and update on resize
   useEffect(() => {
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
-                    window.innerWidth <= 768;
-    isMobileRef.current = isMobile;
+    const updateMobileDetection = () => {
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                      window.innerWidth <= 768;
+      isMobileRef.current = isMobile;
+      
+      // Set volume to 50% on mobile
+      if (isMobile) {
+        setVolume(0.5);
+      }
+    };
+
+    // Initial detection
+    updateMobileDetection();
+
+    // Listen for window resize (for device rotation, browser resize, etc.)
+    window.addEventListener('resize', updateMobileDetection);
     
-    // Set volume to 50% on mobile
-    if (isMobile) {
-      setVolume(0.5);
-    }
+    return () => {
+      window.removeEventListener('resize', updateMobileDetection);
+    };
   }, []);
 
   // Update track when theme changes
