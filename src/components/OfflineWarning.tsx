@@ -10,20 +10,36 @@ export default function OfflineWarning() {
   useEffect(() => {
     // Check if we're using localStorage fallback
     const checkOfflineStatus = () => {
-      // Try to ping the database API
+      // Only check if we're online according to navigator
+      if (!navigator.onLine) {
+        setIsOffline(true);
+        setIsVisible(true);
+        return;
+      }
+
+      // Try to ping the database API with a timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
       fetch('/api/user/preferences', { 
         method: 'HEAD',
-        cache: 'no-cache'
+        cache: 'no-cache',
+        signal: controller.signal
       })
       .then(() => {
         // API is available
+        clearTimeout(timeoutId);
         setIsOffline(false);
         setIsVisible(false);
       })
-      .catch(() => {
-        // API is not available, we're offline
-        setIsOffline(true);
-        setIsVisible(true);
+      .catch((error) => {
+        clearTimeout(timeoutId);
+        // Only set offline if it's a network error, not an auth error
+        if (error.name === 'AbortError' || error.name === 'TypeError' || !navigator.onLine) {
+          setIsOffline(true);
+          setIsVisible(true);
+        }
+        // Don't set offline for 401/403 errors - those are auth issues, not network issues
       });
     };
 

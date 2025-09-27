@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Avatar } from '@/types';
+import { useState } from 'react';
 
 interface LayeredAvatarRendererProps {
   layeredAvatar: NonNullable<NonNullable<Avatar['options']>['layeredAvatar']>;
@@ -14,6 +15,8 @@ export default function LayeredAvatarRenderer({
   size = 'md',
   className = '' 
 }: LayeredAvatarRendererProps) {
+  const [imageErrors, setImageErrors] = useState<{ [key: string]: boolean }>({});
+
   const sizeClasses = {
     sm: 'w-12 h-12',
     md: 'w-16 h-16',
@@ -24,6 +27,20 @@ export default function LayeredAvatarRenderer({
     sm: 48,
     md: 64,
     lg: 160
+  };
+
+  const handleImageError = (imageKey: string) => {
+    setImageErrors(prev => ({ ...prev, [imageKey]: true }));
+  };
+
+  const getEmojiForPart = (part: 'head' | 'torso' | 'legs', gender: string) => {
+    if (part === 'head') {
+      return gender === 'female' ? '👩' : '👨';
+    } else if (part === 'torso') {
+      return '👕';
+    } else {
+      return '👖';
+    }
   };
 
   return (
@@ -40,12 +57,19 @@ export default function LayeredAvatarRenderer({
           className="flex-shrink-0"
           style={{ height: imageSize[size] * 0.35 }} // ~56px for lg size
         >
-          <img
-            src={layeredAvatar.head.imagePath}
-            alt={layeredAvatar.head.name}
-            className="w-full h-full object-contain pixelated"
-            style={{ imageRendering: 'pixelated' }}
-          />
+          {imageErrors['head'] ? (
+            <div className="w-full h-full flex items-center justify-center text-2xl bg-gray-800 pixelated">
+              {getEmojiForPart('head', layeredAvatar.head.gender)}
+            </div>
+          ) : (
+            <img
+              src={layeredAvatar.head.imagePath}
+              alt={layeredAvatar.head.name}
+              className="w-full h-full object-contain pixelated"
+              style={{ imageRendering: 'pixelated' }}
+              onError={() => handleImageError('head')}
+            />
+          )}
         </motion.div>
         
         {/* Torso Layer (middle) */}
@@ -53,12 +77,19 @@ export default function LayeredAvatarRenderer({
           className="flex-shrink-0"
           style={{ height: imageSize[size] * 0.35 }} // ~56px for lg size
         >
-          <img
-            src={layeredAvatar.torso.imagePath}
-            alt={layeredAvatar.torso.name}
-            className="w-full h-full object-contain pixelated"
-            style={{ imageRendering: 'pixelated' }}
-          />
+          {imageErrors['torso'] ? (
+            <div className="w-full h-full flex items-center justify-center text-2xl bg-gray-800 pixelated">
+              {getEmojiForPart('torso', layeredAvatar.torso.gender)}
+            </div>
+          ) : (
+            <img
+              src={layeredAvatar.torso.imagePath}
+              alt={layeredAvatar.torso.name}
+              className="w-full h-full object-contain pixelated"
+              style={{ imageRendering: 'pixelated' }}
+              onError={() => handleImageError('torso')}
+            />
+          )}
         </motion.div>
         
         {/* Legs Layer (bottom) */}
@@ -66,12 +97,19 @@ export default function LayeredAvatarRenderer({
           className="flex-shrink-0"
           style={{ height: imageSize[size] * 0.30 }} // ~48px for lg size
         >
-          <img
-            src={layeredAvatar.legs.imagePath}
-            alt={layeredAvatar.legs.name}
-            className="w-full h-full object-contain pixelated"
-            style={{ imageRendering: 'pixelated' }}
-          />
+          {imageErrors['legs'] ? (
+            <div className="w-full h-full flex items-center justify-center text-2xl bg-gray-800 pixelated">
+              {getEmojiForPart('legs', layeredAvatar.legs.gender)}
+            </div>
+          ) : (
+            <img
+              src={layeredAvatar.legs.imagePath}
+              alt={layeredAvatar.legs.name}
+              className="w-full h-full object-contain pixelated"
+              style={{ imageRendering: 'pixelated' }}
+              onError={() => handleImageError('legs')}
+            />
+          )}
         </motion.div>
       </motion.div>
     </div>

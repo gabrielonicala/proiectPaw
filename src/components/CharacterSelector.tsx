@@ -264,11 +264,22 @@ export default function CharacterSelector({
                           className="w-32 h-40"
                         />
                       ) : (
-                        <img
-                          src={character.avatar.image}
-                          alt={character.avatar.name}
-                          className="w-32 h-40 pixelated object-cover"
-                        />
+                        <>
+                          <img
+                            src={character.avatar.image}
+                            alt={character.avatar.name}
+                            className="w-32 h-40 pixelated object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              const fallback = target.nextElementSibling as HTMLElement;
+                              if (fallback) fallback.style.display = 'flex';
+                            }}
+                          />
+                          <div className="w-32 h-40 flex items-center justify-center text-6xl text-gray-400 bg-gray-800 pixelated" style={{ display: 'none' }}>
+                            👤
+                          </div>
+                        </>
                       )
                     ) : (
                       <div className="w-32 h-40 flex items-center justify-center text-6xl text-gray-400 bg-gray-800 pixelated">
