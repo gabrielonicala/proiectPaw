@@ -172,6 +172,13 @@ export default function CharacterSelector({
   const handleSaveName = async (characterId: string) => {
     if (!tempName.trim()) return;
 
+    // Find the character to update
+    const characterToUpdate = characters.find(c => c.id === characterId);
+    if (!characterToUpdate) return;
+
+    // Create updated character with new name
+    const updatedCharacter = { ...characterToUpdate, name: tempName.trim() };
+
     try {
       const response = await fetch(`/api/characters/${characterId}`, {
         method: 'PUT',
@@ -183,12 +190,22 @@ export default function CharacterSelector({
         throw new Error('Failed to update character name');
       }
 
-      const { character: updatedCharacter } = await response.json();
-      onCharacterUpdate(updatedCharacter);
+      const { character: serverUpdatedCharacter } = await response.json();
+      onCharacterUpdate(serverUpdatedCharacter);
       setEditingName(null);
       setTempName('');
     } catch (error) {
       console.error('Error updating character name:', error);
+      // Queue the change for offline sync
+      queueOfflineChange('character_update', {
+        characterId: characterId,
+        updates: { name: tempName.trim() }
+      });
+      
+      // Still update locally and close the editor
+      onCharacterUpdate(updatedCharacter);
+      setEditingName(null);
+      setTempName('');
     }
   };
 
