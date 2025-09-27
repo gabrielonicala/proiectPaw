@@ -19,6 +19,8 @@ export function useEntries() {
       if (!navigator.onLine) {
         console.log('Offline detected, loading entries from localStorage');
         const localEntries = loadEntriesFromStorage();
+        console.log('Loaded entries from localStorage:', localEntries);
+        console.log('Number of local entries:', localEntries?.length || 0);
         setEntries(localEntries);
         return;
       }
@@ -29,11 +31,20 @@ export function useEntries() {
       }
       
       const data = await response.json();
+      console.log('API response data:', data);
+      console.log('Entries from API:', data.entries);
+      console.log('Number of entries:', data.entries?.length || 0);
+      
       setEntries(data.entries);
       
       // Cache all entries to localStorage for offline use
       console.log('Caching all entries to localStorage for offline use');
       saveEntries(data.entries);
+      
+      // Verify what was saved
+      const savedEntries = loadEntriesFromStorage();
+      console.log('Saved entries to localStorage:', savedEntries);
+      console.log('Number of saved entries:', savedEntries?.length || 0);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load entries');
       console.error('Error loading entries:', err);
@@ -41,6 +52,8 @@ export function useEntries() {
       // Fallback to localStorage when offline or API fails
       console.warn('Falling back to localStorage for entries');
       const localEntries = loadEntriesFromStorage();
+      console.log('Fallback - loaded entries from localStorage:', localEntries);
+      console.log('Fallback - number of local entries:', localEntries?.length || 0);
       setEntries(localEntries);
     } finally {
       setIsLoading(false);
