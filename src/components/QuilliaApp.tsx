@@ -15,6 +15,7 @@ import CustomCursor from './CustomCursor';
 import ThemeCursorStyles from './ThemeCursorStyles';
 import BackgroundMusic from './BackgroundMusic';
 import OfflineWarning from './OfflineWarning';
+import GlobalLogoutButton from './GlobalLogoutButton';
 import Button from './ui/Button';
 import { User, Character, Theme, Avatar } from '@/types';
 import { loadUserPreferences, loadUser } from '@/lib/client-utils';
@@ -510,6 +511,14 @@ export default function QuilliaApp() {
           </motion.div>
         )}
       </AnimatePresence>
+      
+      {/* Global Logout Button - Bottom Left */}
+      {user && (
+        <GlobalLogoutButton 
+          theme={currentTheme} 
+          currentPage={appState}
+        />
+      )}
     </div>
   );
 }
