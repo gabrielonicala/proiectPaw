@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { JournalEntry } from '@/types';
-import { loadEntries as loadEntriesFromStorage, saveEntries } from '@/lib/client-utils';
+import { loadEntries as loadEntriesFromStorage, saveEntries, checkAndCleanupLocalStorage } from '@/lib/client-utils';
 import { fetchWithAutoLogout } from '@/lib/auto-logout';
 
 export function useEntries() {
@@ -33,7 +33,13 @@ export function useEntries() {
       
       // Cache all entries to localStorage for offline use
       console.log('Caching all entries to localStorage for offline use');
-      saveEntries(data.entries);
+      
+      // Check and cleanup localStorage before saving entries
+      if (checkAndCleanupLocalStorage()) {
+        saveEntries(data.entries);
+      } else {
+        console.warn('Could not save entries to localStorage due to quota issues');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load entries');
       console.error('Error loading entries:', err);

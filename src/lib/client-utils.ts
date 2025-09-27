@@ -10,6 +10,53 @@ export function generateId(): string {
   return Math.random().toString(36).substr(2, 9);
 }
 
+/**
+ * Check localStorage usage and clean up if needed
+ */
+export function checkAndCleanupLocalStorage(): boolean {
+  if (typeof window === 'undefined') return false;
+  
+  try {
+    // Test if we can write to localStorage
+    const testKey = 'quillia-storage-test';
+    localStorage.setItem(testKey, 'test');
+    localStorage.removeItem(testKey);
+    return true;
+  } catch (quotaError) {
+    console.warn('localStorage quota exceeded, performing cleanup...');
+    
+    // Clean up asset cache to free space
+    const keysToRemove: string[] = [];
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('quillia-asset-cache-')) {
+        keysToRemove.push(key);
+      }
+    }
+    
+    // Remove oldest cache entries first
+    keysToRemove.forEach(key => {
+      try {
+        localStorage.removeItem(key);
+      } catch (e) {
+        console.error('Error removing cache key:', key, e);
+      }
+    });
+    
+    // Test again
+    try {
+      const testKey = 'quillia-storage-test';
+      localStorage.setItem(testKey, 'test');
+      localStorage.removeItem(testKey);
+      console.log('localStorage cleanup successful');
+      return true;
+    } catch (retryError) {
+      console.error('localStorage still full after cleanup:', retryError);
+      return false;
+    }
+  }
+}
+
 export function saveToLocalStorage(key: string, data: unknown): void {
   if (typeof window !== 'undefined') {
     try {
@@ -19,12 +66,18 @@ export function saveToLocalStorage(key: string, data: unknown): void {
       
       // Try to free up space by clearing old cache data
       try {
-        // Clear asset cache to free up space
+        // Clear asset cache to free up space (but keep essential data)
+        const keysToRemove: string[] = [];
         for (let i = localStorage.length - 1; i >= 0; i--) {
           const keyToCheck = localStorage.key(i);
           if (keyToCheck && keyToCheck.startsWith('quillia-asset-cache-')) {
-            localStorage.removeItem(keyToCheck);
+            keysToRemove.push(keyToCheck);
           }
+        }
+        
+        // Remove cache entries in batches to free up space
+        for (const cacheKey of keysToRemove.slice(0, Math.floor(keysToRemove.length / 2))) {
+          localStorage.removeItem(cacheKey);
         }
         
         // Retry saving the data

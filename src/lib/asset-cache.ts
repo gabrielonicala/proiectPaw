@@ -20,7 +20,7 @@ interface CacheStats {
 
 const CACHE_PREFIX = 'quillia-asset-cache-';
 const CACHE_STATS_KEY = 'quillia-cache-stats';
-const MAX_CACHE_SIZE = 5 * 1024 * 1024; // 5MB max cache size (reduced from 50MB)
+const MAX_CACHE_SIZE = 25 * 1024 * 1024; // 25MB max cache size (balanced approach)
 const CACHE_EXPIRY = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 /**
@@ -131,7 +131,9 @@ export async function cacheAsset(url: string, mimeType: string): Promise<string 
             resolve(base64);
           } catch (retryError) {
             console.error('Failed to cache asset even after cleanup:', retryError);
-            resolve(null);
+            // Still return the base64 data even if we can't cache it
+            // This ensures the asset still works, just won't be cached for next time
+            resolve(base64);
           }
         }
       };
