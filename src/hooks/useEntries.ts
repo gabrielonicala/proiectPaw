@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import { JournalEntry } from '@/types';
 import { loadEntries as loadEntriesFromStorage, saveEntries } from '@/lib/client-utils';
-import { fetchWithAutoLogout, shouldAutoLogout } from '@/lib/auto-logout';
-import { queueOfflineChange } from '@/lib/offline-sync';
+import { fetchWithAutoLogout } from '@/lib/auto-logout';
 
 export function useEntries() {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
@@ -31,6 +30,10 @@ export function useEntries() {
       
       const data = await response.json();
       setEntries(data.entries);
+      
+      // Cache all entries to localStorage for offline use
+      console.log('Caching all entries to localStorage for offline use');
+      saveEntries(data.entries);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load entries');
       console.error('Error loading entries:', err);
@@ -44,23 +47,10 @@ export function useEntries() {
     }
   };
 
+  // Note: Entry deletion functionality is not implemented in the UI
+  // This function is kept for potential future use but is not currently used
   const deleteEntry = async (entryId: string) => {
     try {
-      // Check if we're offline first
-      if (!navigator.onLine) {
-        console.log('Offline detected, deleting entry locally and queuing for sync');
-        // Queue the deletion for offline sync
-        queueOfflineChange('entry_delete', { entryId });
-        
-        // Remove from local state and localStorage
-        setEntries(prev => {
-          const updatedEntries = prev.filter(entry => entry.id !== entryId);
-          saveEntries(updatedEntries);
-          return updatedEntries;
-        });
-        return;
-      }
-      
       const response = await fetchWithAutoLogout(`/api/entries/${entryId}`, {
         method: 'DELETE',
       });
@@ -74,16 +64,6 @@ export function useEntries() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete entry');
       console.error('Error deleting entry:', err);
-      
-      // Queue the deletion for offline sync
-      queueOfflineChange('entry_delete', { entryId });
-      
-      // Still remove from local state and localStorage
-      setEntries(prev => {
-        const updatedEntries = prev.filter(entry => entry.id !== entryId);
-        saveEntries(updatedEntries);
-        return updatedEntries;
-      });
     }
   };
 

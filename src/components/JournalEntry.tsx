@@ -9,9 +9,8 @@ import Card from './ui/Card';
 import MovingGradientBackground from './MovingGradientBackground';
 import AppNavigation from './AppNavigation';
 import { OutputType, User, Character, Theme } from '@/types';
-import { generateReimaginedText, generateImage, generateImageSD, generateImageGemini, /* generateVideo, */ getPastContext, addEntry } from '@/lib/client-utils';
-import { fetchWithAutoLogout, shouldAutoLogout } from '@/lib/auto-logout';
-import { queueOfflineChange } from '@/lib/offline-sync';
+import { generateReimaginedText, generateImage, generateImageSD, generateImageGemini, /* generateVideo, */ getPastContext } from '@/lib/client-utils';
+import { fetchWithAutoLogout } from '@/lib/auto-logout';
 import { migrateTheme } from '@/lib/theme-migration';
 import { getImageProvider, getReferenceImages } from '@/lib/image-generation-config';
 import { useDailyUsage } from '@/hooks/useDailyUsage';
@@ -291,32 +290,14 @@ export default function JournalEntry({
 
           const { entry: savedEntry } = await response.json();
           
-          // Save to localStorage as well
-          addEntry(savedEntry);
-          
           // Entry created successfully
+          // Note: Entry will be cached to localStorage when entries are next loaded
           // Refresh daily usage data
           refreshUsage();
         } catch (error) {
           console.error('Error saving entry:', error);
-          
-          // Create a temporary entry for offline use
-          const tempEntry = {
-            id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            userId: user.id,
-            ...entryData,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          };
-          
-          // Save to localStorage
-          addEntry(tempEntry);
-          
-          // Queue for offline sync
-          queueOfflineChange('entry_create', entryData);
-          
-          // Refresh daily usage data
-          refreshUsage();
+          // Note: Entry creation requires AI API calls and cannot work offline
+          // The entry will need to be recreated when back online
         }
       }
     } catch (error) {
