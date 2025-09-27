@@ -13,6 +13,7 @@ import { Character } from '@/types';
 import { themes } from '@/themes';
 import { migrateTheme } from '@/lib/theme-migration';
 import { getCachedImageUrl } from '@/lib/asset-cache';
+import { queueOfflineChange } from '@/lib/offline-sync';
 
 interface CharacterSelectorProps {
   characters: Character[];
@@ -91,39 +92,39 @@ export default function CharacterSelector({
   const handleAvatarSave = async (layeredAvatar: NonNullable<NonNullable<Character['avatar']>['options']>['layeredAvatar']) => {
     if (!editingCharacter) return;
 
-    try {
-      // Update the character's avatar
-      const updatedCharacter = {
-        ...editingCharacter,
-        avatar: editingCharacter.avatar ? {
-          ...editingCharacter.avatar,
-          options: {
-            ...editingCharacter.avatar.options,
-            layeredAvatar: layeredAvatar
-          }
-        } : {
-          id: 'temp-avatar',
-          name: 'Custom Avatar',
-          image: '👤',
-          pixelArt: undefined,
-          color: '#FF6B35',
-          accessories: [],
-          description: 'Custom layered avatar',
-          race: 'Custom',
-          class: 'Adventurer',
-          stats: {
-            strength: 10,
-            intelligence: 10,
-            dexterity: 10,
-            wisdom: 10,
-            charisma: 10
-          },
-          options: {
-            layeredAvatar: layeredAvatar
-          }
+    // Update the character's avatar
+    const updatedCharacter = {
+      ...editingCharacter,
+      avatar: editingCharacter.avatar ? {
+        ...editingCharacter.avatar,
+        options: {
+          ...editingCharacter.avatar.options,
+          layeredAvatar: layeredAvatar
         }
-      };
+      } : {
+        id: 'temp-avatar',
+        name: 'Custom Avatar',
+        image: '👤',
+        pixelArt: undefined,
+        color: '#FF6B35',
+        accessories: [],
+        description: 'Custom layered avatar',
+        race: 'Custom',
+        class: 'Adventurer',
+        stats: {
+          strength: 10,
+          intelligence: 10,
+          dexterity: 10,
+          wisdom: 10,
+          charisma: 10
+        },
+        options: {
+          layeredAvatar: layeredAvatar
+        }
+      }
+    };
 
+    try {
       // Save to database
       const response = await fetch(`/api/characters/${editingCharacter.id}`, {
         method: 'PUT',
@@ -145,6 +146,16 @@ export default function CharacterSelector({
       setEditingCharacter(null);
     } catch (error) {
       console.error('Error updating character avatar:', error);
+      // Queue the change for offline sync
+      queueOfflineChange('character_update', {
+        characterId: editingCharacter.id,
+        updates: { avatar: updatedCharacter.avatar }
+      });
+      
+      // Still update locally and close the builder
+      onCharacterUpdate(updatedCharacter);
+      setShowAvatarBuilder(false);
+      setEditingCharacter(null);
     }
   };
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { checkConnectionAndSync } from '@/lib/offline-sync';
 
 export default function OfflineWarning() {
   const [isOffline, setIsOffline] = useState(false);
@@ -31,6 +32,8 @@ export default function OfflineWarning() {
         clearTimeout(timeoutId);
         setIsOffline(false);
         setIsVisible(false);
+        // Sync any pending offline changes
+        checkConnectionAndSync();
       })
       .catch((error) => {
         clearTimeout(timeoutId);
@@ -77,6 +80,8 @@ export default function OfflineWarning() {
     // Check on network status change
     const handleOnline = () => {
       checkOfflineStatus();
+      // Also sync pending changes when coming back online
+      checkConnectionAndSync();
     };
 
     const handleOffline = () => {

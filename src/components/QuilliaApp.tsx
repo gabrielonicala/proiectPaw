@@ -19,6 +19,7 @@ import GlobalLogoutButton from './GlobalLogoutButton';
 import Button from './ui/Button';
 import { User, Character, Theme, Avatar } from '@/types';
 import { fetchWithAutoLogout, shouldAutoLogout } from '@/lib/auto-logout';
+import { queueOfflineChange } from '@/lib/offline-sync';
 import { loadUserPreferences, loadUser } from '@/lib/client-utils';
 
 type AppState = 'intro' | 'character-select' | 'character-create' | 'journal' | 'calendar' | 'profile' | 'tribute';
@@ -322,7 +323,20 @@ export default function QuilliaApp() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ avatar })
-      }).catch(console.error);
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to update avatar');
+        }
+      })
+      .catch(error => {
+        console.error('Error updating avatar:', error);
+        // Queue the change for offline sync
+        queueOfflineChange('avatar_change', {
+          characterId: activeCharacter.id,
+          avatar: avatar
+        });
+      });
     }
   };
 
