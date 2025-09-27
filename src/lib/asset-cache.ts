@@ -20,7 +20,7 @@ interface CacheStats {
 
 const CACHE_PREFIX = 'quillia-asset-cache-';
 const CACHE_STATS_KEY = 'quillia-cache-stats';
-const MAX_CACHE_SIZE = 50 * 1024 * 1024; // 50MB max cache size
+const MAX_CACHE_SIZE = 5 * 1024 * 1024; // 5MB max cache size (reduced from 50MB)
 const CACHE_EXPIRY = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 /**
@@ -116,11 +116,24 @@ export async function cacheAsset(url: string, mimeType: string): Promise<string 
           size: base64.length
         };
         
-        localStorage.setItem(cacheKey, JSON.stringify(asset));
-        updateCacheStats(asset.size, 1);
-        cleanupCache();
-        
-        resolve(base64);
+        try {
+          localStorage.setItem(cacheKey, JSON.stringify(asset));
+          updateCacheStats(asset.size, 1);
+          cleanupCache();
+          resolve(base64);
+        } catch (quotaError) {
+          console.warn('localStorage quota exceeded, cleaning cache and retrying...', quotaError);
+          // Try to clean up cache and retry once
+          cleanupCache();
+          try {
+            localStorage.setItem(cacheKey, JSON.stringify(asset));
+            updateCacheStats(asset.size, 1);
+            resolve(base64);
+          } catch (retryError) {
+            console.error('Failed to cache asset even after cleanup:', retryError);
+            resolve(null);
+          }
+        }
       };
       reader.onerror = () => resolve(null);
       reader.readAsDataURL(blob);

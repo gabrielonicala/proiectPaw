@@ -12,7 +12,29 @@ export function generateId(): string {
 
 export function saveToLocalStorage(key: string, data: unknown): void {
   if (typeof window !== 'undefined') {
-    localStorage.setItem(key, JSON.stringify(data));
+    try {
+      localStorage.setItem(key, JSON.stringify(data));
+    } catch (quotaError) {
+      console.warn(`localStorage quota exceeded for key ${key}, attempting cleanup...`, quotaError);
+      
+      // Try to free up space by clearing old cache data
+      try {
+        // Clear asset cache to free up space
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const keyToCheck = localStorage.key(i);
+          if (keyToCheck && keyToCheck.startsWith('quillia-asset-cache-')) {
+            localStorage.removeItem(keyToCheck);
+          }
+        }
+        
+        // Retry saving the data
+        localStorage.setItem(key, JSON.stringify(data));
+        console.log(`Successfully saved ${key} after cache cleanup`);
+      } catch (retryError) {
+        console.error(`Failed to save ${key} even after cleanup:`, retryError);
+        // Don't throw - just log the error and continue
+      }
+    }
   }
 }
 
