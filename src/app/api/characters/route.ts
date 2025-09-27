@@ -51,6 +51,15 @@ export async function GET() {
   } catch (error) {
     console.error('Error in GET /api/characters:', error);
     
+    // If it's a "User account deleted" error, return a special response for auto-logout
+    if (error instanceof Error && error.message === 'USER_ACCOUNT_DELETED') {
+      return NextResponse.json({ 
+        error: 'Your account has been deleted. You will be signed out automatically.',
+        code: 'USER_ACCOUNT_DELETED',
+        autoLogout: true
+      }, { status: 401 });
+    }
+    
     // If it's a "User not found" error, return a more specific error
     if (error instanceof Error && error.message === 'User not found') {
       return NextResponse.json({ 
@@ -89,8 +98,9 @@ export async function POST(request: NextRequest) {
     if (!user) {
       console.error('User not found during character creation:', (session as { user: { id: string } }).user.id);
       return NextResponse.json({ 
-        error: 'User session is invalid. Please sign out and sign in again.',
-        code: 'USER_NOT_FOUND'
+        error: 'Your account has been deleted. You will be signed out automatically.',
+        code: 'USER_ACCOUNT_DELETED',
+        autoLogout: true
       }, { status: 401 });
     }
 

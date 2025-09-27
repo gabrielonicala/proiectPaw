@@ -27,7 +27,7 @@ export async function getCharacterAccess(userId: string): Promise<CharacterAcces
       console.error('1. User was deleted from database');
       console.error('2. Database connection issue');
       console.error('3. Session contains stale user ID');
-      throw new Error('User not found');
+      throw new Error('USER_ACCOUNT_DELETED');
     }
     
     const user = await db.user.findUnique({

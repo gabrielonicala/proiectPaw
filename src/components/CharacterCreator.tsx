@@ -11,6 +11,7 @@ import AssetAvatarSelector from './AssetAvatarSelector';
 import LayeredAvatarBuilder from './LayeredAvatarBuilder';
 import LayeredAvatarRenderer from './LayeredAvatarRenderer';
 import { AssetAvatar } from '@/lib/asset-avatars';
+import { fetchWithAutoLogout, shouldAutoLogout } from '@/lib/auto-logout';
 
 interface CharacterCreatorProps {
   user: {
@@ -112,7 +113,7 @@ export default function CharacterCreator({ user, onCharacterCreate, onBack, curr
 
     setIsLoading(true);
     try {
-      const response = await fetch('/api/characters', {
+      const response = await fetchWithAutoLogout('/api/characters', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

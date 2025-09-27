@@ -18,6 +18,7 @@ import OfflineWarning from './OfflineWarning';
 import GlobalLogoutButton from './GlobalLogoutButton';
 import Button from './ui/Button';
 import { User, Character, Theme, Avatar } from '@/types';
+import { fetchWithAutoLogout, shouldAutoLogout } from '@/lib/auto-logout';
 import { loadUserPreferences, loadUser } from '@/lib/client-utils';
 
 type AppState = 'intro' | 'character-select' | 'character-create' | 'journal' | 'calendar' | 'profile' | 'tribute';
@@ -54,7 +55,7 @@ export default function QuilliaApp() {
               if (dbUser && dbUser.id === (session as unknown as { user: { id: string } }).user.id) {
                 // Load characters with lock status
                 try {
-                  const charactersResponse = await fetch('/api/characters');
+                  const charactersResponse = await fetchWithAutoLogout('/api/characters');
                   if (charactersResponse.ok) {
                     const charactersData = await charactersResponse.json();
                     dbUser.characters = charactersData.characters || [];
@@ -62,6 +63,12 @@ export default function QuilliaApp() {
                     console.error('Failed to load characters:', charactersResponse.status, charactersResponse.statusText);
                     const errorData = await charactersResponse.json().catch(() => ({}));
                     console.error('Error details:', errorData);
+                    
+                    // Check if this is an auto-logout scenario
+                    if (shouldAutoLogout(errorData)) {
+                      console.log('User account deleted, auto-logout will be handled by fetchWithAutoLogout');
+                      return; // Exit early, auto-logout is in progress
+                    }
                   }
                 } catch (error) {
                   console.error('Error loading characters:', error);
