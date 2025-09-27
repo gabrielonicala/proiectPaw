@@ -380,7 +380,7 @@ export default function CharacterSelector({
                                handleEditAvatar(character);
                              }}
                              variant="secondary"
-                             className="text-sm px-2 py-1 flex-1"
+                             className="text-[10px] xs:text-xs sm:text-sm px-2 py-1 flex-1"
                              theme={character.theme}
                            >
                              EDIT AVATAR
