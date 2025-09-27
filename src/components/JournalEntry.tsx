@@ -9,7 +9,9 @@ import Card from './ui/Card';
 import MovingGradientBackground from './MovingGradientBackground';
 import AppNavigation from './AppNavigation';
 import { OutputType, User, Character, Theme } from '@/types';
-import { generateReimaginedText, generateImage, generateImageSD, generateImageGemini, /* generateVideo, */ getPastContext } from '@/lib/client-utils';
+import { generateReimaginedText, generateImage, generateImageSD, generateImageGemini, /* generateVideo, */ getPastContext, addEntry } from '@/lib/client-utils';
+import { fetchWithAutoLogout, shouldAutoLogout } from '@/lib/auto-logout';
+import { queueOfflineChange } from '@/lib/offline-sync';
 import { migrateTheme } from '@/lib/theme-migration';
 import { getImageProvider, getReferenceImages } from '@/lib/image-generation-config';
 import { useDailyUsage } from '@/hooks/useDailyUsage';
@@ -44,7 +46,7 @@ const outputTypes: { value: OutputType; label: string; emoji: string }[] = [
 ];
 
 export default function JournalEntry({ 
-  user: _user, 
+  user, 
   activeCharacter, 
   onBack: _onBack, 
   onCalendarView, 
@@ -275,7 +277,7 @@ export default function JournalEntry({
         };
 
         try {
-          const response = await fetch('/api/entries', {
+          const response = await fetchWithAutoLogout('/api/entries', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -287,12 +289,34 @@ export default function JournalEntry({
             throw new Error('Failed to save entry');
           }
 
+          const { entry: savedEntry } = await response.json();
+          
+          // Save to localStorage as well
+          addEntry(savedEntry);
+          
           // Entry created successfully
           // Refresh daily usage data
           refreshUsage();
         } catch (error) {
           console.error('Error saving entry:', error);
-          // Entry created successfully
+          
+          // Create a temporary entry for offline use
+          const tempEntry = {
+            id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            userId: user.id,
+            ...entryData,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          };
+          
+          // Save to localStorage
+          addEntry(tempEntry);
+          
+          // Queue for offline sync
+          queueOfflineChange('entry_create', entryData);
+          
+          // Refresh daily usage data
+          refreshUsage();
         }
       }
     } catch (error) {

@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { JournalEntry } from '@/types';
+import { loadEntries as loadEntriesFromStorage, saveEntries } from '@/lib/client-utils';
+import { fetchWithAutoLogout, shouldAutoLogout } from '@/lib/auto-logout';
+import { queueOfflineChange } from '@/lib/offline-sync';
 
 export function useEntries() {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
@@ -13,7 +16,7 @@ export function useEntries() {
       setIsLoading(true);
       setError(null);
       
-      const response = await fetch('/api/entries');
+      const response = await fetchWithAutoLogout('/api/entries');
       if (!response.ok) {
         throw new Error('Failed to load entries');
       }
@@ -23,6 +26,11 @@ export function useEntries() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load entries');
       console.error('Error loading entries:', err);
+      
+      // Fallback to localStorage when offline
+      console.warn('Falling back to localStorage for entries');
+      const localEntries = loadEntriesFromStorage();
+      setEntries(localEntries);
     } finally {
       setIsLoading(false);
     }
@@ -30,7 +38,7 @@ export function useEntries() {
 
   const deleteEntry = async (entryId: string) => {
     try {
-      const response = await fetch(`/api/entries/${entryId}`, {
+      const response = await fetchWithAutoLogout(`/api/entries/${entryId}`, {
         method: 'DELETE',
       });
       
@@ -43,6 +51,16 @@ export function useEntries() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete entry');
       console.error('Error deleting entry:', err);
+      
+      // Queue the deletion for offline sync
+      queueOfflineChange('entry_delete', { entryId });
+      
+      // Still remove from local state and localStorage
+      setEntries(prev => {
+        const updatedEntries = prev.filter(entry => entry.id !== entryId);
+        saveEntries(updatedEntries);
+        return updatedEntries;
+      });
     }
   };
 
