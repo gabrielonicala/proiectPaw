@@ -303,33 +303,35 @@ export default function CharacterCreator({ user, onCharacterCreate, onBack, curr
               <div className="flex justify-center gap-4">
                 <Button 
                   onClick={() => setShowLayeredAvatarBuilder(true)}
-                  variant={showLayeredAvatarBuilder ? "primary" : "secondary"}
+                  variant="primary"
                   theme={selectedTheme}
                 >
                   🎨 CUSTOM BUILDER
                 </Button>
-                <Button 
+                {/* Predefined avatar selector temporarily disabled */}
+                {/* <Button 
                   onClick={() => setShowLayeredAvatarBuilder(false)}
                   variant={!showLayeredAvatarBuilder ? "primary" : "secondary"}
                   theme={selectedTheme}
                 >
                   📦 PREDEFINED
-                </Button>
+                </Button> */}
               </div>
             </div>
 
-            {!showLayeredAvatarBuilder ? (
+            {/* Predefined avatar selector temporarily disabled */}
+            {/* {!showLayeredAvatarBuilder ? (
               <AssetAvatarSelector
                 onSelect={handleAvatarSelect}
-                onCancel={() => setStep('theme')}
+                onCancel={() => setShowLayeredAvatarBuilder(true)}
                 theme={selectedTheme}
               />
-            ) : (
+            ) : ( */}
               <LayeredAvatarBuilder
                 onSave={handleLayeredAvatarSelect}
                 onCancel={() => setStep('theme')}
               />
-            )}
+            {/* )} */}
           </div>
         )}
 
