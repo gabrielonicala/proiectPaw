@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Quillia - Turn Your Day Into Adventure",
+  title: "Quillia - Turn Your Days Into Adventures",
   description: "A magical journal app that turns your daily experiences into fantasy adventures with AI-generated stories, images, and animations.",
   icons: {
     icon: '/favicon.ico',
