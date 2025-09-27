@@ -361,7 +361,7 @@ export default function SignUpPage() {
                 Thank you for trying out Quillia!
               </p>
               <p className="text-gray-400 text-xs font-pixel mb-3">
-                If you don&apos;t want to go through the sign-up process, use this test account:
+                If you&apos;d like to skip the whole sign-up process, just use this test account:
               </p>
               <div className="bg-gray-900/50 p-3 rounded border border-gray-700">
                 <p className="text-green-400 text-sm font-pixel font-mono">
