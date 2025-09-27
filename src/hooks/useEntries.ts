@@ -16,6 +16,14 @@ export function useEntries() {
       setIsLoading(true);
       setError(null);
       
+      // Check if we're offline first
+      if (!navigator.onLine) {
+        console.log('Offline detected, loading entries from localStorage');
+        const localEntries = loadEntriesFromStorage();
+        setEntries(localEntries);
+        return;
+      }
+      
       const response = await fetchWithAutoLogout('/api/entries');
       if (!response.ok) {
         throw new Error('Failed to load entries');
@@ -27,7 +35,7 @@ export function useEntries() {
       setError(err instanceof Error ? err.message : 'Failed to load entries');
       console.error('Error loading entries:', err);
       
-      // Fallback to localStorage when offline
+      // Fallback to localStorage when offline or API fails
       console.warn('Falling back to localStorage for entries');
       const localEntries = loadEntriesFromStorage();
       setEntries(localEntries);
@@ -38,6 +46,21 @@ export function useEntries() {
 
   const deleteEntry = async (entryId: string) => {
     try {
+      // Check if we're offline first
+      if (!navigator.onLine) {
+        console.log('Offline detected, deleting entry locally and queuing for sync');
+        // Queue the deletion for offline sync
+        queueOfflineChange('entry_delete', { entryId });
+        
+        // Remove from local state and localStorage
+        setEntries(prev => {
+          const updatedEntries = prev.filter(entry => entry.id !== entryId);
+          saveEntries(updatedEntries);
+          return updatedEntries;
+        });
+        return;
+      }
+      
       const response = await fetchWithAutoLogout(`/api/entries/${entryId}`, {
         method: 'DELETE',
       });

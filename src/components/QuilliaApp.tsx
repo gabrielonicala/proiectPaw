@@ -56,19 +56,31 @@ export default function QuilliaApp() {
               if (dbUser && dbUser.id === (session as unknown as { user: { id: string } }).user.id) {
                 // Load characters with lock status
                 try {
-                  const charactersResponse = await fetchWithAutoLogout('/api/characters');
-                  if (charactersResponse.ok) {
-                    const charactersData = await charactersResponse.json();
-                    dbUser.characters = charactersData.characters || [];
+                  // Check if we're offline first
+                  if (!navigator.onLine) {
+                    console.log('Offline detected, skipping character loading from API');
+                    // Use characters from localStorage if available
+                    const localUser = loadUser();
+                    if (localUser && localUser.characters) {
+                      dbUser.characters = localUser.characters;
+                    } else {
+                      dbUser.characters = [];
+                    }
                   } else {
-                    console.error('Failed to load characters:', charactersResponse.status, charactersResponse.statusText);
-                    const errorData = await charactersResponse.json().catch(() => ({}));
-                    console.error('Error details:', errorData);
-                    
-                    // Check if this is an auto-logout scenario
-                    if (shouldAutoLogout(errorData)) {
-                      console.log('User account deleted, auto-logout will be handled by fetchWithAutoLogout');
-                      return; // Exit early, auto-logout is in progress
+                    const charactersResponse = await fetchWithAutoLogout('/api/characters');
+                    if (charactersResponse.ok) {
+                      const charactersData = await charactersResponse.json();
+                      dbUser.characters = charactersData.characters || [];
+                    } else {
+                      console.error('Failed to load characters:', charactersResponse.status, charactersResponse.statusText);
+                      const errorData = await charactersResponse.json().catch(() => ({}));
+                      console.error('Error details:', errorData);
+                      
+                      // Check if this is an auto-logout scenario
+                      if (shouldAutoLogout(errorData)) {
+                        console.log('User account deleted, auto-logout will be handled by fetchWithAutoLogout');
+                        return; // Exit early, auto-logout is in progress
+                      }
                     }
                   }
                 } catch (error) {

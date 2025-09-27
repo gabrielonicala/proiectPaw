@@ -36,20 +36,32 @@ export function shouldAutoLogout(response: any): boolean {
  * Wrapper for fetch that automatically handles user account deletion
  */
 export async function fetchWithAutoLogout(url: string, options?: RequestInit): Promise<Response> {
-  const response = await fetch(url, options);
-  
-  if (!response.ok && response.status === 401) {
-    try {
-      const data = await response.json();
-      if (shouldAutoLogout(data)) {
-        console.log('User account deleted, initiating auto-logout...');
-        await handleAutoLogout();
-        return response; // Return the original response
+  try {
+    const response = await fetch(url, options);
+    
+    if (!response.ok && response.status === 401) {
+      try {
+        const data = await response.json();
+        if (shouldAutoLogout(data)) {
+          console.log('User account deleted, initiating auto-logout...');
+          await handleAutoLogout();
+          return response; // Return the original response
+        }
+      } catch (error) {
+        console.error('Error parsing auto-logout response:', error);
       }
-    } catch (error) {
-      console.error('Error parsing auto-logout response:', error);
     }
+    
+    return response;
+  } catch (error) {
+    // If it's a network error (offline), don't trigger auto-logout
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      console.log('Network error (likely offline), not triggering auto-logout');
+      // Re-throw the error so the calling code can handle it appropriately
+      throw error;
+    }
+    
+    // For other errors, re-throw them
+    throw error;
   }
-  
-  return response;
 }
