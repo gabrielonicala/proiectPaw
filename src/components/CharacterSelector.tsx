@@ -12,6 +12,7 @@ import MovingGradientBackground from './MovingGradientBackground';
 import { Character } from '@/types';
 import { themes } from '@/themes';
 import { migrateTheme } from '@/lib/theme-migration';
+import { getCachedImageUrl } from '@/lib/asset-cache';
 
 interface CharacterSelectorProps {
   characters: Character[];
@@ -265,17 +266,17 @@ export default function CharacterSelector({
                         />
                       ) : (
                         <>
-                          <img
-                            src={character.avatar.image}
-                            alt={character.avatar.name}
-                            className="w-32 h-40 pixelated object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              const fallback = target.nextElementSibling as HTMLElement;
-                              if (fallback) fallback.style.display = 'flex';
-                            }}
-                          />
+                        <img
+                          src={getCachedImageUrl(character.avatar.image)}
+                          alt={character.avatar.name}
+                          className="w-32 h-40 pixelated object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            const fallback = target.nextElementSibling as HTMLElement;
+                            if (fallback) fallback.style.display = 'flex';
+                          }}
+                        />
                           <div className="w-32 h-40 flex items-center justify-center text-6xl text-gray-400 bg-gray-800 pixelated" style={{ display: 'none' }}>
                             👤
                           </div>

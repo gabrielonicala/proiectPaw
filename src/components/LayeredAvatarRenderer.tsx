@@ -2,7 +2,8 @@
 
 import { motion } from 'framer-motion';
 import { Avatar } from '@/types';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getCachedImageUrl, cacheAsset } from '@/lib/asset-cache';
 
 interface LayeredAvatarRendererProps {
   layeredAvatar: NonNullable<NonNullable<Avatar['options']>['layeredAvatar']>;
@@ -16,6 +17,7 @@ export default function LayeredAvatarRenderer({
   className = '' 
 }: LayeredAvatarRendererProps) {
   const [imageErrors, setImageErrors] = useState<{ [key: string]: boolean }>({});
+  const [cachedImages, setCachedImages] = useState<{ [key: string]: string }>({});
 
   const sizeClasses = {
     sm: 'w-12 h-12',
@@ -29,6 +31,34 @@ export default function LayeredAvatarRenderer({
     lg: 160
   };
 
+  // Preload and cache avatar images
+  useEffect(() => {
+    const preloadImages = async () => {
+      const imagePaths = [
+        layeredAvatar.head.imagePath,
+        layeredAvatar.torso.imagePath,
+        layeredAvatar.legs.imagePath
+      ];
+
+      const cachePromises = imagePaths.map(async (path) => {
+        const cached = getCachedImageUrl(path);
+        if (cached !== path) {
+          setCachedImages(prev => ({ ...prev, [path]: cached }));
+        } else {
+          // Try to cache the image for future use
+          const cachedData = await cacheAsset(path, 'image/png');
+          if (cachedData) {
+            setCachedImages(prev => ({ ...prev, [path]: cachedData }));
+          }
+        }
+      });
+
+      await Promise.allSettled(cachePromises);
+    };
+
+    preloadImages();
+  }, [layeredAvatar]);
+
   const handleImageError = (imageKey: string) => {
     setImageErrors(prev => ({ ...prev, [imageKey]: true }));
   };
@@ -41,6 +71,10 @@ export default function LayeredAvatarRenderer({
     } else {
       return '👖';
     }
+  };
+
+  const getImageSrc = (imagePath: string) => {
+    return cachedImages[imagePath] || getCachedImageUrl(imagePath) || imagePath;
   };
 
   return (
@@ -63,7 +97,7 @@ export default function LayeredAvatarRenderer({
             </div>
           ) : (
             <img
-              src={layeredAvatar.head.imagePath}
+              src={getImageSrc(layeredAvatar.head.imagePath)}
               alt={layeredAvatar.head.name}
               className="w-full h-full object-contain pixelated"
               style={{ imageRendering: 'pixelated' }}
@@ -83,7 +117,7 @@ export default function LayeredAvatarRenderer({
             </div>
           ) : (
             <img
-              src={layeredAvatar.torso.imagePath}
+              src={getImageSrc(layeredAvatar.torso.imagePath)}
               alt={layeredAvatar.torso.name}
               className="w-full h-full object-contain pixelated"
               style={{ imageRendering: 'pixelated' }}
@@ -103,7 +137,7 @@ export default function LayeredAvatarRenderer({
             </div>
           ) : (
             <img
-              src={layeredAvatar.legs.imagePath}
+              src={getImageSrc(layeredAvatar.legs.imagePath)}
               alt={layeredAvatar.legs.name}
               className="w-full h-full object-contain pixelated"
               style={{ imageRendering: 'pixelated' }}

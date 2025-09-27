@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "../styles/custom-cursor.css";
 import SessionProvider from "@/components/SessionProvider";
+import AssetPreloader from "@/components/AssetPreloader";
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
@@ -42,7 +43,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <SessionProvider>
-          {children}
+          <AssetPreloader>
+            {children}
+          </AssetPreloader>
         </SessionProvider>
         <Analytics />
         <SpeedInsights />

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getCachedAudioUrl, cacheAsset } from '@/lib/asset-cache';
 
 interface BackgroundMusicProps {
   theme?: string;
@@ -91,6 +92,27 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
   const audioRef = useRef<HTMLAudioElement>(null);
   const isMobileRef = useRef<boolean>(false);
   const [currentTrack, setCurrentTrack] = useState(themeMusic[theme as keyof typeof themeMusic] || themeMusic.default);
+  const [cachedAudioUrl, setCachedAudioUrl] = useState<string | null>(null);
+
+  // Cache audio when track changes
+  useEffect(() => {
+    const cacheCurrentTrack = async () => {
+      const cached = getCachedAudioUrl(currentTrack.url);
+      if (cached !== currentTrack.url) {
+        setCachedAudioUrl(cached);
+      } else {
+        // Try to cache the audio for future use
+        const cachedData = await cacheAsset(currentTrack.url, 'audio/mpeg');
+        if (cachedData) {
+          setCachedAudioUrl(cachedData);
+        } else {
+          setCachedAudioUrl(currentTrack.url);
+        }
+      }
+    };
+
+    cacheCurrentTrack();
+  }, [currentTrack]);
 
   // Detect mobile device and update on resize
   useEffect(() => {
@@ -218,7 +240,7 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
       {/* Hidden audio element */}
       <audio
         ref={audioRef}
-        src={currentTrack.url}
+        src={cachedAudioUrl || currentTrack.url}
         loop
         onEnded={handleTrackEnd}
         onCanPlay={handleCanPlay}
