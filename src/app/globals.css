@@ -102,6 +102,25 @@ body {
   .text-xs {
     font-size: 0.75rem;
   }
+  
+  /* Ensure proper mobile rendering */
+  html, body {
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  
+  /* Prevent horizontal scrolling on mobile */
+  body {
+    overflow-x: hidden;
+    position: relative;
+  }
+  
+  /* Improve form rendering on mobile */
+  input, textarea, select {
+    -webkit-appearance: none;
+    border-radius: 0;
+  }
 }
 
 /* Pixelated/RPG styling */

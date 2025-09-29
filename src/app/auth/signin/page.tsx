@@ -71,8 +71,11 @@ export default function SignInPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black relative overflow-hidden p-4">
-      {/* Theme-colored moving squares */}
-      <div className="absolute inset-0">
+      {/* Mobile background pattern */}
+      <div className="absolute inset-0 md:hidden bg-gradient-to-br from-gray-900 via-black to-gray-800"></div>
+      
+      {/* Theme-colored moving squares - Reduced on mobile for performance */}
+      <div className="absolute inset-0 hidden md:block">
         {/* Velour Nights - Orange */}
         <div 
           className="absolute w-6 h-6 pixelated opacity-60" 
@@ -246,7 +249,7 @@ export default function SignInPage() {
         }
       `}</style>
 
-      <Card className="w-full max-w-md relative z-10 bg-gray-900/90 backdrop-blur-sm border-gray-700">
+      <Card className="w-full max-w-md relative z-10 bg-gray-900/95 border-gray-700">
         <div className="p-6">
           <div className="text-center mb-6">
             <h1 className="text-3xl font-bold text-white mb-2 font-pixel">Welcome Back</h1>
