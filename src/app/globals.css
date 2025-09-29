@@ -79,6 +79,11 @@ body {
     line-height: 1.4;
   }
   
+  .font-serif {
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  
   /* Larger touch targets */
   button, .cursor-pointer {
     min-height: 44px;
@@ -208,6 +213,13 @@ body {
   font-family: 'Press Start 2P', 'Orbitron', monospace;
   font-size: 12px;
   line-height: 1.5;
+}
+
+/* Legal document fonts */
+.font-serif {
+  font-family: 'Times New Roman', 'Georgia', serif;
+  font-size: 16px;
+  line-height: 1.7;
 }
 
 /* Make '0' and '8' more distinguishable */

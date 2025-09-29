@@ -11,6 +11,7 @@ import AppNavigation from './AppNavigation';
 import { JournalEntry, User, Character } from '@/types';
 import { useEntries } from '@/hooks/useEntries';
 import { themes } from '@/themes';
+import Footer from './Footer';
 
 interface CalendarViewProps {
   user: User;
@@ -113,7 +114,8 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
   };
 
   return (
-    <div className="min-h-screen p-4">
+    <div className="min-h-screen flex flex-col">
+      <div className="flex-1 p-4">
       {/* Pixel art background */}
       <MovingGradientBackground theme={activeCharacter.theme} />
       
@@ -371,6 +373,8 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
           }}
         />
       )}
+      </div>
+      <Footer />
     </div>
   );
 }

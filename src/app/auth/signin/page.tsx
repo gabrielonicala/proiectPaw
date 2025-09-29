@@ -253,7 +253,7 @@ export default function SignInPage() {
         <div className="p-6">
           <div className="text-center mb-6">
             <h1 className="text-3xl font-bold text-white mb-2 font-pixel">Welcome Back</h1>
-            <p className="text-gray-300 font-pixel">Sign in to continue your adventure</p>
+            <p className="text-gray-300 font-pixel">Sign in to continue</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">

@@ -9,6 +9,7 @@ import MovingGradientBackground from '@/components/MovingGradientBackground';
 import AppNavigation from '@/components/AppNavigation';
 import { User, Character } from '@/types';
 import { USE_SHARED_LIMITS } from '@/lib/subscription-limits';
+import Footer from './Footer';
 
 interface SubscriptionData {
   hasSubscription: boolean;
@@ -116,7 +117,8 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
   // Theme is now tied to the active character
 
   return (
-    <div className="min-h-screen p-4">
+    <div className="min-h-screen flex flex-col">
+      <div className="flex-1 p-4">
       <MovingGradientBackground theme={activeCharacter.theme} />
       
       <div className="relative z-10 max-w-4xl mx-auto">
@@ -261,6 +263,8 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
           </motion.div>
         </div>
       </div>
+      </div>
+      <Footer />
     </div>
   );
 }

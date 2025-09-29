@@ -15,6 +15,7 @@ import LayeredAvatarBuilder from './LayeredAvatarBuilder';
 import { LayeredAvatar } from '@/lib/layered-avatars';
 import { calculateCharacterStats } from '@/lib/character-stats';
 import { getCachedImageUrl } from '@/lib/asset-cache';
+import Footer from './Footer';
 
 interface UserProfileProps {
   user: User;
@@ -183,7 +184,8 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
   };
 
   return (
-    <div className="min-h-screen p-1">
+    <div className="min-h-screen flex flex-col">
+      <div className="flex-1 p-1">
       <MovingGradientBackground theme={activeCharacter.theme} />
       
       <div className="max-w-7xl mx-auto relative z-10">
@@ -587,6 +589,8 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
           currentAvatar={activeCharacter.avatar?.options?.layeredAvatar}
         />
       )}
+      </div>
+      <Footer />
     </div>
   );
 }

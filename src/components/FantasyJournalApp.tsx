@@ -250,25 +250,39 @@ export default function QuilliaApp() {
             const userData = data.user;
             setUser(userData);
             setActiveCharacter(userData.activeCharacter || null);
+            // Update theme to match the new active character
+            if (userData.activeCharacter) {
+              setCurrentTheme(userData.activeCharacter.theme);
+            }
           } else {
             console.error('Failed to fetch updated user data:', response.status);
             // Fallback: remove character from local state
+            const newActiveCharacter = user.activeCharacterId === deletedCharacterId ? updatedCharacters[0] : user.activeCharacter;
             setUser({
               ...user,
               characters: updatedCharacters,
-              activeCharacter: user.activeCharacterId === deletedCharacterId ? updatedCharacters[0] : user.activeCharacter,
+              activeCharacter: newActiveCharacter,
               activeCharacterId: user.activeCharacterId === deletedCharacterId ? updatedCharacters[0]?.id : user.activeCharacterId
             });
+            // Update theme to match the new active character
+            if (newActiveCharacter) {
+              setCurrentTheme(newActiveCharacter.theme);
+            }
           }
         } catch (error) {
           console.error('Error fetching updated user data:', error);
           // Fallback: remove character from local state
+          const newActiveCharacter = user.activeCharacterId === deletedCharacterId ? updatedCharacters[0] : user.activeCharacter;
           setUser({
             ...user,
             characters: updatedCharacters,
-            activeCharacter: user.activeCharacterId === deletedCharacterId ? updatedCharacters[0] : user.activeCharacter,
+            activeCharacter: newActiveCharacter,
             activeCharacterId: user.activeCharacterId === deletedCharacterId ? updatedCharacters[0]?.id : user.activeCharacterId
           });
+          // Update theme to match the new active character
+          if (newActiveCharacter) {
+            setCurrentTheme(newActiveCharacter.theme);
+          }
         }
       }
     }

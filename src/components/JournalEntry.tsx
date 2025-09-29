@@ -15,6 +15,7 @@ import { migrateTheme } from '@/lib/theme-migration';
 import { getImageProvider, getReferenceImages } from '@/lib/image-generation-config';
 import { useDailyUsage } from '@/hooks/useDailyUsage';
 import QuotaCountdown from './QuotaCountdown';
+import Footer from './Footer';
 
 interface JournalEntryProps {
   user: User;
@@ -307,7 +308,8 @@ export default function JournalEntry({
   };
 
   return (
-    <div className="min-h-screen p-4">
+    <div className="min-h-screen flex flex-col">
+      <div className="flex-1 p-4">
       {/* Pixel art background */}
       <MovingGradientBackground theme={migrateTheme(activeCharacter.theme) as Theme} />
 
@@ -762,6 +764,8 @@ Hint: Rich details weave the most captivating tales.`}
           </motion.div>
         )}
       </div>
+      </div>
+      <Footer />
     </div>
   );
 }

@@ -14,6 +14,7 @@ import { themes } from '@/themes';
 import { migrateTheme } from '@/lib/theme-migration';
 import { getCachedImageUrl } from '@/lib/asset-cache';
 import { queueOfflineChange } from '@/lib/offline-sync';
+import Footer from './Footer';
 
 interface CharacterSelectorProps {
   characters: Character[];
@@ -238,7 +239,8 @@ export default function CharacterSelector({
   const canCreateNew = characters.length < user.characterSlots;
 
   return (
-    <div className="min-h-screen p-4">
+    <div className="min-h-screen flex flex-col">
+      <div className="flex-1 p-4">
       <MovingGradientBackground theme={activeCharacter?.theme || 'obsidian-veil'} />
       
       <div className="max-w-6xl mx-auto relative z-10">
@@ -690,6 +692,8 @@ export default function CharacterSelector({
           </p>
         </motion.div>
       )}
+      </div>
+      <Footer />
     </div>
   );
 }

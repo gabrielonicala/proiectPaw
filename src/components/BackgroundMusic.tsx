@@ -114,6 +114,23 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
     cacheCurrentTrack();
   }, [currentTrack]);
 
+  // Force restart audio when cached URL changes (new track loaded)
+  useEffect(() => {
+    if (cachedAudioUrl && audioRef.current && userInteracted && !isMuted) {
+      // Small delay to ensure the audio element has updated its src
+      const restartTimer = setTimeout(() => {
+        if (audioRef.current) {
+          audioRef.current.currentTime = 0;
+          audioRef.current.play().catch(e => {
+            console.error("Error restarting audio with new track:", e);
+          });
+        }
+      }, 50);
+      
+      return () => clearTimeout(restartTimer);
+    }
+  }, [cachedAudioUrl, userInteracted, isMuted]);
+
   // Detect mobile device and update on resize
   useEffect(() => {
     const updateMobileDetection = () => {
@@ -141,6 +158,13 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
   // Update track when theme changes
   useEffect(() => {
     const newTrack = themeMusic[theme as keyof typeof themeMusic] || themeMusic.default;
+    
+    // Stop current audio if it's playing
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    
     setCurrentTrack(newTrack);
     setHasError(false);
     setIsLoading(true);
@@ -204,10 +228,17 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
       audioRef.current.volume = isMuted ? 0 : volume;
       // Only try to play if user has interacted and not muted
       if (userInteracted && !isMuted) {
-        audioRef.current.play().catch(e => {
-          console.error("Error playing audio:", e);
-          setHasError(true);
-        });
+        // Small delay to ensure the new track is loaded
+        const playTimer = setTimeout(() => {
+          if (audioRef.current) {
+            audioRef.current.play().catch(e => {
+              console.error("Error playing audio:", e);
+              setHasError(true);
+            });
+          }
+        }, 100);
+        
+        return () => clearTimeout(playTimer);
       }
     }
   }, [volume, isMuted, currentTrack, userInteracted]);
