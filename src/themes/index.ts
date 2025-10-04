@@ -25,7 +25,9 @@ export const themes: Record<string, ThemeConfig> = {
       'Finding comfort in small moments during busy city life',
       'A chance encounter that changes everything',
       'The warmth of friendship in a cold urban world'
-    ]
+    ],
+    // Hidden until archetype is defined
+    hidden: true
   },
   'neon-ashes': {
     id: 'neon-ashes',
@@ -51,7 +53,17 @@ export const themes: Record<string, ThemeConfig> = {
       'The price of freedom in a controlled world',
       'A rogue AI seeking humanity',
       'Underground resistance in a digital dystopia'
-    ]
+    ],
+    archetype: {
+      name: 'Net-Runner',
+      stats: {
+        'Syntax': 'Your ability to think logically and analyze data.',
+        'Latency': 'Your speed and reaction time, in both the digital and physical world.',
+        'Discretion': 'Your ability to move unseen and remain undetected.',
+        'Reputation': 'Your influence and standing within the city\'s network.',
+        'Jolt': 'Your raw mental energy and quick-wittedness.'
+      }
+    }
   },
   'crimson-casefiles': {
     id: 'crimson-casefiles',
@@ -77,7 +89,17 @@ export const themes: Record<string, ThemeConfig> = {
       'The detective who never gives up, no matter the cost',
       'A crime syndicate with connections in high places',
       'Psychological tension in the interrogation room'
-    ]
+    ],
+    archetype: {
+      name: 'Detective',
+      stats: {
+        'Deduction': 'Your ability to make logical inferences and solve complex problems.',
+        'Perception': 'Your keen eye for observation and detail.',
+        'Composure': 'Your ability to remain calm and rational under pressure.',
+        'Discourse': 'Your skill in conversation and extracting information from others.',
+        'Stamina': 'Your mental and physical endurance.'
+      }
+    }
   },
   'blazeheart-saga': {
     id: 'blazeheart-saga',
@@ -103,7 +125,17 @@ export const themes: Record<string, ThemeConfig> = {
       'Friendship that transcends all obstacles',
       'The final battle that determines everything',
       'Destiny calls, and the hero answers'
-    ]
+    ],
+    archetype: {
+      name: 'Samurai',
+      stats: {
+        'Discipline': 'Your mental fortitude and control over your emotions.',
+        'Valor': 'Your courage and fearlessness in the face of a challenge.',
+        'Poise': 'Your physical grace, balance, and composure.',
+        'Vigilance': 'Your awareness of your surroundings and attention to detail.',
+        'Spirit': 'Your inner strength and resilience in the face of hardship.'
+      }
+    }
   },
   'echoes-of-dawn': {
     id: 'echoes-of-dawn',
@@ -129,7 +161,9 @@ export const themes: Record<string, ThemeConfig> = {
       'The classroom at sunset, filled with memories',
       'Old train stations and the promise of new beginnings',
       'Coming of age in a world that\'s always changing'
-    ]
+    ],
+    // Hidden until archetype is defined
+    hidden: true
   },
   'obsidian-veil': {
     id: 'obsidian-veil',
@@ -155,7 +189,17 @@ export const themes: Record<string, ThemeConfig> = {
       'The price of power in a dark world',
       'Heroes who walk the line between light and shadow',
       'Legends that refuse to die'
-    ]
+    ],
+    archetype: {
+      name: 'Occultist',
+      stats: {
+        'Clarity': 'Your ability to keep a clear mind in the face of madness.',
+        'Prowess': 'Your physical quickness and coordination.',
+        'Glimmer': 'Your intuition and ability to perceive hidden supernatural elements.',
+        'Reserve': 'Your skill in observing without being noticed and keeping secrets.',
+        'Conviction': 'Your unshakeable belief in your own path, no matter the cost.'
+      }
+    }
   },
   'starlit-horizon': {
     id: 'starlit-horizon',
@@ -181,7 +225,17 @@ export const themes: Record<string, ThemeConfig> = {
       'The vastness of the cosmos and our place in it',
       'Space odysseys that test the limits of humanity',
       'Discovering new worlds and new possibilities'
-    ]
+    ],
+    archetype: {
+      name: 'Cosmonaut',
+      stats: {
+        'Navigation': 'Your ability to chart a course and stay on it, both literally and in your daily tasks.',
+        'Empathy': 'Your ability to connect with and understand new perspectives.',
+        'Curiosity': 'Your thirst for knowledge and drive to seek out the unknown.',
+        'Resolve': 'Your mental fortitude and resilience in the face of immense challenges.',
+        'Observation': 'Your ability to take in the wonders of the universe and understand the data you are collecting.'
+      }
+    }
   },
   'ivory-quill': {
     id: 'ivory-quill',
@@ -207,7 +261,17 @@ export const themes: Record<string, ThemeConfig> = {
       'Kingdoms at war and the price of peace',
       'The quest for the legendary artifact',
       'Magic that flows through every living thing'
-    ]
+    ],
+    archetype: {
+      name: 'Arcane Scribe',
+      stats: {
+        'Lore': 'Your knowledge of the world and its secrets.',
+        'Willpower': 'Your mental strength and determination.',
+        'Presence': 'Your personal charisma and how you influence others.',
+        'Aura': 'Your ability to perceive and manipulate magical energy.',
+        'Sagacity': 'Your wisdom and ability to make sound judgments.'
+      }
+    }
   },
   'wild-west': {
     id: 'wild-west',
@@ -233,7 +297,17 @@ export const themes: Record<string, ThemeConfig> = {
       'A gold rush brings fortune seekers and trouble to a peaceful frontier town',
       'A stagecoach robbery leads to an unexpected alliance between enemies',
       'A lone gunslinger seeks redemption for past mistakes in the lawless west'
-    ]
+    ],
+    archetype: {
+      name: 'Outlaw',
+      stats: {
+        'Aim': 'Your precision and focus in all endeavors.',
+        'Grit': 'Your sheer mental and physical toughness.',
+        'Presence': 'Your charisma and the impression you leave on others.',
+        'Gait': 'Your manner of moving and navigating the world, both literally and figuratively.',
+        'Guile': 'Your cleverness and resourcefulness in tricky situations.'
+      }
+    }
   },
   'crimson-tides': {
     id: 'crimson-tides',
@@ -262,8 +336,18 @@ export const themes: Record<string, ThemeConfig> = {
       'The storm that tests every sailor\'s soul',
       'An island where legends come to life',
       'The compass that points to destiny'
-    ]
+    ],
+    archetype: {
+      name: 'Pirate',
+      stats: {
+        'Swagger': 'Your confidence and ability to inspire or intimidate.',
+        'Dexterity': 'Your nimbleness and physical quickness.',
+        'Resolve': 'Your determination and perseverance in the face of adversity.',
+        'Avarice': 'Your drive to acquire and your skill in finding what you seek.',
+        'Cunning': 'Your intelligence and resourcefulness for deception and strategy.'
+      }
+    }
   }
 };
 
-export const defaultTheme = themes['velour-nights'];
+export const defaultTheme = themes['blazeheart-saga'];

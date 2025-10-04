@@ -11,8 +11,8 @@ import JournalEntry from './JournalEntry';
 import CalendarView from './CalendarView';
 import UserProfile from './UserProfile';
 import TributePage from './TributePage';
-import CustomCursor from './CustomCursor';
-import ThemeCursorStyles from './ThemeCursorStyles';
+// import CustomCursor from './CustomCursor';
+// import ThemeCursorStyles from './ThemeCursorStyles';
 import BackgroundMusic from './BackgroundMusic';
 import OfflineWarning from './OfflineWarning';
 import Button from './ui/Button';
@@ -385,12 +385,12 @@ export default function QuilliaApp() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      <ThemeCursorStyles theme={currentTheme} />
+      {/* <ThemeCursorStyles theme={currentTheme} />
       <CustomCursor 
         isGenerating={isGenerating} 
         isModalOpen={isModalOpen} 
         theme={currentTheme} 
-      />
+      /> */}
       <BackgroundMusic theme={currentTheme} />
       <OfflineWarning />
 

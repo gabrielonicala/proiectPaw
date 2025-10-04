@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Button from './ui/Button';
 import Card from './ui/Card';
 import MovingGradientBackground from './MovingGradientBackground';
@@ -27,7 +27,7 @@ interface CharacterCreatorProps {
 
 export default function CharacterCreator({ user, onCharacterCreate, onBack, currentTheme, onUpgrade }: CharacterCreatorProps) {
   const [step, setStep] = useState<'theme' | 'avatar' | 'details'>('theme');
-  const [selectedTheme, setSelectedTheme] = useState<Theme>(currentTheme || 'velour-nights');
+  const [selectedTheme, setSelectedTheme] = useState<Theme>(currentTheme || 'blazeheart-saga');
   const [selectedAvatar, setSelectedAvatar] = useState<Avatar | null>(null);
   const [characterName, setCharacterName] = useState('');
   // Bio feature temporarily disabled
@@ -38,9 +38,54 @@ export default function CharacterCreator({ user, onCharacterCreate, onBack, curr
   const [customObjectPronoun, setCustomObjectPronoun] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showLayeredAvatarBuilder, setShowLayeredAvatarBuilder] = useState(true);
+  const [currentThemeIndex, setCurrentThemeIndex] = useState(0);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const carouselRef = useRef<HTMLDivElement>(null);
 
   const existingCharacters = user.characters || [];
   const canCreateCharacter = existingCharacters.length < user.characterSlots;
+  const visibleThemes = Object.values(themes).filter(theme => !theme.hidden);
+
+  // Touch handling for swipe gestures
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const navigateToTheme = (newIndex: number) => {
+    if (isTransitioning) return;
+    
+    setIsTransitioning(true);
+    setCurrentThemeIndex(newIndex);
+    
+    // Reset transition state after animation completes
+    setTimeout(() => {
+      setIsTransitioning(false);
+    }, 400);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd || isTransitioning) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      navigateToTheme((currentThemeIndex + 1) % visibleThemes.length);
+    }
+    if (isRightSwipe) {
+      navigateToTheme((currentThemeIndex - 1 + visibleThemes.length) % visibleThemes.length);
+    }
+  };
   
   // Don't show the "slots full" screen if we're in the middle of creating a character
   const isCreatingCharacter = step !== 'theme';
@@ -234,64 +279,154 @@ export default function CharacterCreator({ user, onCharacterCreate, onBack, curr
 
         {/* Step Content */}
         {step === 'theme' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            {Object.values(themes).map((theme, index) => (
-              <motion.div
-                key={theme.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1, duration: 0.5 }}
-              >
-                <Card
-                  hover
-                  onClick={() => handleThemeSelect(theme.id)}
-                  theme={theme.id}
-                  className={`cursor-pointer transition-all duration-200 ${
-                    selectedTheme === theme.id ? 'animate-gentle-pulse' : ''
-                  }`}
+          <div className="relative w-full max-w-6xl mx-auto mb-8 -mt-2">
+            {/* Navigation Arrows - Desktop only */}
+            <button
+              onClick={() => navigateToTheme((currentThemeIndex - 1 + visibleThemes.length) % visibleThemes.length)}
+              className="hidden md:flex absolute -left-3 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 rounded items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-lg"
+              style={{ 
+                backgroundColor: visibleThemes[currentThemeIndex]?.colors.secondary || 'rgba(0,0,0,0.7)', 
+                color: visibleThemes[currentThemeIndex]?.colors.text || 'white',
+                border: `2px solid ${visibleThemes[currentThemeIndex]?.colors.border || 'transparent'}`
+              }}
+            >
+              <span className="text-2xl">←</span>
+            </button>
+            <button
+              onClick={() => navigateToTheme((currentThemeIndex + 1) % visibleThemes.length)}
+              className="hidden md:flex absolute -right-3 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 rounded items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-lg"
+              style={{ 
+                backgroundColor: visibleThemes[currentThemeIndex]?.colors.secondary || 'rgba(0,0,0,0.7)', 
+                color: visibleThemes[currentThemeIndex]?.colors.text || 'white',
+                border: `2px solid ${visibleThemes[currentThemeIndex]?.colors.border || 'transparent'}`
+              }}
+            >
+              <span className="text-2xl">→</span>
+            </button>
+
+            {/* Mobile Swipe Hint */}
+            <div className="md:hidden text-center mb-2 px-2">
+                <p className="text-sm font-pixel whitespace-nowrap" style={{ 
+                  color: visibleThemes[currentThemeIndex]?.colors.accent,
+                  textShadow: '2px 2px 0px #000, -2px -2px 0px #000, 2px -2px 0px #000, -2px 2px 0px #000'
+                }}>
+                  ← Swipe to explore themes →
+                </p>
+            </div>
+
+            {/* Carousel Container */}
+            <div 
+              className="overflow-hidden"
+              ref={carouselRef}
+              onTouchStart={onTouchStart}
+              onTouchMove={onTouchMove}
+              onTouchEnd={onTouchEnd}
+            >
+              <div className="min-h-[700px] flex items-center justify-center">
+                <motion.div
+                  key={visibleThemes[currentThemeIndex]?.id}
+                  className="w-full px-8 py-2 cursor-pointer"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ 
+                    opacity: 1,
+                    scale: 1
+                  }}
+                  transition={{ 
+                    duration: 0.3,
+                    ease: "easeInOut"
+                  }}
+                  onClick={() => handleThemeSelect(visibleThemes[currentThemeIndex]?.id)}
                 >
-                  <div className="p-6">
-                    <div className="flex items-start gap-4 mb-4">
-                      <motion.div
-                        className="w-16 h-16 pixelated border-2 flex-shrink-0"
-                        style={{ 
-                          background: `linear-gradient(135deg, ${theme.colors.background} 0%, ${theme.colors.primary} 50%, ${theme.colors.secondary} 100%)`,
-                          borderColor: theme.colors.border
-                        }}
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-2xl">{theme.emoji}</span>
-                          <h3 className="font-pixel text-xl" style={{ color: theme.colors.text }}>
-                            {theme.name}
-                          </h3>
+                  <Card
+                    theme={visibleThemes[currentThemeIndex]?.id}
+                    className="animate-gentle-pulse h-full"
+                  >
+                    <div className="p-6">
+                      <div className="flex items-start gap-4 mb-4">
+                        <motion.div
+                          className="w-16 h-16 pixelated border-2 flex-shrink-0"
+                          style={{ 
+                            background: `linear-gradient(135deg, ${visibleThemes[currentThemeIndex]?.colors.background} 0%, ${visibleThemes[currentThemeIndex]?.colors.primary} 50%, ${visibleThemes[currentThemeIndex]?.colors.secondary} 100%)`,
+                            borderColor: visibleThemes[currentThemeIndex]?.colors.border
+                          }}
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-2xl">{visibleThemes[currentThemeIndex]?.emoji}</span>
+                            <h3 className="font-pixel text-xl" style={{ color: visibleThemes[currentThemeIndex]?.colors.text }}>
+                              {visibleThemes[currentThemeIndex]?.name}
+                            </h3>
+                          </div>
+                          <p className="font-pixel text-sm mb-3" style={{ color: visibleThemes[currentThemeIndex]?.colors.accent }}>
+                            {visibleThemes[currentThemeIndex]?.archetype ? `The ${visibleThemes[currentThemeIndex]?.archetype.name}` : visibleThemes[currentThemeIndex]?.description}
+                          </p>
                         </div>
-                        <p className="font-pixel text-sm mb-3" style={{ color: theme.colors.accent }}>
-                          {theme.description}
-                        </p>
+                      </div>
+                      <p className="font-pixel text-sm leading-relaxed" style={{ color: visibleThemes[currentThemeIndex]?.colors.text }}>
+                        {visibleThemes[currentThemeIndex]?.detailedDescription}
+                      </p>
+                      <div className="mt-4">
+                        {visibleThemes[currentThemeIndex]?.archetype ? (
+                          <>
+                            <h4 className="font-pixel text-sm mb-3" style={{ color: visibleThemes[currentThemeIndex]?.colors.accent }}>
+                              The {visibleThemes[currentThemeIndex]?.archetype.name}&apos;s traits:
+                            </h4>
+                            {Object.entries(visibleThemes[currentThemeIndex]?.archetype.stats || {}).map(([statName, statDescription], idx) => (
+                              <div key={idx} className="mb-3 last:mb-0">
+                                <div
+                                  className="inline-block px-3 py-2 text-sm font-pixel rounded mb-1"
+                                  style={{ 
+                                    backgroundColor: visibleThemes[currentThemeIndex]?.colors.secondary,
+                                    color: visibleThemes[currentThemeIndex]?.colors.text
+                                  }}
+                                >
+                                  {statName}
+                                </div>
+                                <p className="text-xs font-pixel leading-relaxed" style={{ color: visibleThemes[currentThemeIndex]?.colors.text }}>
+                                  {statDescription}
+                                </p>
+                              </div>
+                            ))}
+                          </>
+                        ) : (
+                          <div className="flex flex-wrap gap-2">
+                            {visibleThemes[currentThemeIndex]?.effects.slice(0, 3).map((effect, idx) => (
+                              <span
+                                key={idx}
+                                className="px-2 py-1 text-xs font-pixel rounded"
+                                style={{ 
+                                  backgroundColor: visibleThemes[currentThemeIndex]?.colors.secondary,
+                                  color: visibleThemes[currentThemeIndex]?.colors.text
+                                }}
+                              >
+                                {effect}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
-                    <p className="font-pixel text-sm leading-relaxed" style={{ color: theme.colors.text }}>
-                      {theme.detailedDescription}
-                    </p>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {theme.effects.slice(0, 3).map((effect, idx) => (
-                        <span
-                          key={idx}
-                          className="px-2 py-1 text-xs font-pixel rounded"
-                          style={{ 
-                            backgroundColor: theme.colors.secondary,
-                            color: theme.colors.text
-                          }}
-                        >
-                          {effect}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </Card>
-              </motion.div>
-            ))}
+                  </Card>
+                </motion.div>
+              </div>
+            </div>
+
+                {/* Dots Indicator */}
+                {/* <div className="flex justify-center mt-3 space-x-2">
+                  {visibleThemes.map((theme, index) => (
+                    <button
+                      key={index}
+                      onClick={() => navigateToTheme(index)}
+                      className={`w-[2px] h-[2px] sm:w-[18px] sm:h-[18px] md:w-[22px] md:h-[22px] rounded-full transition-all duration-300 ${
+                        index === currentThemeIndex ? 'opacity-100 scale-125' : 'opacity-50'
+                      }`}
+                      style={{ 
+                        background: `linear-gradient(135deg, ${theme.colors.background} 0%, ${theme.colors.primary} 50%, ${theme.colors.secondary} 100%)`,
+                        border: `1px solid ${theme.colors.border}`
+                      }}
+                    />
+                  ))}
+                </div> */}
           </div>
         )}
 

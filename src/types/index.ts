@@ -126,6 +126,13 @@ export interface ThemeConfig {
   sounds: string[];
   animations: string[];
   storyPrompts?: string[];
+  // NEW: Character archetype stats
+  archetype?: {
+    name: string;
+    stats: Record<string, string>; // stat name -> description
+  };
+  // NEW: Hide theme from selection if no archetype defined
+  hidden?: boolean;
 }
 
 export interface AppState {

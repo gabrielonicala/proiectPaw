@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useState, useMemo, useRef, useEffect } from 'react';
+import { HiInformationCircle } from "react-icons/hi";
 import Button from './ui/Button';
 import Card from './ui/Card';
 import Input from './ui/Input';
@@ -55,6 +56,7 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
   const [isLoading, setIsLoading] = useState(false);
   const [showLayeredAvatarBuilder, setShowLayeredAvatarBuilder] = useState(false);
   const [selectedCharacterId, setSelectedCharacterId] = useState(activeCharacter.id);
+  const [openTooltip, setOpenTooltip] = useState<string | null>(null);
   
   const { entries, isLoading: entriesLoading } = useEntries();
   
@@ -86,6 +88,18 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
     
     return () => clearTimeout(timeoutId);
   }, [activeCharacter, characterStats]);
+
+  // Close tooltip when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setOpenTooltip(null);
+    };
+
+    if (openTooltip) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [openTooltip]);
   
   // Get available characters for selection
   const availableCharacters = user.characters || [];
@@ -377,7 +391,40 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
               </div>
 
 
-              {/* Quick Stats */}
+              {/* Level Progress Bar */}
+              {!themes[activeCharacter.theme]?.hidden ? (
+                <div className="mt-4">
+                  {(() => {
+                    const totalExp = (activeCharacter as any).experience || 0;
+                    const currentLevel = Math.floor(totalExp / 100) + 1;
+                    const expInCurrentLevel = totalExp % 100;
+                    const expToNextLevel = 100 - expInCurrentLevel;
+                    
+                    return (
+                      <div className="text-center">
+                        <div className="flex items-center justify-center gap-2 mb-2">
+                          <span className="font-pixel text-lg text-yellow-300">Level {currentLevel}</span>
+                          <span className="font-pixel text-sm text-gray-300">
+                            ({expInCurrentLevel}/100 EXP)
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-700 rounded-full h-3 mb-2">
+                          <div 
+                            className="h-3 rounded-full transition-all duration-500"
+                            style={{ 
+                              width: `${(expInCurrentLevel / 100) * 100}%`,
+                              backgroundColor: themes[activeCharacter.theme]?.colors.accent || '#FFD700'
+                            }}
+                          />
+                        </div>
+                        <p className="font-pixel text-xs text-gray-400">
+                          {expToNextLevel} EXP to Level {currentLevel + 1}
+                        </p>
+                      </div>
+                    );
+                  })()}
+                </div>
+              ) : (
               <div className="flex gap-6 text-center mt-4">
                 <div>
                   <div className="font-pixel text-2xl text-yellow-300">{characterStats.totalAdventures}</div>
@@ -392,6 +439,7 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
                   <div className="font-pixel text-xs text-gray-300">Days Old</div>
                 </div>
                 </div>
+              )}
               </div>
             </Card>
           </motion.div>
@@ -404,10 +452,70 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
          >
            <Card theme={activeCharacter.theme} effect="glow" className="p-3">
              <div>
-               <h3 className="font-pixel text-lg text-yellow-300 mb-3 text-center">{themes[activeCharacter.theme]?.name || 'Theme'}</h3>
+               <h3 className="font-pixel text-lg text-yellow-300 mb-3 text-center">
+                 {themes[activeCharacter.theme]?.hidden 
+                   ? (themes[activeCharacter.theme]?.name || 'Theme')
+                   : (themes[activeCharacter.theme]?.archetype?.name ? `The ${themes[activeCharacter.theme]?.archetype?.name}` : themes[activeCharacter.theme]?.name || 'Theme')
+                 }
+               </h3>
+               {themes[activeCharacter.theme]?.hidden ? (
+                 <p className="font-pixel text-sm text-gray-300 leading-relaxed">
+                   {themes[activeCharacter.theme]?.detailedDescription || 'No theme description available.'}
+                 </p>
+               ) : themes[activeCharacter.theme]?.archetype ? (
+                 <div>
+                   <h4 className="font-pixel text-sm mb-3 text-center text-white">
+                     {activeCharacter.name}&apos;s stats:
+                   </h4>
+                   {Object.keys(themes[activeCharacter.theme]?.archetype?.stats || {}).map((statName, idx) => {
+                     const statValue = (activeCharacter as any).stats?.[statName]?.value || 10; // Default to 10 if no value
+                     return (
+                        <div key={idx} className="mb-2 last:mb-0">
+                          <div className="flex justify-between items-center">
+                            <div className="relative flex items-center gap-1 sm:gap-1">
+                              <span 
+                                className="font-pixel text-sm" 
+                                style={{ color: themes[activeCharacter.theme]?.colors.text }}
+                              >
+                                {statName}
+                              </span>
+                              <button
+                                className="flex items-center justify-center transition-colors hover:opacity-70"
+                                style={{ 
+                                  color: themes[activeCharacter.theme]?.colors.accent
+                                }}
+                                onClick={() => setOpenTooltip(openTooltip === statName ? null : statName)}
+                                title="View description"
+                              >
+                                <HiInformationCircle size={20} className="sm:w-4 sm:h-4" />
+                              </button>
+                              {/* Tooltip */}
+                              {openTooltip === statName && (
+                                <div className="absolute bottom-full left-0 transform translate-x-4 mb-2 px-3 py-2 bg-gray-900 text-white text-xs font-pixel rounded-lg shadow-lg z-10 w-56 text-center">
+                                  {themes[activeCharacter.theme]?.archetype?.stats[statName]}
+                                  <div className="absolute top-full left-8 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                                </div>
+                              )}
+                            </div>
+                            <span 
+                              className="font-pixel text-lg px-2 py-1 rounded"
+                              style={{ 
+                                backgroundColor: themes[activeCharacter.theme]?.colors.background,
+                                color: themes[activeCharacter.theme]?.colors.text
+                              }}
+                            >
+                              {statValue}
+                            </span>
+                          </div>
+                        </div>
+                     );
+                   })}
+                 </div>
+               ) : (
                <p className="font-pixel text-sm text-gray-300 leading-relaxed">
                  {themes[activeCharacter.theme]?.detailedDescription || 'No theme description available.'}
                </p>
+               )}
              </div>
            </Card>
          </motion.div>

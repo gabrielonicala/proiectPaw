@@ -71,21 +71,21 @@
 }
 
 /* Apply custom cursor to the entire app */
-body {
+/* body {
   cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" fill="%23FFD700" stroke="%23FFA500" stroke-width="1" stroke-linejoin="round"/><path d="M13 13l6 6" stroke="%23FFD700" stroke-width="2" stroke-linecap="round"/></svg>') 12 12, auto;
-}
+} */
 
 /* Button hover states */
-button:hover {
+/* button:hover {
   cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><defs><filter id="glow"><feGaussianBlur stdDeviation="2" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" fill="%23FFD700" stroke="%23FFA500" stroke-width="1" stroke-linejoin="round" filter="url(%23glow)"/><path d="M13 13l6 6" stroke="%23FFD700" stroke-width="2" stroke-linecap="round" filter="url(%23glow)"/></svg>') 12 12, pointer;
-}
+} */
 
 /* Input fields */
-input, textarea {
+/* input, textarea {
   cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="%23FFD700" stroke="%23FFA500" stroke-width="1"/><path d="M12 6v12M8 10h8" stroke="%23FFA500" stroke-width="2" stroke-linecap="round"/></svg>') 12 12, text;
-}
+} */
 
 /* Disabled elements */
-button:disabled, input:disabled, textarea:disabled {
+/* button:disabled, input:disabled, textarea:disabled {
   cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" fill="%23666" stroke="%23444" stroke-width="1" stroke-linejoin="round"/><path d="M13 13l6 6" stroke="%23666" stroke-width="2" stroke-linecap="round"/></svg>') 12 12, not-allowed;
-}
+} */
