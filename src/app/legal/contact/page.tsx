@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
@@ -344,12 +345,12 @@ export default function ContactPage() {
           </form>
 
           <div className="mt-6 text-center">
-            <a 
+            <Link 
               href="/" 
               className="text-orange-400 hover:text-orange-300 text-sm font-pixel"
             >
               ← Back to Quillia
-            </a>
+            </Link>
           </div>
         </div>
       </Card>

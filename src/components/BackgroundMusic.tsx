@@ -84,6 +84,7 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
   // const [isMusicPlaying, setIsMusicPlaying] = useState(true); // Always start playing
   const [volume, setVolume] = useState(0.3);
   const [isMuted, setIsMuted] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [showControls, setShowControls] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -94,42 +95,47 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
   const [currentTrack, setCurrentTrack] = useState(themeMusic[theme as keyof typeof themeMusic] || themeMusic.default);
   const [cachedAudioUrl, setCachedAudioUrl] = useState<string | null>(null);
 
-  // Cache audio when track changes
-  useEffect(() => {
-    const cacheCurrentTrack = async () => {
-      const cached = getCachedAudioUrl(currentTrack.url);
-      if (cached !== currentTrack.url) {
-        setCachedAudioUrl(cached);
+  // Lazy load audio only when user interacts and wants to play music
+  const loadCurrentTrack = async () => {
+    if (cachedAudioUrl) return; // Already loaded
+    
+    const cached = getCachedAudioUrl(currentTrack.url);
+    if (cached !== currentTrack.url) {
+      setCachedAudioUrl(cached);
+    } else {
+      // Try to cache the audio for future use
+      const cachedData = await cacheAsset(currentTrack.url, 'audio/mpeg');
+      if (cachedData) {
+        setCachedAudioUrl(cachedData);
       } else {
-        // Try to cache the audio for future use
-        const cachedData = await cacheAsset(currentTrack.url, 'audio/mpeg');
-        if (cachedData) {
-          setCachedAudioUrl(cachedData);
-        } else {
-          setCachedAudioUrl(currentTrack.url);
-        }
+        setCachedAudioUrl(currentTrack.url);
       }
-    };
+    }
+  };
 
-    cacheCurrentTrack();
-  }, [currentTrack]);
-
-  // Force restart audio when cached URL changes (new track loaded)
+  // Handle track changes - only restart when actually changing tracks
   useEffect(() => {
-    if (cachedAudioUrl && audioRef.current && userInteracted && !isMuted) {
+    if (cachedAudioUrl && audioRef.current && userInteracted) {
       // Small delay to ensure the audio element has updated its src
       const restartTimer = setTimeout(() => {
         if (audioRef.current) {
           audioRef.current.currentTime = 0;
-          audioRef.current.play().catch(e => {
-            console.error("Error restarting audio with new track:", e);
-          });
+          // Set muted property for mobile
+          if (isMobileRef.current) {
+            audioRef.current.muted = isMuted;
+          }
+          // Only play if not muted and not paused
+          if (!isMuted && !isPaused) {
+            audioRef.current.play().catch(e => {
+              console.error("Error restarting audio with new track:", e);
+            });
+          }
         }
       }, 50);
       
       return () => clearTimeout(restartTimer);
     }
-  }, [cachedAudioUrl, userInteracted, isMuted]);
+  }, [cachedAudioUrl, userInteracted]);
 
   // Detect mobile device and update on resize
   useEffect(() => {
@@ -166,21 +172,32 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
     }
     
     setCurrentTrack(newTrack);
+    setCachedAudioUrl(null); // Reset cached URL to trigger lazy loading
     setHasError(false);
     setIsLoading(true);
   }, [theme]);
 
   // User interaction detection for autoplay
   useEffect(() => {
-    const handleUserInteraction = () => {
+    const handleUserInteraction = async () => {
       if (!userInteracted) {
         setUserInteracted(true);
         setShowInteractionPrompt(false);
+        
+        // Load the current track when user first interacts
+        await loadCurrentTrack();
+        
         // Try to play audio after user interaction
         if (audioRef.current && !isMuted) {
-          audioRef.current.play().catch(e => {
-            console.error("Error playing audio after user interaction:", e);
-          });
+          if (isMobileRef.current) {
+            // On mobile, ensure muted property is set correctly
+            audioRef.current.muted = isMuted;
+          }
+          if (!isPaused) {
+            audioRef.current.play().catch(e => {
+              console.error("Error playing audio after user interaction:", e);
+            });
+          }
         }
       }
     };
@@ -204,7 +221,7 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
       });
       clearTimeout(promptTimer);
     };
-  }, [userInteracted, isMuted]);
+  }, [userInteracted, isMuted, isPaused]);
 
   // Handle audio loading and errors
   const handleCanPlay = () => {
@@ -224,24 +241,51 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
 
   // Handle audio playback - only play after user interaction
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = isMuted ? 0 : volume;
-      // Only try to play if user has interacted and not muted
-      if (userInteracted && !isMuted) {
-        // Small delay to ensure the new track is loaded
-        const playTimer = setTimeout(() => {
-          if (audioRef.current) {
-            audioRef.current.play().catch(e => {
-              console.error("Error playing audio:", e);
-              setHasError(true);
-            });
-          }
-        }, 100);
+    if (audioRef.current && cachedAudioUrl) {
+      if (isMobileRef.current) {
+        // On mobile, use muted property and volume control
+        audioRef.current.muted = isMuted;
+        // Note: volume property may not work on mobile, but we set it anyway
+        audioRef.current.volume = volume;
         
-        return () => clearTimeout(playTimer);
+        // Only try to play if user has interacted and not muted
+        if (userInteracted && !isMuted) {
+          const playTimer = setTimeout(() => {
+            if (audioRef.current) {
+              audioRef.current.play().catch(e => {
+                console.error("Error playing audio on mobile:", e);
+                setHasError(true);
+              });
+            }
+          }, 100);
+          
+          return () => clearTimeout(playTimer);
+        }
+      } else {
+        // Desktop behavior - use pause/play
+        audioRef.current.volume = volume;
+        // Only try to play if user has interacted and not muted
+        if (userInteracted && !isMuted && !isPaused) {
+          // Small delay to ensure the new track is loaded
+          const playTimer = setTimeout(() => {
+            if (audioRef.current) {
+              audioRef.current.play().catch(e => {
+                console.error("Error playing audio:", e);
+                setHasError(true);
+              });
+            }
+          }, 100);
+          
+          return () => clearTimeout(playTimer);
+        } else if (isMuted || isPaused) {
+          // Pause the audio instead of stopping it
+          if (audioRef.current && !audioRef.current.paused) {
+            audioRef.current.pause();
+          }
+        }
       }
     }
-  }, [volume, isMuted, currentTrack, userInteracted]);
+  }, [volume, isMuted, isPaused, userInteracted]);
 
   // Handle track end - loop the music
   const handleTrackEnd = () => {
@@ -253,16 +297,68 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
 
   // Music always plays, we only toggle mute/unmute
 
-  const toggleMute = () => {
-    setIsMuted(!isMuted);
+  const toggleMute = async () => {
+    if (isMuted) {
+      // Unmuting - resume from where we left off
+      setIsMuted(false);
+      setIsPaused(false);
+      
+      // Load the track if not already loaded
+      await loadCurrentTrack();
+      
+      if (audioRef.current) {
+        if (isMobileRef.current) {
+          // On mobile, use muted property instead of pause/play
+          audioRef.current.muted = false;
+        } else {
+          // On desktop, use pause/play for better control
+          if (userInteracted) {
+            audioRef.current.play().catch(e => {
+              console.error("Error resuming audio:", e);
+            });
+          }
+        }
+      }
+    } else {
+      // Muting - pause the audio
+      setIsMuted(true);
+      setIsPaused(true);
+      if (audioRef.current) {
+        if (isMobileRef.current) {
+          // On mobile, use muted property instead of pause/play
+          audioRef.current.muted = true;
+        } else {
+          // On desktop, use pause/play for better control
+          audioRef.current.pause();
+        }
+      }
+    }
   };
 
-  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleVolumeChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
-    // If user adjusts volume, unmute
+    // If user adjusts volume, unmute and unpause
     if (isMuted && newVolume > 0) {
       setIsMuted(false);
+      setIsPaused(false);
+      
+      // Load the track if not already loaded
+      await loadCurrentTrack();
+      
+      if (audioRef.current) {
+        if (isMobileRef.current) {
+          // On mobile, use muted property
+          audioRef.current.muted = false;
+        } else {
+          // On desktop, use play
+          if (userInteracted) {
+            audioRef.current.play().catch(e => {
+              console.error("Error resuming audio after volume change:", e);
+            });
+          }
+        }
+      }
     }
   };
 

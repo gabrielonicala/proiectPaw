@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import Footer from '@/components/Footer';
 
 export default function PrivacyPage() {
@@ -325,12 +326,12 @@ export default function PrivacyPage() {
           </div>
 
           <div className="mt-8 text-center">
-            <a 
+            <Link 
               href="/" 
               className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-pixel px-6 py-3 rounded transition-colors"
             >
               Back to Quillia
-            </a>
+            </Link>
           </div>
         </div>
       </div>

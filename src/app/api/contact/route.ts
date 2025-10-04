@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Basic rate limiting check (you can enhance this with Redis or similar)
-    const clientIP = request.ip || request.headers.get('x-forwarded-for') || 'unknown';
+    const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
     
     // Log the contact form submission (in production, you'd send this to your email service)
     console.log('Contact form submission:', {

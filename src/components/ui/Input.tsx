@@ -21,6 +21,7 @@ interface InputProps {
   showCharCount?: boolean;
   charCountLabel?: string;
   quotaData?: React.ReactNode;
+  required?: boolean;
 }
 
 export default function Input({
@@ -39,7 +40,8 @@ export default function Input({
   minLength,
   showCharCount = false,
   charCountLabel = 'characters',
-  quotaData
+  quotaData,
+  required
 }: InputProps) {
   // Get theme colors
   const themeConfig = themes[theme];
@@ -83,6 +85,7 @@ export default function Input({
             autoFocus={autoFocus}
             maxLength={maxLength}
             minLength={minLength}
+            required={required}
             style={getInputStyle()}
             className={cn(baseClasses, pixelatedClasses, className)}
           />
@@ -118,6 +121,7 @@ export default function Input({
         autoFocus={autoFocus}
         maxLength={maxLength}
         minLength={minLength}
+        required={required}
         style={getInputStyle()}
         className={cn(baseClasses, pixelatedClasses, className)}
       />
