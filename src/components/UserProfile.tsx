@@ -15,7 +15,7 @@ import LayeredAvatarBuilder from './LayeredAvatarBuilder';
 import { LayeredAvatar } from '@/lib/layered-avatars';
 import { calculateCharacterStats } from '@/lib/character-stats';
 import { getCachedImageUrl } from '@/lib/asset-cache';
-import Footer from './Footer';
+// import Footer from './Footer';
 
 interface UserProfileProps {
   user: User;
@@ -590,7 +590,7 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
         />
       )}
       </div>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }

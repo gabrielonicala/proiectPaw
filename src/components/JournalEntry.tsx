@@ -15,7 +15,7 @@ import { migrateTheme } from '@/lib/theme-migration';
 import { getImageProvider, getReferenceImages } from '@/lib/image-generation-config';
 import { useDailyUsage } from '@/hooks/useDailyUsage';
 import QuotaCountdown from './QuotaCountdown';
-import Footer from './Footer';
+// import Footer from './Footer';
 
 interface JournalEntryProps {
   user: User;
@@ -765,7 +765,7 @@ Hint: Rich details weave the most captivating tales.`}
         )}
       </div>
       </div>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }
