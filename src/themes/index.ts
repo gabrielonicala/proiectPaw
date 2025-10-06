@@ -141,7 +141,7 @@ export const themes: Record<string, ThemeConfig> = {
       'Destiny calls, and the hero answers'
     ],
     archetype: {
-      name: 'Samurai',
+      name: 'Hero', // Changed from 'Samurai' to be more anime-generic
       stats: {
         // Original descriptions (commented out for reference):
         // 'Discipline': 'Your mental fortitude and control over your emotions.',
@@ -214,11 +214,18 @@ export const themes: Record<string, ThemeConfig> = {
     archetype: {
       name: 'Occultist',
       stats: {
-        'Clarity': 'Your ability to keep a clear mind in the face of madness.',
-        'Prowess': 'Your physical quickness and coordination.',
-        'Glimmer': 'Your intuition and ability to perceive hidden supernatural elements.',
-        'Reserve': 'Your skill in observing without being noticed and keeping secrets.',
-        'Conviction': 'Your unshakeable belief in your own path, no matter the cost.'
+        // Original descriptions (commented out for reference):
+        // 'Clarity': 'Your ability to keep a clear mind in the face of madness.',
+        // 'Prowess': 'Your physical quickness and coordination.',
+        // 'Glimmer': 'Your intuition and ability to perceive hidden supernatural elements.',
+        // 'Reserve': 'Your skill in observing without being noticed and keeping secrets.',
+        // 'Conviction': 'Your unshakeable belief in your own path, no matter the cost.'
+        
+        'Clarity': 'Your ability to keep a clear mind and think logically in chaotic situations. Affected by: meditation, problem-solving, staying calm under pressure, and maintaining focus.',
+        'Prowess': 'Your physical quickness, coordination, and athletic ability. Affected by: physical training, sports, dance, martial arts, gym workouts, and activities requiring body control.',
+        'Glimmer': 'Your intuition and ability to perceive hidden patterns and supernatural elements. Affected by: creative activities, pattern recognition, artistic pursuits, and intuitive decision-making.',
+        'Reserve': 'Your skill in observing without being noticed and keeping secrets. Affected by: stealth activities, privacy, keeping confidences, and avoiding attention.',
+        'Conviction': 'Your unshakeable belief in your own path and determination. Affected by: standing up for beliefs, making difficult decisions, persistence, and moral courage.'
       }
     }
   },
@@ -250,11 +257,18 @@ export const themes: Record<string, ThemeConfig> = {
     archetype: {
       name: 'Cosmonaut',
       stats: {
-        'Navigation': 'Your ability to chart a course and stay on it, both literally and in your daily tasks.',
-        'Empathy': 'Your ability to connect with and understand new perspectives.',
-        'Curiosity': 'Your thirst for knowledge and drive to seek out the unknown.',
-        'Resolve': 'Your mental fortitude and resilience in the face of immense challenges.',
-        'Observation': 'Your ability to take in the wonders of the universe and understand the data you are collecting.'
+        // Original descriptions (commented out for reference):
+        // 'Navigation': 'Your ability to chart a course and stay on it, both literally and in your daily tasks.',
+        // 'Empathy': 'Your ability to connect with and understand new perspectives.',
+        // 'Curiosity': 'Your thirst for knowledge and drive to seek out the unknown.',
+        // 'Resolve': 'Your mental fortitude and resilience in the face of immense challenges.',
+        // 'Observation': 'Your ability to take in the wonders of the universe and understand the data you are collecting.'
+        
+        'Navigation': 'Your ability to chart a course and stay on it, both literally and in your daily tasks. Affected by: planning, goal-setting, following through on commitments, and staying organized.',
+        'Empathy': 'Your ability to connect with and understand new perspectives. Affected by: social interactions, listening to others, understanding different viewpoints, and emotional intelligence.',
+        'Curiosity': 'Your thirst for knowledge and drive to seek out the unknown. Affected by: learning new things, asking questions, exploring new topics, and intellectual pursuits.',
+        'Resolve': 'Your mental fortitude and resilience in the face of immense challenges. Affected by: overcoming obstacles, persistence, mental toughness, and handling stress.',
+        'Observation': 'Your ability to take in the wonders of the universe and understand the data you are collecting. Affected by: paying attention to details, analysis, research, and careful observation.'
       }
     }
   },
@@ -286,11 +300,18 @@ export const themes: Record<string, ThemeConfig> = {
     archetype: {
       name: 'Arcane Scribe',
       stats: {
-        'Lore': 'Your knowledge of the world and its secrets.',
-        'Willpower': 'Your mental strength and determination.',
-        'Presence': 'Your personal charisma and how you influence others.',
-        'Aura': 'Your ability to perceive and manipulate magical energy.',
-        'Sagacity': 'Your wisdom and ability to make sound judgments.'
+        // Original descriptions (commented out for reference):
+        // 'Lore': 'Your knowledge of the world and its secrets.',
+        // 'Willpower': 'Your mental strength and determination.',
+        // 'Presence': 'Your personal charisma and how you influence others.',
+        // 'Aura': 'Your ability to perceive and manipulate magical energy.',
+        // 'Sagacity': 'Your wisdom and ability to make sound judgments.'
+        
+        'Lore': 'Your knowledge of the world and its secrets. Affected by: studying, reading, learning new information, research, and accumulating knowledge.',
+        'Willpower': 'Your mental strength and determination. Affected by: self-discipline, resisting temptation, mental toughness, and pushing through challenges.',
+        'Presence': 'Your personal charisma and how you influence others. Affected by: public speaking, leadership, social interactions, and making an impression.',
+        'Aura': 'Your ability to perceive and manipulate magical energy. Affected by: creative activities, artistic pursuits, meditation, and spiritual practices.',
+        'Sagacity': 'Your wisdom and ability to make sound judgments. Affected by: making good decisions, giving advice, problem-solving, and thoughtful analysis.'
       }
     }
   },
@@ -322,11 +343,18 @@ export const themes: Record<string, ThemeConfig> = {
     archetype: {
       name: 'Outlaw',
       stats: {
-        'Aim': 'Your precision and focus in all endeavors.',
-        'Grit': 'Your sheer mental and physical toughness.',
-        'Presence': 'Your charisma and the impression you leave on others.',
-        'Gait': 'Your manner of moving and navigating the world, both literally and figuratively.',
-        'Guile': 'Your cleverness and resourcefulness in tricky situations.'
+        // Original descriptions (commented out for reference):
+        // 'Aim': 'Your precision and focus in all endeavors.',
+        // 'Grit': 'Your sheer mental and physical toughness.',
+        // 'Presence': 'Your charisma and the impression you leave on others.',
+        // 'Gait': 'Your manner of moving and navigating the world, both literally and figuratively.',
+        // 'Guile': 'Your cleverness and resourcefulness in tricky situations.'
+        
+        'Aim': 'Your precision and focus in all endeavors. Affected by: detailed work, accuracy, concentration, and tasks requiring precision.',
+        'Grit': 'Your sheer mental and physical toughness. Affected by: endurance activities, handling stress, persistence, and overcoming physical challenges.',
+        'Presence': 'Your charisma and the impression you leave on others. Affected by: leadership, public speaking, social interactions, and making an impact.',
+        'Gait': 'Your manner of moving and navigating the world, both literally and figuratively. Affected by: physical movement, travel, adaptability, and how you carry yourself.',
+        'Guile': 'Your cleverness and resourcefulness in tricky situations. Affected by: problem-solving, creative thinking, strategy, and handling complex situations.'
       }
     }
   },
@@ -361,11 +389,18 @@ export const themes: Record<string, ThemeConfig> = {
     archetype: {
       name: 'Pirate',
       stats: {
-        'Swagger': 'Your confidence and ability to inspire or intimidate.',
-        'Dexterity': 'Your nimbleness and physical quickness.',
-        'Resolve': 'Your determination and perseverance in the face of adversity.',
-        'Avarice': 'Your drive to acquire and your skill in finding what you seek.',
-        'Cunning': 'Your intelligence and resourcefulness for deception and strategy.'
+        // Original descriptions (commented out for reference):
+        // 'Swagger': 'Your confidence and ability to inspire or intimidate.',
+        // 'Dexterity': 'Your nimbleness and physical quickness.',
+        // 'Resolve': 'Your determination and perseverance in the face of adversity.',
+        // 'Avarice': 'Your drive to acquire and your skill in finding what you seek.',
+        // 'Cunning': 'Your intelligence and resourcefulness for deception and strategy.'
+        
+        'Swagger': 'Your confidence and ability to inspire or intimidate. Affected by: leadership, public speaking, taking charge, and projecting confidence.',
+        'Dexterity': 'Your nimbleness and physical quickness. Affected by: physical activities, sports, dance, martial arts, and tasks requiring agility.',
+        'Resolve': 'Your determination and perseverance in the face of adversity. Affected by: persistence, overcoming obstacles, mental toughness, and not giving up.',
+        'Avarice': 'Your drive to acquire and your skill in finding what you seek. Affected by: goal-setting, ambition, resource gathering, and pursuing opportunities.',
+        'Cunning': 'Your intelligence and resourcefulness for deception and strategy. Affected by: strategic thinking, problem-solving, planning, and handling complex situations.'
       }
     }
   }
