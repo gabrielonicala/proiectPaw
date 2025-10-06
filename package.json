@@ -17,7 +17,6 @@
     "@dicebear/core": "^9.2.4",
     "@google/genai": "^1.20.0",
     "@google/generative-ai": "^0.24.1",
-    "@next/swc-win32-x64-msvc": "^15.5.4",
     "@prisma/client": "^6.16.1",
     "@runwayml/sdk": "^2.9.0",
     "@stripe/stripe-js": "^7.9.0",
