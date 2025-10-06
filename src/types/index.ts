@@ -31,6 +31,9 @@ export interface Character {
   isLocked?: boolean; // Added for character access control
   createdAt: Date;
   updatedAt: Date;
+  experience?: number;
+  level?: number;
+  stats?: Record<string, { value: number; description: string }>;
   // Relations
   entries?: JournalEntry[];
 }
@@ -100,6 +103,8 @@ export interface JournalEntry {
   createdAt: Date;
   updatedAt: Date;
   pastContext?: string[];
+  expGained?: number;
+  statAnalysis?: string;
   // Relations
   character?: Character;
 }

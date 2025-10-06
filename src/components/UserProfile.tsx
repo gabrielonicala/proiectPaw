@@ -396,23 +396,35 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
                 <div className="mt-4">
                   {(() => {
                     const totalExp = (activeCharacter as any).experience || 0;
-                    const currentLevel = Math.floor(totalExp / 100) + 1;
-                    const expInCurrentLevel = totalExp % 100;
-                    const expToNextLevel = 100 - expInCurrentLevel;
+                    
+                    // Calculate level using scaling curve: 100 + 20×(level-1)
+                    let currentLevel = 1;
+                    let expForNextLevel = 100;
+                    let totalExpNeeded = 0;
+                    let expInCurrentLevel = totalExp;
+                    
+                    while (totalExpNeeded + expForNextLevel <= totalExp) {
+                      totalExpNeeded += expForNextLevel;
+                      currentLevel++;
+                      expForNextLevel = 100 + 20 * (currentLevel - 1);
+                    }
+                    
+                    expInCurrentLevel = totalExp - totalExpNeeded;
+                    const expToNextLevel = expForNextLevel - expInCurrentLevel;
                     
                     return (
                       <div className="text-center">
                         <div className="flex items-center justify-center gap-2 mb-2">
                           <span className="font-pixel text-lg text-yellow-300">Level {currentLevel}</span>
                           <span className="font-pixel text-sm text-gray-300">
-                            ({expInCurrentLevel}/100 EXP)
+                            ({expInCurrentLevel}/{expForNextLevel} EXP)
                           </span>
                         </div>
                         <div className="w-full bg-gray-700 rounded-full h-3 mb-2">
                           <div 
                             className="h-3 rounded-full transition-all duration-500"
                             style={{ 
-                              width: `${(expInCurrentLevel / 100) * 100}%`,
+                              width: `${(expInCurrentLevel / expForNextLevel) * 100}%`,
                               backgroundColor: themes[activeCharacter.theme]?.colors.accent || '#FFD700'
                             }}
                           />
@@ -467,8 +479,8 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
                    <h4 className="font-pixel text-sm mb-3 text-center text-white">
                      {activeCharacter.name}&apos;s stats:
                    </h4>
-                   {Object.keys(themes[activeCharacter.theme]?.archetype?.stats || {}).map((statName, idx) => {
-                     const statValue = (activeCharacter as any).stats?.[statName]?.value || 10; // Default to 10 if no value
+                  {Object.keys(themes[activeCharacter.theme]?.archetype?.stats || {}).map((statName, idx) => {
+                    const statValue = (activeCharacter as any).stats?.[statName]?.value || 10; // Default to 10 if no value
                      return (
                         <div key={idx} className="mb-2 last:mb-0">
                           <div className="flex justify-between items-center">

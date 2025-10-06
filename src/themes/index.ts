@@ -57,11 +57,18 @@ export const themes: Record<string, ThemeConfig> = {
     archetype: {
       name: 'Net-Runner',
       stats: {
-        'Syntax': 'Your ability to think logically and analyze data.',
-        'Latency': 'Your speed and reaction time, in both the digital and physical world.',
-        'Discretion': 'Your ability to move unseen and remain undetected.',
-        'Reputation': 'Your influence and standing within the city\'s network.',
-        'Jolt': 'Your raw mental energy and quick-wittedness.'
+        // Original descriptions (commented out for reference):
+        // 'Syntax': 'Your ability to think logically and analyze data.',
+        // 'Latency': 'Your speed and reaction time, in both the digital and physical world.',
+        // 'Discretion': 'Your ability to move unseen and remain undetected.',
+        // 'Reputation': 'Your influence and standing within the city\'s network.',
+        // 'Jolt': 'Your raw mental energy and quick-wittedness.'
+        
+        'Syntax': 'Your ability to think logically, analyze data, and solve complex problems. Affected by: coding, programming, logical reasoning, data analysis, and systematic thinking.',
+        'Latency': 'Your speed, reaction time, and quickness in both digital and physical tasks. Affected by: fast-paced activities, quick decision-making, reflexes, and time-sensitive challenges.',
+        'Discretion': 'Your ability to move unseen, remain undetected, and keep secrets. Affected by: stealth activities, privacy, keeping confidences, and avoiding attention.',
+        'Reputation': 'Your influence, standing, and social connections within networks. Affected by: networking, building relationships, gaining respect, and social influence.',
+        'Jolt': 'Your raw mental energy, creativity, and quick-wittedness. Affected by: creative projects, brainstorming, improvisation, and mental agility.'
       }
     }
   },
@@ -93,11 +100,18 @@ export const themes: Record<string, ThemeConfig> = {
     archetype: {
       name: 'Detective',
       stats: {
-        'Deduction': 'Your ability to make logical inferences and solve complex problems.',
-        'Perception': 'Your keen eye for observation and detail.',
-        'Composure': 'Your ability to remain calm and rational under pressure.',
-        'Discourse': 'Your skill in conversation and extracting information from others.',
-        'Stamina': 'Your mental and physical endurance.'
+        // Original descriptions (commented out for reference):
+        // 'Deduction': 'Your ability to make logical inferences and solve complex problems.',
+        // 'Perception': 'Your keen eye for observation and detail.',
+        // 'Composure': 'Your ability to remain calm and rational under pressure.',
+        // 'Discourse': 'Your skill in conversation and extracting information from others.',
+        // 'Stamina': 'Your mental and physical endurance.'
+        
+        'Deduction': 'Your ability to make logical inferences and solve complex problems. Affected by: puzzle-solving, investigation, logical reasoning, and analytical thinking.',
+        'Perception': 'Your keen eye for observation and attention to detail. Affected by: careful observation, noticing details, surveillance, and paying attention to surroundings.',
+        'Composure': 'Your ability to remain calm and rational under pressure. Affected by: stressful situations, maintaining calm, emotional control, and handling pressure.',
+        'Discourse': 'Your skill in conversation and extracting information from others. Affected by: social interactions, interviews, negotiations, and communication.',
+        'Stamina': 'Your mental and physical endurance and persistence. Affected by: long tasks, endurance activities, persistence, and sustained effort.'
       }
     }
   },
@@ -129,11 +143,18 @@ export const themes: Record<string, ThemeConfig> = {
     archetype: {
       name: 'Samurai',
       stats: {
-        'Discipline': 'Your mental fortitude and control over your emotions.',
-        'Valor': 'Your courage and fearlessness in the face of a challenge.',
-        'Poise': 'Your physical grace, balance, and composure.',
-        'Vigilance': 'Your awareness of your surroundings and attention to detail.',
-        'Spirit': 'Your inner strength and resilience in the face of hardship.'
+        // Original descriptions (commented out for reference):
+        // 'Discipline': 'Your mental fortitude and control over your emotions.',
+        // 'Valor': 'Your courage and fearlessness in the face of a challenge.',
+        // 'Poise': 'Your physical grace, balance, and composure.',
+        // 'Vigilance': 'Your awareness of your surroundings and attention to detail.',
+        // 'Spirit': 'Your inner strength and resilience in the face of hardship.'
+        
+        'Discipline': 'Your mental fortitude, self-control, and ability to stick to routines and commitments. Affected by: completing difficult tasks, following through on goals, maintaining habits, resisting temptations, and showing self-restraint.',
+        'Valor': 'Your courage, bravery, and willingness to face fears or challenges. Affected by: confronting difficult situations, taking risks, standing up for others, facing your fears, and pushing beyond comfort zones.',
+        'Poise': 'Your physical grace, balance, coordination, and athletic ability. Affected by: physical training, sports, dance, martial arts, gym workouts, physical challenges, and activities requiring body control.',
+        'Vigilance': 'Your awareness, attention to detail, and ability to notice important things. Affected by: careful observation, problem-solving, detective work, studying, analyzing situations, and paying close attention to surroundings.',
+        'Spirit': 'Your inner strength, resilience, and emotional fortitude. Affected by: overcoming setbacks, maintaining optimism, supporting others, emotional challenges, and bouncing back from difficulties.'
       }
     }
   },

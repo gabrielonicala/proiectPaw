@@ -188,6 +188,20 @@ export default function QuilliaApp() {
     }
   };
 
+  const handleCharacterUpdate = (updatedCharacter: Character) => {
+    if (user) {
+      const updatedUser = {
+        ...user,
+        characters: user.characters?.map(char => 
+          char.id === updatedCharacter.id ? updatedCharacter : char
+        ) || [],
+        activeCharacter: updatedCharacter
+      };
+      setUser(updatedUser);
+      setActiveCharacter(updatedCharacter);
+    }
+  };
+
   const handleCharacterSelect = (character: Character) => {
     setActiveCharacter(character);
     setCurrentTheme(character.theme);
@@ -222,28 +236,6 @@ export default function QuilliaApp() {
         } catch (error) {
           console.error('Error switching character:', error);
         }
-      }
-    }
-  };
-
-  const handleCharacterUpdate = (updatedCharacter: Character) => {
-    if (user) {
-      // Update the character in the user's characters array
-      const updatedCharacters = user.characters?.map(char => 
-        char.id === updatedCharacter.id ? updatedCharacter : char
-      ) || [];
-      
-      const updatedUser = {
-        ...user,
-        characters: updatedCharacters,
-        activeCharacter: updatedCharacter.id === user.activeCharacterId ? updatedCharacter : user.activeCharacter
-      };
-      
-      setUser(updatedUser);
-      
-      // If this is the active character, update it
-      if (updatedCharacter.id === activeCharacter?.id) {
-        setActiveCharacter(updatedCharacter);
       }
     }
   };
@@ -503,6 +495,7 @@ export default function QuilliaApp() {
               onModalClose={() => setIsModalOpen(false)}
               onGeneratingStart={() => setIsGenerating(true)}
               onGeneratingEnd={() => setIsGenerating(false)}
+              onCharacterUpdate={handleCharacterUpdate}
             />
           </motion.div>
         )}

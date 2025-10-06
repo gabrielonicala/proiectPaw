@@ -67,7 +67,10 @@ export async function GET() {
             updatedAt: true,
             appearance: true,
             pronouns: true,
-            customPronouns: true
+            customPronouns: true,
+            experience: true,
+            level: true,
+            stats: true
           }
         },
         characters: {
@@ -82,7 +85,10 @@ export async function GET() {
             updatedAt: true,
             appearance: true,
             pronouns: true,
-            customPronouns: true
+            customPronouns: true,
+            experience: true,
+            level: true,
+            stats: true
           },
           orderBy: { createdAt: 'asc' }
         }
@@ -93,8 +99,8 @@ export async function GET() {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Parse avatar data for characters
-    const charactersWithParsedAvatars = user.characters.map((character: DatabaseCharacter) => ({
+    // Parse avatar and stats data for characters
+    const charactersWithParsedAvatars = user.characters.map((character: any) => ({
       ...character,
       userId: user.id,
       description: character.description || undefined,
@@ -102,7 +108,10 @@ export async function GET() {
       avatar: character.avatar ? JSON.parse(character.avatar) : null,
       appearance: character.appearance as 'masculine' | 'feminine' | 'androgynous' | 'custom',
       pronouns: character.pronouns as 'he/him' | 'she/her' | 'they/them' | 'custom',
-      customPronouns: character.customPronouns || undefined
+      customPronouns: character.customPronouns || undefined,
+      experience: character.experience || 0,
+      level: character.level || 1,
+      stats: character.stats ? JSON.parse(character.stats) : null
     })) as Character[];
 
     const activeCharacterWithParsedAvatar = user.activeCharacter ? {
@@ -113,7 +122,10 @@ export async function GET() {
       avatar: user.activeCharacter.avatar ? JSON.parse(user.activeCharacter.avatar) : null,
       appearance: user.activeCharacter.appearance as 'masculine' | 'feminine' | 'androgynous' | 'custom',
       pronouns: user.activeCharacter.pronouns as 'he/him' | 'she/her' | 'they/them' | 'custom',
-      customPronouns: user.activeCharacter.customPronouns || undefined
+      customPronouns: user.activeCharacter.customPronouns || undefined,
+      experience: user.activeCharacter.experience || 0,
+      level: user.activeCharacter.level || 1,
+      stats: user.activeCharacter.stats ? JSON.parse(user.activeCharacter.stats) : null
     } as Character : null;
 
     const userData: User = {
@@ -191,7 +203,10 @@ export async function PUT(request: NextRequest) {
             updatedAt: true,
             appearance: true,
             pronouns: true,
-            customPronouns: true
+            customPronouns: true,
+            experience: true,
+            level: true,
+            stats: true
           }
         },
         characters: {
@@ -206,15 +221,18 @@ export async function PUT(request: NextRequest) {
             updatedAt: true,
             appearance: true,
             pronouns: true,
-            customPronouns: true
+            customPronouns: true,
+            experience: true,
+            level: true,
+            stats: true
           },
           orderBy: { createdAt: 'asc' }
         }
       }
     });
 
-    // Parse avatar data for characters
-    const charactersWithParsedAvatars = updatedUser.characters.map((character: DatabaseCharacter) => ({
+    // Parse avatar and stats data for characters
+    const charactersWithParsedAvatars = updatedUser.characters.map((character: any) => ({
       ...character,
       userId: updatedUser.id,
       description: character.description || undefined,
@@ -222,7 +240,10 @@ export async function PUT(request: NextRequest) {
       avatar: character.avatar ? JSON.parse(character.avatar) : null,
       appearance: character.appearance as 'masculine' | 'feminine' | 'androgynous' | 'custom',
       pronouns: character.pronouns as 'he/him' | 'she/her' | 'they/them' | 'custom',
-      customPronouns: character.customPronouns || undefined
+      customPronouns: character.customPronouns || undefined,
+      experience: character.experience || 0,
+      level: character.level || 1,
+      stats: character.stats ? JSON.parse(character.stats) : null
     })) as Character[];
 
     const activeCharacterWithParsedAvatar = updatedUser.activeCharacter ? {
@@ -233,7 +254,10 @@ export async function PUT(request: NextRequest) {
       avatar: updatedUser.activeCharacter.avatar ? JSON.parse(updatedUser.activeCharacter.avatar) : null,
       appearance: updatedUser.activeCharacter.appearance as 'masculine' | 'feminine' | 'androgynous' | 'custom',
       pronouns: updatedUser.activeCharacter.pronouns as 'he/him' | 'she/her' | 'they/them' | 'custom',
-      customPronouns: updatedUser.activeCharacter.customPronouns || undefined
+      customPronouns: updatedUser.activeCharacter.customPronouns || undefined,
+      experience: updatedUser.activeCharacter.experience || 0,
+      level: updatedUser.activeCharacter.level || 1,
+      stats: updatedUser.activeCharacter.stats ? JSON.parse(updatedUser.activeCharacter.stats) : null
     } as Character : null;
 
     const userData: User = {

@@ -1,6 +1,7 @@
 import { JournalEntry } from "@/types";
 import { db } from "./db";
 import { validateUserSession } from "./auth";
+import { evaluateStatChanges, applyStatChanges } from "./stat-evaluation";
 
 // Database functions for journal entries
 export async function saveEntryToDatabase(entry: Omit<JournalEntry, 'id' | 'createdAt' | 'updatedAt'> & { userId: string }): Promise<JournalEntry> {
@@ -23,6 +24,42 @@ export async function saveEntryToDatabase(entry: Omit<JournalEntry, 'id' | 'crea
       pastContext: entry.pastContext ? JSON.stringify(entry.pastContext) : undefined,
     },
   });
+
+  // Evaluate stat changes for text entries only
+  if (entry.outputType === 'text' && entry.reimaginedText) {
+    try {
+      // Get character info for stat evaluation
+      const character = await db.character.findUnique({
+        where: { id: entry.characterId },
+        select: { theme: true, stats: true }
+      });
+
+      if (character?.theme && character?.stats) {
+        const currentStats = JSON.parse(character.stats);
+        
+        // Evaluate stat changes
+        const statChanges = await evaluateStatChanges(
+          entry.originalText,
+          entry.reimaginedText,
+          character.theme,
+          currentStats
+        );
+
+        // Apply stat changes if any
+        if (Object.keys(statChanges).length > 0) {
+          await applyStatChanges(
+            entry.characterId,
+            dbEntry.id,
+            statChanges,
+            entry.originalText
+          );
+        }
+      }
+    } catch (error) {
+      console.error('Error evaluating stat changes:', error);
+      // Don't fail the entry creation if stat evaluation fails
+    }
+  }
 
   return {
     id: dbEntry.id,
@@ -63,6 +100,8 @@ export async function loadEntriesFromDatabase(userId: string): Promise<JournalEn
     createdAt: entry.createdAt,
     updatedAt: entry.updatedAt,
     pastContext: entry.pastContext ? JSON.parse(entry.pastContext) : undefined,
+    expGained: entry.expGained || undefined,
+    statAnalysis: entry.statAnalysis || undefined,
   }));
 }
 

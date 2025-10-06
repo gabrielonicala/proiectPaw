@@ -31,6 +31,7 @@ interface JournalEntryProps {
   onModalClose: () => void;
   onGeneratingStart: () => void;
   onGeneratingEnd: () => void;
+  onCharacterUpdate?: (updatedCharacter: Character) => void;
 }
 
 // Import themes to get full theme details
@@ -58,7 +59,8 @@ export default function JournalEntry({
   onModalOpen, 
   onModalClose, 
   onGeneratingStart, 
-  onGeneratingEnd 
+  onGeneratingEnd,
+  onCharacterUpdate
 }: JournalEntryProps) {
   const [entryText, setEntryText] = useState('');
   const [selectedOutput, setSelectedOutput] = useState<OutputType>('text');
@@ -295,6 +297,22 @@ export default function JournalEntry({
           // Note: Entry will be cached to localStorage when entries are next loaded
           // Refresh daily usage data
           refreshUsage();
+          
+          // Refresh character data to get updated stats and level
+          if (onCharacterUpdate) {
+            try {
+              const characterResponse = await fetchWithAutoLogout('/api/characters');
+              if (characterResponse.ok) {
+                const { characters } = await characterResponse.json();
+                const updatedCharacter = characters.find((char: Character) => char.id === activeCharacter.id);
+                if (updatedCharacter) {
+                  onCharacterUpdate(updatedCharacter);
+                }
+              }
+            } catch (error) {
+              console.error('Error refreshing character data:', error);
+            }
+          }
         } catch (error) {
           console.error('Error saving entry:', error);
           // Note: Entry creation requires AI API calls and cannot work offline

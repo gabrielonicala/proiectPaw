@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { themes } from '@/themes';
 import { getCharacterAccess } from '@/lib/character-access';
 import { createErrorResponse } from '@/lib/error-utils';
 
@@ -25,17 +26,19 @@ export async function GET() {
       totalOwned: accessInfo.totalOwned
     });
     
-    // Parse avatar data for accessible characters
+    // Parse avatar and stats data for accessible characters
     const accessibleCharacters = accessInfo.accessibleCharacters.map(character => ({
       ...character,
       avatar: character.avatar ? JSON.parse(character.avatar) : null,
+      stats: character.stats ? JSON.parse(character.stats) : null,
       isLocked: false
     }));
 
-    // Parse avatar data for locked characters (for display purposes)
+    // Parse avatar and stats data for locked characters (for display purposes)
     const lockedCharacters = accessInfo.lockedCharacters.map(character => ({
       ...character,
       avatar: character.avatar ? JSON.parse(character.avatar) : null,
+      stats: character.stats ? JSON.parse(character.stats) : null,
       isLocked: true
     }));
 
@@ -116,6 +119,17 @@ export async function POST(request: NextRequest) {
       }, { status: 403 });
     }
 
+    // Prepare default stats from theme archetype (value 5 for each)
+    let statsJson: string | null = null;
+    const themeConfig = themes[theme as keyof typeof themes];
+    if (themeConfig?.archetype?.stats) {
+      const defaultStats: Record<string, { value: number; description: string }> = {};
+      Object.entries(themeConfig.archetype.stats).forEach(([statName, description]) => {
+        defaultStats[statName] = { value: 10, description };
+      });
+      statsJson = JSON.stringify(defaultStats);
+    }
+
     // Create the character
     const character = await db.character.create({
       data: {
@@ -127,6 +141,7 @@ export async function POST(request: NextRequest) {
         appearance: appearance || 'androgynous',
         pronouns: pronouns || 'they/them',
         customPronouns: customPronouns || null,
+        stats: statsJson,
         isActive: existingCharacters === 0 // First character is automatically active
       }
     });
@@ -151,10 +166,11 @@ export async function POST(request: NextRequest) {
       data: { isActive: true }
     });
 
-    // Parse avatar data if it exists
+    // Parse avatar and stats data if they exist
     const characterWithParsedAvatar = {
       ...character,
-      avatar: character.avatar ? JSON.parse(character.avatar) : null
+      avatar: character.avatar ? JSON.parse(character.avatar) : null,
+      stats: character.stats ? JSON.parse(character.stats as unknown as string) : null
     };
 
     return NextResponse.json({ character: characterWithParsedAvatar });

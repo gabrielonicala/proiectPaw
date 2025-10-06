@@ -52,6 +52,21 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
     return () => clearTimeout(timeoutId);
   }, [currentDate]);
 
+  // Re-measure height when component mounts to ensure proper sizing
+  useEffect(() => {
+    const measureCalendarHeight = () => {
+      if (calendarRef.current) {
+        const height = calendarRef.current.offsetHeight;
+        setCalendarHeight(height);
+      }
+    };
+
+    // Small delay to ensure DOM is fully rendered
+    const timeoutId = setTimeout(measureCalendarHeight, 200);
+    
+    return () => clearTimeout(timeoutId);
+  }, []);
+
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
@@ -227,7 +242,7 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
                       transition={{ delay: index * 0.02 }}
                       onClick={() => setSelectedDate(day)}
                       className={`
-                        aspect-square md:aspect-square aspect-[1/1.5] p-2 text-sm font-pixel border-2 transition-all duration-200
+                        aspect-square md:aspect-[4/3] lg:aspect-[4/3] aspect-[1/1.5] p-2 text-sm font-pixel border-2 transition-all duration-200
                         ${isCurrentDay 
                           ? 'border-blue-400 bg-blue-400 text-white' 
                           : isSelected 
@@ -315,14 +330,78 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
                         </div>
                       )}
                       
+                      {/* Stat Progression Display */}
+                      {entry.statAnalysis && entry.outputType === 'text' && (
+                        <div className="mb-3 p-2 bg-gray-900/50 rounded border border-gray-700">
+                          <div className="font-pixel text-xs text-yellow-300 mb-2">📊 Stat Changes:</div>
+                          <div className="flex flex-wrap gap-1 items-center">
+                            {/* Filter out stats with 0 changes, then take first 2 */}
+                            {Object.entries(JSON.parse(entry.statAnalysis))
+                              .filter(([_, change]: [string, any]) => change.change !== 0)
+                              .slice(0, 2)
+                              .map(([statName, change]: [string, any]) => (
+                              <div
+                                key={statName}
+                                className={`px-1 py-0.5 rounded font-pixel whitespace-nowrap ${
+                                  change.change > 0 
+                                    ? 'bg-green-600/30 text-green-300 border border-green-500/50' 
+                                    : change.change < 0 
+                                      ? 'bg-red-600/30 text-red-300 border border-red-500/50'
+                                      : 'bg-gray-600/30 text-gray-300 border border-gray-500/50'
+                                }`}
+                                style={{ fontSize: '10px' }}
+                                title={`${change.reason} (Confidence: ${Math.round(change.confidence * 100)}%)`}
+                              >
+                                {statName} {change.change > 0 ? '+' : ''}{change.change}
+                              </div>
+                            ))}
+                            {/* Show "..." if there are more than 2 non-zero stat changes */}
+                            {Object.entries(JSON.parse(entry.statAnalysis)).filter(([_, change]: [string, any]) => change.change !== 0).length > 2 && (
+                              <span className="text-gray-400 font-pixel" style={{ fontSize: '10px' }}>
+                                ...
+                              </span>
+                            )}
+                            
+                            {/* Original code (commented out) - shows all stats including 0 changes */}
+                            {/* {Object.entries(JSON.parse(entry.statAnalysis)).slice(0, 2).map(([statName, change]: [string, any]) => (
+                              <div
+                                key={statName}
+                                className={`px-1 py-0.5 rounded font-pixel whitespace-nowrap ${
+                                  change.change > 0 
+                                    ? 'bg-green-600/30 text-green-300 border border-green-500/50' 
+                                    : change.change < 0 
+                                      ? 'bg-red-600/30 text-red-300 border border-red-500/50'
+                                      : 'bg-gray-600/30 text-gray-300 border border-gray-500/50'
+                                }`}
+                                style={{ fontSize: '10px' }}
+                                title={`${change.reason} (Confidence: ${Math.round(change.confidence * 100)}%)`}
+                              >
+                                {statName} {change.change > 0 ? '+' : ''}{change.change}
+                              </div>
+                            ))}
+                            {Object.entries(JSON.parse(entry.statAnalysis)).length > 2 && (
+                              <span className="text-gray-400 font-pixel" style={{ fontSize: '10px' }}>
+                                ...
+                              </span>
+                            )} */}
+                          </div>
+                        </div>
+                      )}
+                      
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
-                          <span className="font-pixel text-xs text-gray-400">
-                            {entry.outputType === 'text' && '📖'}
-                            {entry.outputType === 'image' && '🖼️'}
-                            {entry.outputType === 'coming-soon' && '🎬'}
-                            {/* {entry.outputType === 'video' && '🎬'} */} {/* VIDEO GENERATION COMMENTED OUT */}
-                          </span>
+                          {entry.expGained ? (
+                            <span className="font-pixel text-xs text-blue-300">
+                              {entry.expGained} EXP
+                            </span>
+                          ) : (
+                            <span className="font-pixel text-xs text-gray-400">
+                              {entry.outputType === 'text' && '📖'}
+                              {entry.outputType === 'image' && '🖼️'}
+                              {entry.outputType === 'coming-soon' && '🎬'}
+                              {/* {entry.outputType === 'video' && '🎬'} */} {/* VIDEO GENERATION COMMENTED OUT */}
+                            </span>
+                          )}
                         </div>
                         <span className="font-pixel text-xs text-yellow-400">
                           CLICK TO VIEW

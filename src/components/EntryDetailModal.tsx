@@ -47,6 +47,20 @@ export default function EntryDetailModal({ entry, user, activeCharacter, isOpen,
     }
   }, [isContentReady]);
 
+  // Disable body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    // Cleanup function to restore scroll when component unmounts
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
   if (!entry) return null;
 
   // Download functions
@@ -145,7 +159,7 @@ export default function EntryDetailModal({ entry, user, activeCharacter, isOpen,
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-start justify-center p-2 pt-8 overflow-y-auto"
           onClick={onClose}
         >
           <motion.div
@@ -154,7 +168,7 @@ export default function EntryDetailModal({ entry, user, activeCharacter, isOpen,
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 50 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="w-full max-w-md max-h-[90vh] overflow-y-auto"
+            className="w-full max-w-6xl max-h-[90vh] lg:max-h-[70vh]"
             onClick={(e) => e.stopPropagation()}
           >
               <Card theme={activeCharacter?.theme || 'obsidian-veil'} effect="glow" className="relative px-2 py-4">
@@ -189,26 +203,29 @@ export default function EntryDetailModal({ entry, user, activeCharacter, isOpen,
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.1 }}
                 >
-                  <h3 className="font-pixel text-lg text-white mb-3">Original Entry:</h3>
-                  <Card theme={activeCharacter?.theme || 'obsidian-veil'} effect="vintage" className="bg-gray-800/50">
-                    <p className="text-gray-200 leading-relaxed">{entry.originalText}</p>
+                  <h3 className="font-pixel text-lg lg:text-base text-white mb-3">Original Entry:</h3>
+                  <Card theme={activeCharacter?.theme || 'obsidian-veil'} effect="vintage" className="bg-gray-800/50 overflow-y-auto">
+                    <p className="text-gray-200 lg:text-sm leading-relaxed">{entry.originalText}</p>
                   </Card>
                 </motion.div>
 
-                {/* Generated Content */}
+                {/* Generated Content and Stat Progression */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:items-start">
+                  {/* Adventure Content */}
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.2 }}
+                    className="lg:col-span-2 lg:flex lg:flex-col lg:h-full"
                 >
-                  <h3 className="font-pixel text-lg text-white mb-3">Your Adventure:</h3>
-                  <Card theme={activeCharacter?.theme || 'obsidian-veil'} effect="glow" className="bg-gradient-to-b from-yellow-900/20 to-orange-900/20">
+                    <h3 className="font-pixel text-lg lg:text-base text-white mb-3 lg:mb-2">Your Adventure:</h3>
+                    <Card theme={activeCharacter?.theme || 'obsidian-veil'} effect="glow" className="bg-gradient-to-b from-yellow-900/20 to-orange-900/20 lg:flex-1 lg:max-h-82 lg:overflow-y-auto lg:pr-2">
                     {entry.outputType === 'text' && entry.reimaginedText && (
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.3 }}
-                        className="text-white leading-relaxed"
+                        className="text-white leading-relaxed lg:text-sm"
                       >
                         {entry.reimaginedText}
                       </motion.div>
@@ -325,6 +342,94 @@ export default function EntryDetailModal({ entry, user, activeCharacter, isOpen,
                     */}
                   </Card>
                 </motion.div>
+
+                  {/* Stat Progression */}
+                  {entry.statAnalysis && entry.outputType === 'text' && (
+                    <motion.div
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.3 }}
+                      className="lg:col-span-1 lg:flex lg:flex-col lg:h-full"
+                    >
+                      <h3 className="font-pixel text-lg lg:text-base text-white mb-3 lg:mb-2">📊 Character Growth:</h3>
+                      <Card theme={activeCharacter?.theme || 'obsidian-veil'} effect="glow" className="bg-gradient-to-b from-green-900/20 to-blue-900/20 lg:flex-1 lg:flex lg:flex-col lg:max-h-75">
+                        <div className="space-y-3 lg:space-y-2 lg:flex-1 lg:overflow-y-auto lg:pr-2">
+                          {/* Original code (commented out) - shows all stats including 0 changes */}
+                          {/* {Object.entries(JSON.parse(entry.statAnalysis)).map(([statName, change]: [string, any]) => (
+                            <div
+                              key={statName}
+                              className={`p-3 lg:p-2 rounded-lg border-2 ${
+                                change.change > 0 
+                                  ? 'bg-green-600/20 border-green-500/50' 
+                                  : change.change < 0 
+                                    ? 'bg-red-600/20 border-red-500/50'
+                                    : 'bg-gray-600/20 border-gray-500/50'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="font-pixel text-lg text-white">{statName}</span>
+                                <span className={`font-pixel text-xl font-bold ${
+                                  change.change > 0 ? 'text-green-300' : change.change < 0 ? 'text-red-300' : 'text-gray-300'
+                                }`}>
+                                  {change.change > 0 ? '+' : ''}{change.change}
+                                </span>
+                              </div>
+                              <p className="text-sm text-gray-300 mb-1">{change.reason}</p>
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-gray-400">Confidence:</span>
+                                <span className="text-xs text-blue-300 font-pixel">
+                                  {Math.round(change.confidence * 100)}%
+                                </span>
+                              </div>
+                            </div>
+                          ))} */}
+
+                          {/* Filtered code: Only show stats with non-zero changes */}
+                          {Object.entries(JSON.parse(entry.statAnalysis))
+                            .filter(([_, change]: [string, any]) => change.change !== 0)
+                            .map(([statName, change]: [string, any]) => (
+                            <div
+                              key={statName}
+                              className={`p-3 lg:p-2 rounded-lg border-2 ${
+                                change.change > 0 
+                                  ? 'bg-green-600/20 border-green-500/50' 
+                                  : change.change < 0 
+                                    ? 'bg-red-600/20 border-red-500/50'
+                                    : 'bg-gray-600/20 border-gray-500/50'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="font-pixel text-lg text-white">{statName}</span>
+                                <span className={`font-pixel text-xl font-bold ${
+                                  change.change > 0 ? 'text-green-300' : change.change < 0 ? 'text-red-300' : 'text-gray-300'
+                                }`}>
+                                  {change.change > 0 ? '+' : ''}{change.change}
+                                </span>
+                              </div>
+                              <p className="text-sm text-gray-300 mb-1">{change.reason}</p>
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-gray-400">Confidence:</span>
+                                <span className="text-xs text-blue-300 font-pixel">
+                                  {Math.round(change.confidence * 100)}%
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                          {entry.expGained && (
+                            <div className="mt-4 p-3 bg-blue-600/20 border-2 border-blue-500/50 rounded-lg">
+                              <div className="flex items-center justify-between">
+                                <span className="font-pixel text-lg text-white">Experience Gained</span>
+                                <span className="font-pixel text-xl font-bold text-blue-300">
+                                  +{entry.expGained} EXP
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </Card>
+                    </motion.div>
+                  )}
+                </div>
 
                 {/* Past Context */}
                 {entry.pastContext && entry.pastContext.length > 0 && (
