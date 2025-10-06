@@ -42,7 +42,7 @@ const REFERENCE_IMAGES = getReferenceImages();
 
 const outputTypes: { value: OutputType; label: string; emoji: string }[] = [
   { value: 'text', label: 'Chapter', emoji: '📖' },
-  { value: 'image', label: 'Scene', emoji: '🖼️' },
+  { value: 'image', label: 'Scene (Experimental)', emoji: '🖼️' },
   // { value: 'coming-soon', label: 'Episode', emoji: '🎬' } // Coming Soon placeholder - commented out for now
 ];
 
