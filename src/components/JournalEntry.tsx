@@ -9,6 +9,7 @@ import Card from './ui/Card';
 import MovingGradientBackground from './MovingGradientBackground';
 import AppNavigation from './AppNavigation';
 import { OutputType, User, Character, Theme } from '@/types';
+import type { JournalEntry } from '@/types';
 import { generateReimaginedText, generateImage, generateImageSD, generateImageGemini, /* generateVideo, */ getPastContext } from '@/lib/client-utils';
 import { fetchWithAutoLogout } from '@/lib/auto-logout';
 import { migrateTheme } from '@/lib/theme-migration';
@@ -36,6 +37,7 @@ interface JournalEntryProps {
 
 // Import themes to get full theme details
 import { themes } from '@/themes';
+import UnifiedEntryModal from './UnifiedEntryModal';
 
 // Get reference images from configuration
 const REFERENCE_IMAGES = getReferenceImages();
@@ -65,7 +67,7 @@ export default function JournalEntry({
   const [entryText, setEntryText] = useState('');
   const [selectedOutput, setSelectedOutput] = useState<OutputType>('text');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedContent, setGeneratedContent] = useState<string>('');
+  const [generatedContent, setGeneratedContent] = useState<string | JournalEntry>('');
   const [imageError, setImageError] = useState(false);
   const [isClosingModal, setIsClosingModal] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -264,12 +266,9 @@ export default function JournalEntry({
           return;
       }
 
-      setGeneratedContent(content);
-      setIsGenerating(false);
-
       // Don't save content policy violations to database
       if (content !== 'CONTENT_POLICY_VIOLATION') {
-        // Save the entry to database
+        // Save the entry to database (this will also trigger stat evaluation)
         const entryData = {
           originalText: entryText,
           reimaginedText: selectedOutput === 'text' ? content : undefined,
@@ -293,8 +292,12 @@ export default function JournalEntry({
 
           const { entry: savedEntry } = await response.json();
           
-          // Entry created successfully
-          // Note: Entry will be cached to localStorage when entries are next loaded
+          // Entry created successfully with stat analysis
+          // Now show the modal with the complete entry data
+          setGeneratedContent(savedEntry);
+          setShowModal(true);
+          setIsGenerating(false);
+          
           // Refresh daily usage data
           refreshUsage();
           
@@ -317,7 +320,13 @@ export default function JournalEntry({
           console.error('Error saving entry:', error);
           // Note: Entry creation requires AI API calls and cannot work offline
           // The entry will need to be recreated when back online
+          setIsGenerating(false);
         }
+      } else {
+        // For content policy violations, show modal immediately without saving
+        setGeneratedContent(content);
+        setShowModal(true);
+        setIsGenerating(false);
       }
     } catch (error) {
       console.error('Error generating content:', error);
@@ -386,134 +395,19 @@ export default function JournalEntry({
           <Card className="h-full rounded-xl" theme={migrateTheme(activeCharacter.theme) as Theme} effect="vintage">
             
             {/* Generated Content Modal */}
-            {showModal && generatedContent ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4"
-                onClick={handleCloseModal}
-              >
-                <motion.div
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.8, opacity: 0 }}
-                  className="bg-gray-900 p-6 rounded-lg pixelated border-2 border-gray-700 max-w-md w-full"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <h3 className="font-pixel text-base text-yellow-400 mb-6 text-center">
-                    {selectedOutput === 'text' ? 'Today\'s adventure!' : 
-                     selectedOutput === 'image' ? 'Today\'s adventure!' : 
-                     'Animation Coming Soon!'}
-                </h3>
-                  
-                  {selectedOutput === 'text' ? (
-                    <div className="relative mb-3">
-                      {/* Decorative border */}
-                      <div className="absolute -inset-1 bg-gradient-to-r from-yellow-400 via-orange-400 to-yellow-400 rounded-lg opacity-75"></div>
-                      <div className="relative bg-gray-900 border-2 border-yellow-400 rounded-lg p-4">
-                        {/* Scrollable text area */}
-                        <div className="text-yellow-100 leading-relaxed whitespace-pre-wrap text-sm max-h-96 overflow-y-auto font-serif">
-                          <div className="flex items-center mb-3">
-                            <div className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></div>
-                            <div className="w-2 h-2 bg-orange-400 rounded-full mr-2"></div>
-                            <div className="w-2 h-2 bg-yellow-400 rounded-full mr-3"></div>
-                            <span className="text-yellow-400 text-xs font-pixel tracking-wider">ADVENTURE LOG</span>
-                          </div>
-                          <div className="border-l-2 border-yellow-400 pl-4 ml-2">
-                            {generatedContent}
-                          </div>
-                          <div className="flex justify-end mt-3">
-                            <div className="text-yellow-400 text-xs font-pixel opacity-75">
-                              ✦ END OF ENTRY ✦
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ) : selectedOutput === 'image' ? (
-                    <div className="text-center mb-3">
-                      {imageError ? (
-                        <div className="w-full h-96 bg-gray-800 pixelated border-2 border-gray-600 flex items-center justify-center">
-                          <div className="text-center">
-                            <div className="text-4xl mb-2">⚠️</div>
-                            <p className="text-red-400 text-sm font-pixel">Image failed to load</p>
-                            <p className="text-gray-400 text-xs mt-1">Please try again</p>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="w-full h-96 bg-gray-800 pixelated border-2 border-gray-600 flex items-center justify-center">
-                          {generatedContent === 'CONTENT_POLICY_VIOLATION' ? (
-                            <div className="text-center p-6">
-                              <div className="text-6xl mb-4">🚫</div>
-                              <h3 className="font-pixel text-lg text-yellow-300 mb-2">
-                                Content Policy Violation
-                              </h3>
-                              <p className="font-pixel text-sm text-gray-300 leading-relaxed">
-                                This content cannot be visualized due to safety guidelines. Please try rephrasing your adventure in a more family-friendly way.
-                              </p>
-                            </div>
-                          ) : (
-                            <Image
-                              src={generatedContent}
-                              alt="Generated adventure scene"
-                              width={350}
-                              height={500}
-                              className="w-full h-full object-cover pixelated"
-                              onLoad={handleImageLoad}
-                              onError={handleImageError}
-                              priority
-                              unoptimized
-                            />
-                          )}
-                        </div>
-                      )}
-                      <div className="mt-2 px-2 py-1 text-xs text-white/90 font-pixel bg-black/30 rounded">
-                          <div className="flex justify-between">
-                            <span>Generated:</span>
-                            <span>{new Date().toLocaleDateString()}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Theme:</span>
-                            <span>{themes[migrateTheme(activeCharacter.theme)]?.name || 'Adventure'.charAt(0).toUpperCase() + themes[migrateTheme(activeCharacter.theme)]?.name || 'Adventure'.slice(1)}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Time:</span>
-                            <span>{new Date().toLocaleTimeString()}</span>
-                          </div>
-                        </div>
-                      </div>
-                  ) : selectedOutput === 'coming-soon' ? (
-                    <div className="text-center mb-3">
-                      <div className="text-3xl mb-2">🎬</div>
-                      <p className="text-purple-200 mb-2 text-xs">
-                        We&apos;re working on bringing you amazing animated adventures.
-                      </p>
-                      <div className="text-xs text-purple-300 font-pixel bg-black/30 rounded p-2">
-                        <div className="flex justify-between mb-1">
-                          <span>Status:</span>
-                          <span className="text-yellow-400">In Development</span>
-                        </div>
-                        <div className="flex justify-between mb-1">
-                          <span>ETA:</span>
-                          <span className="text-yellow-400">Coming Soon</span>
-                        </div>
-                      </div>
-                </div>
-                  ) : null}
-                  
-                <Button
-                    onClick={handleCloseModal}
-                  variant="secondary"
-                  size="sm"
-                    theme={migrateTheme(activeCharacter.theme) as Theme}
-                    className="w-full"
-                >
-                  Create Another Adventure
-                </Button>
-                </motion.div>
-              </motion.div>
-            ) : null}
+            <UnifiedEntryModal
+              entry={typeof generatedContent === 'object' ? generatedContent : null}
+              user={user}
+              activeCharacter={activeCharacter}
+              isOpen={showModal && !!generatedContent}
+              onClose={handleCloseModal}
+              generatedContent={typeof generatedContent === 'string' ? generatedContent : undefined}
+              outputType={selectedOutput}
+              originalText={entryText}
+              imageError={imageError}
+              onImageLoad={handleImageLoad}
+              onImageError={handleImageError}
+            />
 
             {/* Pixelated Brick Falling Animation */}
             {isClosingModal && (

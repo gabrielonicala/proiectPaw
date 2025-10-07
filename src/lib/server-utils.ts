@@ -61,18 +61,39 @@ export async function saveEntryToDatabase(entry: Omit<JournalEntry, 'id' | 'crea
     }
   }
 
+  // Fetch the updated entry with stat analysis
+  const updatedEntry = await db.journalEntry.findUnique({
+    where: { id: dbEntry.id },
+    select: {
+      id: true,
+      userId: true,
+      characterId: true,
+      originalText: true,
+      reimaginedText: true,
+      imageUrl: true,
+      outputType: true,
+      createdAt: true,
+      updatedAt: true,
+      pastContext: true,
+      expGained: true,
+      statAnalysis: true,
+    }
+  });
+
   return {
-    id: dbEntry.id,
-    userId: dbEntry.userId,
-    characterId: dbEntry.characterId,
-    originalText: dbEntry.originalText,
-    reimaginedText: dbEntry.reimaginedText || undefined,
-    imageUrl: dbEntry.imageUrl || undefined,
-    // videoUrl: dbEntry.videoUrl || undefined, // VIDEO GENERATION COMMENTED OUT
-    outputType: dbEntry.outputType as 'text' | 'image' | 'coming-soon',
-    createdAt: dbEntry.createdAt,
-    updatedAt: dbEntry.updatedAt,
-    pastContext: dbEntry.pastContext ? JSON.parse(dbEntry.pastContext) : undefined,
+    id: updatedEntry!.id,
+    userId: updatedEntry!.userId,
+    characterId: updatedEntry!.characterId,
+    originalText: updatedEntry!.originalText,
+    reimaginedText: updatedEntry!.reimaginedText || undefined,
+    imageUrl: updatedEntry!.imageUrl || undefined,
+    // videoUrl: updatedEntry!.videoUrl || undefined, // VIDEO GENERATION COMMENTED OUT
+    outputType: updatedEntry!.outputType as 'text' | 'image' | 'coming-soon',
+    createdAt: updatedEntry!.createdAt,
+    updatedAt: updatedEntry!.updatedAt,
+    pastContext: updatedEntry!.pastContext ? JSON.parse(updatedEntry!.pastContext) : undefined,
+    expGained: updatedEntry!.expGained || undefined,
+    statAnalysis: updatedEntry!.statAnalysis || undefined,
   };
 }
 

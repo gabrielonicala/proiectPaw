@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday } from 'date-fns';
 import Button from './ui/Button';
 import Card from './ui/Card';
-import EntryDetailModal from './EntryDetailModal';
+import UnifiedEntryModal from './UnifiedEntryModal';
 import MovingGradientBackground from './MovingGradientBackground';
 import AppNavigation from './AppNavigation';
 import { JournalEntry, User, Character } from '@/types';
@@ -441,7 +441,7 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
 
       {/* Entry Detail Modal */}
       {user && (
-        <EntryDetailModal
+        <UnifiedEntryModal
           entry={selectedEntry}
           user={user}
           activeCharacter={activeCharacter}
