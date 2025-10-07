@@ -64,7 +64,17 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
     // Small delay to ensure DOM is fully rendered
     const timeoutId = setTimeout(measureCalendarHeight, 200);
     
-    return () => clearTimeout(timeoutId);
+    // Add window resize listener to re-measure on window resize
+    const handleResize = () => {
+      setTimeout(measureCalendarHeight, 100);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('resize', handleResize);
+    };
   }, []);
 
   const monthStart = startOfMonth(currentDate);
@@ -168,10 +178,10 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="lg:col-span-2 flex flex-col"
+            className="lg:col-span-2 flex flex-col lg:h-full"
           >
-            <div ref={calendarRef}>
-              <Card theme={activeCharacter.theme} className="flex flex-col">
+            <div ref={calendarRef} className="lg:h-full">
+              <Card theme={activeCharacter.theme} className="flex flex-col h-full">
               {/* Month Navigation */}
               <div className="flex justify-between items-center mb-6">
                 <Button
@@ -282,9 +292,12 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.4 }}
-            className="flex flex-col"
+            className="flex flex-col lg:h-full"
           >
-            <div style={{ height: calendarHeight > 0 ? `${calendarHeight}px` : 'auto' }}>
+            <div 
+              style={{ height: calendarHeight > 0 ? `${calendarHeight}px` : 'auto' }}
+              className="lg:h-full"
+            >
               <Card 
                 theme={activeCharacter.theme} 
                 className="flex flex-col h-full"

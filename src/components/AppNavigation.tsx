@@ -96,10 +96,10 @@ export default function AppNavigation({
           </>
         ) : (
           <div>
-            <h1 className="font-pixel text-2xl md:text-3xl text-white mb-1">
+            <h1 className="font-pixel text-lg md:text-xl text-white mb-1">
               {getPageTitle()}
             </h1>
-            <p className="font-pixel text-sm md:text-lg text-yellow-300">
+            <p className="font-pixel text-xs md:text-sm text-yellow-300">
               {getPageSubtitle()}
             </p>
           </div>

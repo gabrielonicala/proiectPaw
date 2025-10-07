@@ -360,7 +360,7 @@ export default function JournalEntry({
           className="text-center mb-4"
         >
           <motion.h1 
-            className="font-pixel text-3xl md:text-4xl text-white mb-2"
+            className="font-pixel text-lg md:text-xl text-white mb-2"
             animate={{
               textShadow: migrateTheme(activeCharacter.theme) === 'neon-ashes' 
                 ? ["0 0 10px #00FFFF, 0 0 20px #00FFFF", "0 0 20px #00FFFF, 0 0 30px #00FFFF"]
@@ -476,7 +476,7 @@ export default function JournalEntry({
                 </div>
 
                 {/* Central Message */}
-                <motion.div
+                {/* <motion.div
                   initial={{ scale: 0.5, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.5, opacity: 0 }}
@@ -508,7 +508,7 @@ export default function JournalEntry({
                       Building new adventure...
                     </motion.p>
                   </motion.div>
-                </motion.div>
+                </motion.div> */}
               </motion.div>
             )}
 
@@ -562,7 +562,7 @@ export default function JournalEntry({
                     placeholder={`Describe your day, your thoughts, or anything you'd like to transform into an adventure!
 Hint: Rich details weave the most captivating tales.`}
                   type="textarea"
-                  rows={8}
+                  rows={6}
                   className="w-full"
                   theme={migrateTheme(activeCharacter.theme) as Theme}
                   maxLength={selectedOutput === 'image' ? 300 : 500}
@@ -631,7 +631,7 @@ Hint: Rich details weave the most captivating tales.`}
                         className="transition-opacity duration-300 ease-in-out"
                       >
                         {isGenerating 
-                          ? 'GENERATING...' 
+                          ? (selectedOutput === 'text' ? 'WRITING...' : 'PAINTING...')
                           : (usageData && (
                               (selectedOutput === 'text' && usageData.usage.chapters.remaining <= 0) ||
                               (selectedOutput === 'image' && usageData.usage.scenes.remaining <= 0)

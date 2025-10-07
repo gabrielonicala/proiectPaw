@@ -337,7 +337,7 @@ export default function UnifiedEntryModal({
                     className="lg:col-span-1 lg:flex lg:flex-col lg:h-full"
                   >
                     <h3 className="font-pixel text-lg lg:text-base text-white mb-3 lg:mb-2">📊 Character Growth:</h3>
-                    <Card theme={activeCharacter?.theme || 'obsidian-veil'} effect="glow" className="bg-gradient-to-b from-green-900/20 to-blue-900/20 lg:flex-1 lg:flex lg:flex-col lg:max-h-75">
+                    <Card theme={activeCharacter?.theme || 'obsidian-veil'} effect="glow" className="bg-gradient-to-b from-green-900/20 to-blue-900/20 lg:flex-1 lg:flex lg:flex-col lg:max-h-80">
                       <div className="space-y-3 lg:space-y-2 lg:flex-1 lg:overflow-y-auto lg:pr-2">
                         {Object.entries(JSON.parse(entry.statAnalysis))
                           .filter(([_, change]: [string, any]) => change.change !== 0)
