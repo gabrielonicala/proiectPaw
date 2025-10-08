@@ -84,7 +84,6 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
   // const [isMusicPlaying, setIsMusicPlaying] = useState(true); // Always start playing
   const [volume, setVolume] = useState(0.3);
   const [isMuted, setIsMuted] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
   const [showControls, setShowControls] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -124,8 +123,8 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
           if (isMobileRef.current) {
             audioRef.current.muted = isMuted;
           }
-          // Only play if not muted and not paused
-          if (!isMuted && !isPaused) {
+          // Only play if not muted
+          if (!isMuted) {
             audioRef.current.play().catch(e => {
               console.error("Error restarting audio with new track:", e);
             });
@@ -176,23 +175,40 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
     setHasError(false);
     setIsLoading(true);
     
-    // If user has already interacted, load and play the new track immediately
-    if (userInteracted) {
-      loadCurrentTrack().then(() => {
-        // Small delay to ensure the audio element has updated its src
-        setTimeout(() => {
-          if (audioRef.current && !isMuted && !isPaused) {
-            if (isMobileRef.current) {
-              audioRef.current.muted = isMuted;
-            }
-            audioRef.current.play().catch(e => {
-              console.error("Error playing new theme music:", e);
-            });
+    // Character switching is a user interaction - enable music and load new track
+    setUserInteracted(true);
+    
+    // Load the track and ensure cachedAudioUrl is set before playing
+    const loadAndPlay = async () => {
+      await loadCurrentTrack();
+      // Small delay to ensure the audio element has updated its src
+      setTimeout(() => {
+        if (audioRef.current && !isMuted) {
+          if (isMobileRef.current) {
+            audioRef.current.muted = isMuted;
           }
-        }, 100);
-      });
-    }
-  }, [theme, userInteracted, isMuted, isPaused]);
+          audioRef.current.play().catch(e => {
+            console.error("Error playing new theme music:", e);
+          });
+        }
+      }, 100);
+    };
+    
+    loadAndPlay().catch(error => {
+      console.warn('Failed to load new theme music:', error);
+      // Even if loading fails, try to play the direct URL
+      setTimeout(() => {
+        if (audioRef.current && !isMuted) {
+          if (isMobileRef.current) {
+            audioRef.current.muted = isMuted;
+          }
+          audioRef.current.play().catch(e => {
+            console.error("Error playing new theme music (fallback):", e);
+          });
+        }
+      }, 100);
+    });
+  }, [theme]);
 
   // User interaction detection for autoplay
   useEffect(() => {
@@ -210,7 +226,7 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
             // On mobile, ensure muted property is set correctly
             audioRef.current.muted = isMuted;
           }
-          if (!isPaused) {
+          if (!isMuted) {
             audioRef.current.play().catch(e => {
               console.error("Error playing audio after user interaction:", e);
             });
@@ -238,7 +254,7 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
       });
       clearTimeout(promptTimer);
     };
-  }, [userInteracted, isMuted, isPaused]);
+  }, [userInteracted, isMuted]);
 
   // Handle audio loading and errors
   const handleCanPlay = () => {
@@ -282,7 +298,7 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
         // Desktop behavior - use pause/play
         audioRef.current.volume = volume;
         // Only try to play if user has interacted and not muted
-        if (userInteracted && !isMuted && !isPaused) {
+        if (userInteracted && !isMuted) {
           // Small delay to ensure the new track is loaded
           const playTimer = setTimeout(() => {
             if (audioRef.current) {
@@ -294,7 +310,7 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
           }, 100);
           
           return () => clearTimeout(playTimer);
-        } else if (isMuted || isPaused) {
+        } else if (isMuted) {
           // Pause the audio instead of stopping it
           if (audioRef.current && !audioRef.current.paused) {
             audioRef.current.pause();
@@ -302,7 +318,7 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
         }
       }
     }
-  }, [volume, isMuted, isPaused, userInteracted]);
+  }, [volume, isMuted, userInteracted]);
 
   // Handle track end - loop the music
   const handleTrackEnd = () => {
@@ -318,12 +334,9 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
     if (isMuted) {
       // Unmuting - resume from where we left off
       setIsMuted(false);
-      setIsPaused(false);
       
-      // Only load the track if it's not already loaded
-      if (!cachedAudioUrl) {
-        await loadCurrentTrack();
-      }
+      // Load the track if not already loaded
+      await loadCurrentTrack();
       
       if (audioRef.current) {
         if (isMobileRef.current) {
@@ -341,7 +354,6 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
     } else {
       // Muting - pause the audio
       setIsMuted(true);
-      setIsPaused(true);
       if (audioRef.current) {
         if (isMobileRef.current) {
           // On mobile, use muted property instead of pause/play
@@ -357,10 +369,9 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
   const handleVolumeChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
-    // If user adjusts volume, unmute and unpause
+    // If user adjusts volume, unmute
     if (isMuted && newVolume > 0) {
       setIsMuted(false);
-      setIsPaused(false);
       
       // Load the track if not already loaded
       await loadCurrentTrack();
