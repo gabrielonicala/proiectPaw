@@ -121,6 +121,12 @@ body {
     -webkit-appearance: none;
     border-radius: 0;
   }
+  
+  /* Fix mobile viewport height issues */
+  .min-h-screen {
+    min-height: 100dvh !important; /* Use dynamic viewport height */
+    min-height: 100vh; /* Fallback for browsers that don't support dvh */
+  }
 }
 
 /* Pixelated/RPG styling */
