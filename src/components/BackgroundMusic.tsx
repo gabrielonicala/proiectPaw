@@ -320,8 +320,10 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
       setIsMuted(false);
       setIsPaused(false);
       
-      // Load the track if not already loaded
-      await loadCurrentTrack();
+      // Only load the track if it's not already loaded
+      if (!cachedAudioUrl) {
+        await loadCurrentTrack();
+      }
       
       if (audioRef.current) {
         if (isMobileRef.current) {
