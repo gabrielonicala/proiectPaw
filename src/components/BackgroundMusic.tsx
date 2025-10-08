@@ -175,7 +175,24 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
     setCachedAudioUrl(null); // Reset cached URL to trigger lazy loading
     setHasError(false);
     setIsLoading(true);
-  }, [theme]);
+    
+    // If user has already interacted, load and play the new track immediately
+    if (userInteracted) {
+      loadCurrentTrack().then(() => {
+        // Small delay to ensure the audio element has updated its src
+        setTimeout(() => {
+          if (audioRef.current && !isMuted && !isPaused) {
+            if (isMobileRef.current) {
+              audioRef.current.muted = isMuted;
+            }
+            audioRef.current.play().catch(e => {
+              console.error("Error playing new theme music:", e);
+            });
+          }
+        }, 100);
+      });
+    }
+  }, [theme, userInteracted, isMuted, isPaused]);
 
   // User interaction detection for autoplay
   useEffect(() => {
