@@ -93,49 +93,41 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
   const isMobileRef = useRef<boolean>(false);
   const [currentTrack, setCurrentTrack] = useState(themeMusic[theme as keyof typeof themeMusic] || themeMusic.default);
   const [cachedAudioUrl, setCachedAudioUrl] = useState<string | null>(null);
+  const [audioKey, setAudioKey] = useState(0); // Force audio element to reload
 
-  // Lazy load audio only when user interacts and wants to play music
-  const loadCurrentTrack = async () => {
-    if (cachedAudioUrl) return; // Already loaded
-    
-    // Try to get cached audio first
-    const cached = await getCachedAudio(currentTrack.url);
-    if (cached) {
-      setCachedAudioUrl(cached);
-    } else {
-      // Try to cache the audio for future use
-      const cachedData = await cacheAudio(currentTrack.url, 'audio/mpeg');
-      if (cachedData) {
-        setCachedAudioUrl(cachedData);
+  // Load audio for a specific track URL
+  const loadTrack = async (trackUrl: string) => {
+    try {
+      // Try to get cached audio first
+      const cached = await getCachedAudio(trackUrl);
+      if (cached) {
+        return cached;
       } else {
-        setCachedAudioUrl(currentTrack.url);
+        // Try to cache the audio for future use
+        const cachedData = await cacheAudio(trackUrl, 'audio/mpeg');
+        return cachedData || trackUrl;
       }
+    } catch (error) {
+      console.error('Error loading track:', error);
+      return trackUrl; // Fallback to direct URL
     }
   };
 
-  // Handle track changes - only restart when actually changing tracks
+  // Handle track changes - play when audio is loaded and ready
   useEffect(() => {
-    if (cachedAudioUrl && audioRef.current && userInteracted) {
-      // Small delay to ensure the audio element has updated its src
-      const restartTimer = setTimeout(() => {
-        if (audioRef.current) {
-          audioRef.current.currentTime = 0;
-          // Set muted property for mobile
-          if (isMobileRef.current) {
-            audioRef.current.muted = isMuted;
-          }
-          // Only play if not muted
-          if (!isMuted) {
-            audioRef.current.play().catch(e => {
-              console.error("Error restarting audio with new track:", e);
-            });
-          }
-        }
-      }, 50);
-      
-      return () => clearTimeout(restartTimer);
+    if (cachedAudioUrl && audioRef.current && userInteracted && !isLoading) {
+      // Set muted property for mobile
+      if (isMobileRef.current) {
+        audioRef.current.muted = isMuted;
+      }
+      // Only play if not muted
+      if (!isMuted) {
+        audioRef.current.play().catch(e => {
+          console.error("Error playing audio with new track:", e);
+        });
+      }
     }
-  }, [cachedAudioUrl, userInteracted]);
+  }, [cachedAudioUrl, userInteracted, isMuted, isLoading]);
 
   // Detect mobile device and update on resize
   useEffect(() => {
@@ -172,48 +164,27 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
     }
     
     // Clean up previous blob URL to prevent memory leaks
-    if (cachedAudioUrl && cachedAudioUrl.startsWith('blob:')) {
-      URL.revokeObjectURL(cachedAudioUrl);
+    const previousCachedUrl = cachedAudioUrl;
+    if (previousCachedUrl && previousCachedUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(previousCachedUrl);
     }
     
     setCurrentTrack(newTrack);
-    setCachedAudioUrl(null); // Reset cached URL to trigger lazy loading
     setHasError(false);
     setIsLoading(true);
+    setAudioKey(prev => prev + 1); // Force audio element to reload
     
     // Character switching is a user interaction - enable music and load new track
     setUserInteracted(true);
     
-    // Load the track and ensure cachedAudioUrl is set before playing
-    const loadAndPlay = async () => {
-      await loadCurrentTrack();
-      // Small delay to ensure the audio element has updated its src
-      setTimeout(() => {
-        if (audioRef.current && !isMuted) {
-          if (isMobileRef.current) {
-            audioRef.current.muted = isMuted;
-          }
-          audioRef.current.play().catch(e => {
-            console.error("Error playing new theme music:", e);
-          });
-        }
-      }, 100);
+    // Load the track and set the cached URL
+    const loadAndSetTrack = async () => {
+      const audioUrl = await loadTrack(newTrack.url);
+      setCachedAudioUrl(audioUrl);
+      setIsLoading(false);
     };
     
-    loadAndPlay().catch(error => {
-      console.warn('Failed to load new theme music:', error);
-      // Even if loading fails, try to play the direct URL
-      setTimeout(() => {
-        if (audioRef.current && !isMuted) {
-          if (isMobileRef.current) {
-            audioRef.current.muted = isMuted;
-          }
-          audioRef.current.play().catch(e => {
-            console.error("Error playing new theme music (fallback):", e);
-          });
-        }
-      }, 100);
-    });
+    loadAndSetTrack();
   }, [theme]);
 
   // Cleanup blob URLs on unmount
@@ -233,7 +204,8 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
         setShowInteractionPrompt(false);
         
         // Load the current track when user first interacts
-        await loadCurrentTrack();
+        const audioUrl = await loadTrack(currentTrack.url);
+        setCachedAudioUrl(audioUrl);
         
         // Try to play audio after user interaction
         if (audioRef.current && !isMuted) {
@@ -351,7 +323,10 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
       setIsMuted(false);
       
       // Load the track if not already loaded
-      await loadCurrentTrack();
+      if (!cachedAudioUrl) {
+        const audioUrl = await loadTrack(currentTrack.url);
+        setCachedAudioUrl(audioUrl);
+      }
       
       if (audioRef.current) {
         if (isMobileRef.current) {
@@ -389,7 +364,10 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
       setIsMuted(false);
       
       // Load the track if not already loaded
-      await loadCurrentTrack();
+      if (!cachedAudioUrl) {
+        const audioUrl = await loadTrack(currentTrack.url);
+        setCachedAudioUrl(audioUrl);
+      }
       
       if (audioRef.current) {
         if (isMobileRef.current) {
@@ -411,6 +389,7 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
     <>
       {/* Hidden audio element */}
       <audio
+        key={audioKey}
         ref={audioRef}
         src={cachedAudioUrl || currentTrack.url}
         loop

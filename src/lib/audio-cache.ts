@@ -138,66 +138,57 @@ async function cleanupCache(): Promise<void> {
 export async function cacheAudio(url: string, mimeType: string = 'audio/mpeg'): Promise<string | null> {
   try {
     const db = await initDB();
-    const transaction = db.transaction([STORE_NAME], 'readwrite');
-    const store = transaction.objectStore(STORE_NAME);
     
-    // Check if already cached
-    const getRequest = store.get(url);
-    
-    return new Promise((resolve, reject) => {
-      getRequest.onsuccess = async () => {
-        const cached = getRequest.result as (CachedAudio & { url: string }) | undefined;
-        
-        if (cached && Date.now() - cached.lastCached < CACHE_EXPIRY) {
-          // Return cached blob URL
-          const blobUrl = URL.createObjectURL(cached.data);
-          resolve(blobUrl);
-          return;
-        }
-        
-        // Fetch and cache the audio
-        try {
-          const response = await fetch(url);
-          if (!response.ok) {
-            resolve(null);
-            return;
-          }
-          
-          const blob = await response.blob();
-          const audioData: CachedAudio & { url: string } = {
-            url,
-            data: blob,
-            mimeType,
-            lastCached: Date.now(),
-            size: blob.size
-          };
-          
-          // Check cache size and clean up if needed
-          const currentSize = await getCacheSize();
-          if (currentSize + blob.size > MAX_CACHE_SIZE) {
-            await cleanupCache();
-          }
-          
-          // Store in IndexedDB
-          const putRequest = store.put(audioData);
-          putRequest.onsuccess = () => {
-            const blobUrl = URL.createObjectURL(blob);
-            resolve(blobUrl);
-          };
-          putRequest.onerror = () => {
-            console.error('Failed to cache audio:', putRequest.error);
-            // Still return the blob URL even if caching fails
-            const blobUrl = URL.createObjectURL(blob);
-            resolve(blobUrl);
-          };
-        } catch (error) {
-          console.error('Error fetching audio:', error);
-          resolve(null);
-        }
-      };
+    // First, check if already cached
+    const cached = await new Promise<CachedAudio & { url: string } | undefined>((resolve, reject) => {
+      const transaction = db.transaction([STORE_NAME], 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const getRequest = store.get(url);
       
+      getRequest.onsuccess = () => {
+        resolve(getRequest.result as (CachedAudio & { url: string }) | undefined);
+      };
       getRequest.onerror = () => reject(getRequest.error);
     });
+    
+    if (cached && Date.now() - cached.lastCached < CACHE_EXPIRY) {
+      // Return a fresh blob URL each time to ensure audio element updates
+      return URL.createObjectURL(cached.data);
+    }
+    
+    // Fetch the audio
+    const response = await fetch(url);
+    if (!response.ok) {
+      return null;
+    }
+    
+    const blob = await response.blob();
+    const audioData: CachedAudio & { url: string } = {
+      url,
+      data: blob,
+      mimeType,
+      lastCached: Date.now(),
+      size: blob.size
+    };
+    
+    // Check cache size and clean up if needed
+    const currentSize = await getCacheSize();
+    if (currentSize + blob.size > MAX_CACHE_SIZE) {
+      await cleanupCache();
+    }
+    
+    // Store in IndexedDB with a new transaction
+    await new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const putRequest = store.put(audioData);
+      
+      putRequest.onsuccess = () => resolve();
+      putRequest.onerror = () => reject(putRequest.error);
+    });
+    
+    // Return the blob URL
+    return URL.createObjectURL(blob);
   } catch (error) {
     console.error('Error caching audio:', error);
     return null;
@@ -210,23 +201,24 @@ export async function cacheAudio(url: string, mimeType: string = 'audio/mpeg'): 
 export async function getCachedAudio(url: string): Promise<string | null> {
   try {
     const db = await initDB();
-    const transaction = db.transaction([STORE_NAME], 'readonly');
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.get(url);
     
-    return new Promise((resolve, reject) => {
+    const cached = await new Promise<CachedAudio & { url: string } | undefined>((resolve, reject) => {
+      const transaction = db.transaction([STORE_NAME], 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.get(url);
+      
       request.onsuccess = () => {
-        const cached = request.result as (CachedAudio & { url: string }) | undefined;
-        
-        if (cached && Date.now() - cached.lastCached < CACHE_EXPIRY) {
-          const blobUrl = URL.createObjectURL(cached.data);
-          resolve(blobUrl);
-        } else {
-          resolve(null);
-        }
+        resolve(request.result as (CachedAudio & { url: string }) | undefined);
       };
       request.onerror = () => reject(request.error);
     });
+    
+    if (cached && Date.now() - cached.lastCached < CACHE_EXPIRY) {
+      // Return a fresh blob URL each time to ensure audio element updates
+      return URL.createObjectURL(cached.data);
+    } else {
+      return null;
+    }
   } catch (error) {
     console.error('Error getting cached audio:', error);
     return null;
