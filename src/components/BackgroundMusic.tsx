@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getCachedAudioUrl, cacheAsset } from '@/lib/asset-cache';
+import { getCachedAudio, cacheAudio } from '@/lib/audio-cache';
 
 interface BackgroundMusicProps {
   theme?: string;
@@ -98,12 +98,13 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
   const loadCurrentTrack = async () => {
     if (cachedAudioUrl) return; // Already loaded
     
-    const cached = getCachedAudioUrl(currentTrack.url);
-    if (cached !== currentTrack.url) {
+    // Try to get cached audio first
+    const cached = await getCachedAudio(currentTrack.url);
+    if (cached) {
       setCachedAudioUrl(cached);
     } else {
       // Try to cache the audio for future use
-      const cachedData = await cacheAsset(currentTrack.url, 'audio/mpeg');
+      const cachedData = await cacheAudio(currentTrack.url, 'audio/mpeg');
       if (cachedData) {
         setCachedAudioUrl(cachedData);
       } else {
@@ -170,6 +171,11 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
       audioRef.current.currentTime = 0;
     }
     
+    // Clean up previous blob URL to prevent memory leaks
+    if (cachedAudioUrl && cachedAudioUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(cachedAudioUrl);
+    }
+    
     setCurrentTrack(newTrack);
     setCachedAudioUrl(null); // Reset cached URL to trigger lazy loading
     setHasError(false);
@@ -209,6 +215,15 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
       }, 100);
     });
   }, [theme]);
+
+  // Cleanup blob URLs on unmount
+  useEffect(() => {
+    return () => {
+      if (cachedAudioUrl && cachedAudioUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(cachedAudioUrl);
+      }
+    };
+  }, [cachedAudioUrl]);
 
   // User interaction detection for autoplay
   useEffect(() => {
