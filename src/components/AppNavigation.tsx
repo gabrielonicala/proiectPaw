@@ -67,7 +67,7 @@ export default function AppNavigation({
       case 'calendar':
         return `${activeCharacter?.name || 'Adventurer'}'s adventure through time`;
       case 'tribute':
-        return 'Support Your Journey';
+        return 'Enhance your journey';
       case 'character-select':
         return 'Choose which character to play as';
       default:
@@ -133,6 +133,7 @@ export default function AppNavigation({
             <Button onClick={onProfileView} variant="secondary" className="md:hidden" theme={theme}>
               👤
             </Button>
+            {/* Tribute button hidden for now */}
             {/* <Button onClick={onTributeView} variant="secondary" className="hidden md:flex" theme={theme}>
               Tribute
             </Button>

@@ -252,8 +252,9 @@ export default function CharacterSelector({
           theme={activeCharacter?.theme || 'obsidian-veil'}
         />
 
-        {/* Character Grid */}
+        {/* Character Grid - Always show exactly 3 slots */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 auto-rows-fr">
+          {/* Render existing characters first */}
           {characters.map((character, index) => {
             const isLocked = character.isLocked;
             return (
@@ -448,115 +449,78 @@ export default function CharacterSelector({
             );
           })}
 
-          {/* Create New Character Card */}
-          {canCreateNew && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: characters.length * 0.1, duration: 0.5 }}
-            >
-               <Card
-                 hover
-                 onClick={onCreateNew}
-                 theme="obsidian-veil"
-                 className="cursor-pointer transition-all duration-200 hover:border-green-500 border-dashed border-2 border-gray-600 h-full"
-               >
-                <div className="flex items-center gap-4 p-4">
-                  {/* Plus Icon - Left Side */}
-                  <div className="flex-shrink-0 w-24 h-24 flex items-center justify-center">
-                    <div className="text-6xl text-gray-400">➕</div>
-                  </div>
-                  
-                  {/* Create Info - Right Side */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-pixel text-lg text-white mb-1">
-                      CREATE NEW
-                    </h3>
-                    <p className="font-pixel text-sm text-gray-300 mb-3">
-                      Start a new adventure
-                    </p>
-                    <div className="font-pixel text-xs text-green-400 bg-green-400/20 px-2 py-1 pixelated w-fit">
-                      AVAILABLE
+          {/* Fill remaining slots up to 3 total */}
+          {Array.from({ length: Math.max(0, 3 - characters.length) }, (_, index) => {
+            const slotIndex = characters.length + index;
+            const canCreate = slotIndex < user.characterSlots;
+            
+            return (
+              <motion.div
+                key={`slot-${slotIndex}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: slotIndex * 0.1, duration: 0.5 }}
+              >
+                {canCreate ? (
+                  // Available slot - show create new
+                  <Card
+                    hover
+                    onClick={onCreateNew}
+                    theme="obsidian-veil"
+                    className="cursor-pointer transition-all duration-200 hover:border-green-500 border-dashed border-2 border-gray-600 h-full"
+                  >
+                    <div className="flex items-center gap-4 p-4">
+                      {/* Plus Icon - Left Side */}
+                      <div className="flex-shrink-0 w-24 h-24 flex items-center justify-center">
+                        <div className="text-6xl text-gray-400">➕</div>
+                      </div>
+                      
+                      {/* Create Info - Right Side */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-pixel text-lg text-white mb-1">
+                          CREATE NEW
+                        </h3>
+                        <p className="font-pixel text-sm text-gray-300 mb-3">
+                          Start a new adventure
+                        </p>
+                        <div className="font-pixel text-xs text-green-400 bg-green-400/20 px-2 py-1 pixelated w-fit">
+                          AVAILABLE
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
-          )}
-
-          {/* Additional Create New Slots */}
-          {Array.from({ length: Math.max(0, user.characterSlots - characters.length - 1) }, (_, index) => (
-            <motion.div
-              key={`locked-${index}`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: (characters.length + index) * 0.1, duration: 0.5 }}
-            >
-               <Card
-                 hover
-                 onClick={onCreateNew}
-                 theme="obsidian-veil"
-                 className="cursor-pointer transition-all duration-200 hover:border-green-500 border-dashed border-2 border-gray-600 h-full"
-               >
-                <div className="flex items-center gap-4 p-4">
-                  {/* Plus Icon - Left Side */}
-                  <div className="flex-shrink-0 w-24 h-24 flex items-center justify-center">
-                    <div className="text-6xl text-gray-400">➕</div>
-                  </div>
-                  
-                  {/* Create Info - Right Side */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-pixel text-lg text-white mb-1">
-                      CREATE NEW
-                    </h3>
-                    <p className="font-pixel text-sm text-gray-300 mb-3">
-                      Start a new adventure
-                    </p>
-                    <div className="font-pixel text-xs text-green-400 bg-green-400/20 px-2 py-1 pixelated w-fit">
-                      AVAILABLE
+                  </Card>
+                ) : (
+                  // Locked slot - show upgrade prompt
+                  <Card 
+                    theme="obsidian-veil" 
+                    className="border-2 border-gray-600 bg-gray-800/50 opacity-60 cursor-not-allowed h-full"
+                  >
+                    <div className="flex items-center gap-4 p-4">
+                      {/* Locked Icon - Left Side */}
+                      <div className="flex-shrink-0 w-32 h-40 flex items-center justify-center">
+                        <div className="text-6xl text-gray-400 bg-gray-800 pixelated w-full h-full flex items-center justify-center">
+                          🔒
+                        </div>
+                      </div>
+                      
+                      {/* Locked Info - Right Side */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-pixel text-lg text-gray-400 mb-1">
+                          LOCKED SLOT
+                        </h3>
+                        <p className="font-pixel text-sm text-gray-500 mb-3">
+                          Upgrade to unlock
+                        </p>
+                        <div className="font-pixel text-xs text-gray-500 bg-gray-600/20 px-2 py-1 pixelated w-fit">
+                          LOCKED
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
-          ))}
-
-          {/* Locked Character Slots (for users with less than 3 slots) */}
-          {Array.from({ length: Math.max(0, 3 - user.characterSlots) }, (_, index) => (
-            <motion.div
-              key={`locked-${index}`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: (characters.length + Math.max(0, user.characterSlots - characters.length - 1) + index) * 0.1, duration: 0.5 }}
-            >
-               <Card 
-                 theme="obsidian-veil" 
-                 className="border-2 border-gray-600 bg-gray-800/50 opacity-60 cursor-not-allowed h-full"
-               >
-                <div className="flex items-center gap-4 p-4">
-                  {/* Locked Icon - Left Side */}
-                  <div className="flex-shrink-0 w-32 h-40 flex items-center justify-center">
-                    <div className="text-6xl text-gray-400 bg-gray-800 pixelated w-full h-full flex items-center justify-center">
-                      🔒
-                    </div>
-                  </div>
-                  
-                  {/* Locked Info - Right Side */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-pixel text-lg text-gray-400 mb-1">
-                      LOCKED SLOT
-                    </h3>
-                    <p className="font-pixel text-sm text-gray-500 mb-3">
-                      Upgrade to unlock
-                    </p>
-                    <div className="font-pixel text-xs text-gray-500 bg-gray-600/20 px-2 py-1 pixelated w-fit">
-                      LOCKED
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
-          ))}
+                  </Card>
+                )}
+              </motion.div>
+            );
+          })}
         </div>
 
         {/* Character Slots Info */}

@@ -1,4 +1,5 @@
 import { db } from './db';
+import { hasPremiumAccess } from './paddle';
 
 // Subscription limits
 export const SUBSCRIPTION_LIMITS = {
@@ -92,14 +93,15 @@ export async function canCreateEntry(
 ): Promise<{ allowed: boolean; reason?: string; usage?: DailyUsage; limit?: number }> {
   const user = await db.user.findUnique({
     where: { id: userId },
-    select: { subscriptionPlan: true, subscriptionStatus: true }
+    select: { subscriptionPlan: true, subscriptionStatus: true, subscriptionEndsAt: true }
   });
 
   if (!user) {
     return { allowed: false, reason: 'User not found' };
   }
 
-  const isActiveSubscription = user.subscriptionStatus === 'active' && user.subscriptionPlan === 'tribute';
+  // Check if user has premium access (active subscription OR cancelled but still in grace period)
+  const isActiveSubscription = hasPremiumAccess(user);
   const dailyUsage = await getDailyUsage(userId, characterId);
 
   if (outputType === 'text') {
@@ -194,6 +196,7 @@ export async function getSubscriptionLimits(userId: string): Promise<{
     select: { 
       subscriptionPlan: true, 
       subscriptionStatus: true,
+      subscriptionEndsAt: true,
       characterSlots: true
     }
   });
@@ -202,7 +205,8 @@ export async function getSubscriptionLimits(userId: string): Promise<{
     throw new Error('User not found');
   }
 
-  const isActive = user.subscriptionStatus === 'active' && user.subscriptionPlan === 'tribute';
+  // Check if user has premium access (active subscription OR cancelled but still in grace period)
+  const isActive = hasPremiumAccess(user);
   const dailyUsage = await getDailyUsage(userId, ''); // Get total daily usage
 
   let limits;

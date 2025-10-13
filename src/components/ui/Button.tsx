@@ -9,7 +9,7 @@ import { themes } from '@/themes';
 interface ButtonProps {
   children: ReactNode;
   onClick?: (e?: React.MouseEvent<HTMLButtonElement>) => void;
-  variant?: 'primary' | 'secondary' | 'accent';
+  variant?: 'primary' | 'secondary' | 'accent' | 'destructive';
   size?: 'sm' | 'md' | 'lg';
   disabled?: boolean;
   className?: string;
@@ -38,13 +38,38 @@ export default function Button({
   const colors = themeConfig?.colors;
   
   // Create dynamic styles based on theme colors
-  const getVariantStyle = (variant: 'primary' | 'secondary' | 'accent') => {
-    if (!colors) return {};
+  const getVariantStyle = (variant: 'primary' | 'secondary' | 'accent' | 'destructive') => {
+    if (!colors) {
+      // Fallback colors when theme is not available
+      const fallbackColors = {
+        primary: '#8B5CF6',
+        secondary: '#6B7280', 
+        accent: '#F59E0B',
+        text: '#FFFFFF'
+      };
+      
+      const colorMap = {
+        primary: fallbackColors.primary,
+        secondary: fallbackColors.secondary,
+        accent: fallbackColors.accent,
+        destructive: '#DC2626' // Red color for destructive actions
+      };
+      
+      const baseColor = colorMap[variant];
+      
+      return {
+        background: `linear-gradient(to bottom, ${baseColor}, ${adjustColor(baseColor, -20)})`,
+        borderColor: baseColor,
+        color: fallbackColors.text,
+        boxShadow: `0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)`
+      };
+    }
     
     const colorMap = {
       primary: colors.primary,
       secondary: colors.secondary,
-      accent: colors.accent
+      accent: colors.accent,
+      destructive: '#DC2626' // Red color for destructive actions
     };
     
     const baseColor = colorMap[variant];
@@ -58,7 +83,8 @@ export default function Button({
   };
 
   // Helper function to adjust color brightness
-  const adjustColor = (color: string, amount: number) => {
+  const adjustColor = (color: string | undefined, amount: number) => {
+    if (!color) return '#666666'; // Fallback color
     const hex = color.replace('#', '');
     const r = Math.max(0, Math.min(255, parseInt(hex.substr(0, 2), 16) + amount));
     const g = Math.max(0, Math.min(255, parseInt(hex.substr(2, 2), 16) + amount));
@@ -69,7 +95,8 @@ export default function Button({
   const variantClasses = {
     primary: 'border-2',
     secondary: 'border-2', 
-    accent: 'border-2'
+    accent: 'border-2',
+    destructive: 'border-2'
   };
   
   const sizeClasses = {

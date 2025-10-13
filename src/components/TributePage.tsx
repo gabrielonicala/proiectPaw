@@ -7,8 +7,11 @@ import Card from '@/components/ui/Card';
 import { motion } from 'framer-motion';
 import MovingGradientBackground from '@/components/MovingGradientBackground';
 import AppNavigation from '@/components/AppNavigation';
+import ConfirmationModal from '@/components/ConfirmationModal';
+import AlertModal from '@/components/AlertModal';
 import { User, Character } from '@/types';
 import { USE_SHARED_LIMITS } from '@/lib/subscription-limits';
+import { migrateTheme } from '@/lib/theme-migration';
 // import Footer from './Footer';
 
 interface SubscriptionData {
@@ -37,6 +40,15 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
+  
+  // Modal states
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({
+    title: '',
+    message: '',
+    variant: 'info' as 'success' | 'error' | 'info'
+  });
 
   useEffect(() => {
     // Use user data directly instead of calling API
@@ -47,13 +59,20 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
   const handleCreateSubscription = async () => {
     setIsCreating(true);
     try {
-      const response = await fetch('/api/subscription/create', {
+      console.log('Making request to /api/paddle/checkout');
+      const response = await fetch('/api/paddle/checkout', {
         method: 'POST',
       });
       
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+      
       if (!response.ok) {
+        const responseText = await response.text();
+        console.log('Error response body:', responseText);
+        
         if (response.headers.get('content-type')?.includes('text/html')) {
-          alert('Subscription service is not configured yet. Please set up Stripe API keys first.');
+          alert('Subscription service is not configured yet. Please set up Paddle API keys first.');
           setIsCreating(false);
           return;
         }
@@ -61,6 +80,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
       }
       
       const data = await response.json();
+      console.log('Success response:', data);
       
       if (data.success && data.checkoutUrl) {
         window.location.href = data.checkoutUrl;
@@ -69,26 +89,33 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
       }
     } catch (error) {
       console.error('Error creating subscription:', error);
-      alert('Subscription service is not configured yet. Please set up Stripe API keys first.');
+      alert('Subscription service is not configured yet. Please set up Paddle API keys first.');
     } finally {
       setIsCreating(false);
     }
   };
 
-  const handleCancelSubscription = async () => {
-    if (!confirm('Are you sure you want to cancel your Tribute? You will lose access to premium features at the end of your current period.')) {
-      return;
-    }
+  const handleCancelSubscription = () => {
+    setShowCancelConfirm(true);
+  };
 
+  const confirmCancelSubscription = async () => {
+    setShowCancelConfirm(false);
     setIsCanceling(true);
+    
     try {
-      const response = await fetch('/api/subscription/manage', {
-        method: 'DELETE',
+      const response = await fetch('/api/paddle/subscription/cancel', {
+        method: 'POST',
       });
       
       if (!response.ok) {
         if (response.headers.get('content-type')?.includes('text/html')) {
-          alert('Subscription service is not configured yet. Please set up Stripe API keys first.');
+          setAlertConfig({
+            title: 'Configuration Error',
+            message: 'Subscription service is not configured yet. Please set up Paddle API keys first.',
+            variant: 'error'
+          });
+          setShowAlert(true);
           setIsCanceling(false);
           return;
         }
@@ -98,15 +125,30 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
       const data = await response.json();
       
       if (data.success) {
-        alert('Your Tribute has been canceled. You will retain access until the end of your current period.');
+        setAlertConfig({
+          title: 'Subscription Canceled',
+          message: data.message || 'Your Tribute has been canceled. You will retain access until the end of your current period.',
+          variant: 'success'
+        });
+        setShowAlert(true);
         // Update local state to reflect cancellation
         setSubscription(prev => prev ? { ...prev, hasSubscription: false } : null);
       } else {
-        alert('Failed to cancel subscription. Please try again.');
+        setAlertConfig({
+          title: 'Cancellation Failed',
+          message: data.error || 'Failed to cancel subscription. Please try again.',
+          variant: 'error'
+        });
+        setShowAlert(true);
       }
     } catch (error) {
       console.error('Error canceling subscription:', error);
-      alert('Subscription service is not configured yet. Please set up Stripe API keys first.');
+      setAlertConfig({
+        title: 'Error',
+        message: 'Failed to cancel subscription. Please try again.',
+        variant: 'error'
+      });
+      setShowAlert(true);
     } finally {
       setIsCanceling(false);
     }
@@ -136,12 +178,30 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
           transition={{ duration: 0.6 }}
           className="text-center mb-8"
         >
-          <h1 className="font-pixel text-4xl md:text-6xl text-white mb-4">
-            🏰 TRIBUTE 🏰
-          </h1>
-          <p className="text-gray-300">
-            Enhance your adventures and support the realm
-          </p>
+          <motion.h1 
+            className="font-pixel text-lg md:text-xl text-white mb-4"
+            animate={{
+              textShadow: migrateTheme(activeCharacter.theme) === 'neon-ashes' 
+                ? ["0 0 10px #00FFFF, 0 0 20px #00FFFF", "0 0 20px #00FFFF, 0 0 30px #00FFFF"]
+                : migrateTheme(activeCharacter.theme) === 'blazeheart-saga'
+                ? ["0 0 10px #FF6B35, 0 0 20px #FF6B35", "0 0 20px #FF6B35, 0 0 30px #FF6B35"]
+                : ["0 0 10px #fff, 0 0 20px #fff", "0 0 20px #fff, 0 0 30px #fff"]
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          >
+            TRIBUTE
+          </motion.h1>
+          <motion.p 
+            className="font-pixel text-lg text-yellow-300"
+            animate={migrateTheme(activeCharacter.theme) === 'echoes-of-dawn' ? { opacity: [0.7, 1, 0.7] } : {}}
+            transition={{ duration: 3, repeat: Infinity }}
+          >
+            Break through the limits and unleash your adventure spirit!
+          </motion.p>
         </motion.div>
 
         <div className="grid md:grid-cols-2 gap-6 mb-8">
@@ -174,8 +234,8 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
                   </li>
                 </ul>
                 
-                {/* Show "Your Current Plan" for free users */}
-                {user.subscriptionPlan !== 'tribute' || user.subscriptionStatus !== 'active' ? (
+                {/* Show "Your Current Plan" for free users (only when they don't have any active or cancelled subscription) */}
+                {user.subscriptionPlan !== 'tribute' ? (
                   <div className="text-lg font-pixel text-yellow-400 mt-20 text-center">
                     Your Current Plan
                   </div>
@@ -240,6 +300,12 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
                   >
                     {isCanceling ? 'Canceling...' : 'Cancel Tribute'}
                   </Button>
+                ) : user.subscriptionPlan === 'tribute' && user.subscriptionStatus === 'canceled' ? (
+                  <div className="text-center p-4 bg-gray-800 border border-yellow-400 rounded-lg">
+                    <p className="font-pixel text-yellow-400 text-sm">
+                      Your Tribute has been cancelled. You will retain access until the end of your current period.
+                    </p>
+                  </div>
                 ) : (
                   <Button
                     onClick={handleCreateSubscription}
@@ -252,8 +318,8 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
                   </Button>
                 )}
                 
-                {/* Show "Your Current Plan" for active tribute subscribers */}
-                {user.subscriptionPlan === 'tribute' && user.subscriptionStatus === 'active' && (
+                {/* Show "Your Current Plan" for tribute subscribers (active or cancelled but still have access) */}
+                {user.subscriptionPlan === 'tribute' && (
                   <div className="text-lg font-pixel text-yellow-400 mt-6 text-center">
                     Your Current Plan
                   </div>
@@ -265,6 +331,29 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
       </div>
       </div>
       {/* <Footer /> */}
+      
+      {/* Custom Modals */}
+      <ConfirmationModal
+        isOpen={showCancelConfirm}
+        onClose={() => setShowCancelConfirm(false)}
+        onConfirm={confirmCancelSubscription}
+        title="CANCEL TRIBUTE"
+        message="Are you sure you want to cancel your Tribute? You will lose access to premium features at the end of your current period."
+        confirmText="CANCEL TRIBUTE"
+        cancelText="KEEP TRIBUTE"
+        confirmVariant="destructive"
+        theme={activeCharacter?.theme || 'obsidian-veil'}
+        isLoading={isCanceling}
+      />
+      
+      <AlertModal
+        isOpen={showAlert}
+        onClose={() => setShowAlert(false)}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        variant={alertConfig.variant}
+        theme={activeCharacter?.theme || 'obsidian-veil'}
+      />
     </div>
   );
 }

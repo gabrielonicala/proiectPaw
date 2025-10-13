@@ -184,16 +184,8 @@ export async function preloadAvatarPieces(pieces: Array<{ imagePath: string }>):
   await Promise.allSettled(promises);
 }
 
-/**
- * Preload and cache background music
- */
-export async function preloadBackgroundMusic(musicFiles: string[]): Promise<void> {
-  const promises = musicFiles.map(file => 
-    cacheAsset(file, 'audio/mpeg')
-  );
-  
-  await Promise.allSettled(promises);
-}
+// Music caching has been moved to IndexedDB (audio-cache.ts)
+// This file now only handles avatar images and other non-audio assets
 
 /**
  * Get cached image URL or fallback to original URL
@@ -203,13 +195,7 @@ export function getCachedImageUrl(originalUrl: string): string {
   return cached || originalUrl;
 }
 
-/**
- * Get cached audio URL or fallback to original URL
- */
-export function getCachedAudioUrl(originalUrl: string): string {
-  const cached = getCachedAsset(originalUrl);
-  return cached || originalUrl;
-}
+// Audio caching is now handled by IndexedDB (audio-cache.ts)
 
 /**
  * Clear all cached assets

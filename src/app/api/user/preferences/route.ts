@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { User, Theme, Character } from '@/types';
 import { migrateTheme } from '@/lib/theme-migration';
 import { validateUserSession } from '@/lib/auth';
+import { getActiveCharacter, cleanupExpiredSubscriptions, getCharacterAccess } from '@/lib/character-access';
 
 // Type for database character with all fields
 type DatabaseCharacter = {
@@ -30,6 +31,9 @@ export async function GET() {
     }
 
     const userId = (session as { user: { id: string } }).user.id;
+    
+    // Clean up expired subscriptions (runs periodically when users access the app)
+    await cleanupExpiredSubscriptions();
     
     // Validate that the user still exists in the database
     const userExists = await validateUserSession(userId);
@@ -99,7 +103,10 @@ export async function GET() {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Parse avatar and stats data for characters
+    // Get character access info to determine which characters should be locked
+    const accessInfo = await getCharacterAccess(userId);
+    
+    // Parse avatar and stats data for characters and apply character access logic
     const charactersWithParsedAvatars = user.characters.map((character: any) => ({
       ...character,
       userId: user.id,
@@ -111,21 +118,25 @@ export async function GET() {
       customPronouns: character.customPronouns || undefined,
       experience: character.experience || 0,
       level: character.level || 1,
-      stats: character.stats ? JSON.parse(character.stats) : null
+      stats: character.stats ? JSON.parse(character.stats) : null,
+      isLocked: !accessInfo.canAccessCharacter(character.id) // Apply character access logic
     })) as Character[];
 
-    const activeCharacterWithParsedAvatar = user.activeCharacter ? {
-      ...user.activeCharacter,
+    // Get the correct active character (preserves current active character if accessible)
+    const correctActiveCharacter = await getActiveCharacter(userId);
+    
+    const activeCharacterWithParsedAvatar = correctActiveCharacter ? {
+      ...correctActiveCharacter,
       userId: user.id,
-      description: user.activeCharacter.description || undefined,
-      theme: migrateTheme(user.activeCharacter.theme) as Theme,
-      avatar: user.activeCharacter.avatar ? JSON.parse(user.activeCharacter.avatar) : null,
-      appearance: user.activeCharacter.appearance as 'masculine' | 'feminine' | 'androgynous' | 'custom',
-      pronouns: user.activeCharacter.pronouns as 'he/him' | 'she/her' | 'they/them' | 'custom',
-      customPronouns: user.activeCharacter.customPronouns || undefined,
-      experience: user.activeCharacter.experience || 0,
-      level: user.activeCharacter.level || 1,
-      stats: user.activeCharacter.stats ? JSON.parse(user.activeCharacter.stats) : null
+      description: correctActiveCharacter.description || undefined,
+      theme: migrateTheme(correctActiveCharacter.theme) as Theme,
+      avatar: correctActiveCharacter.avatar ? JSON.parse(correctActiveCharacter.avatar) : null,
+      appearance: correctActiveCharacter.appearance as 'masculine' | 'feminine' | 'androgynous' | 'custom',
+      pronouns: correctActiveCharacter.pronouns as 'he/him' | 'she/her' | 'they/them' | 'custom',
+      customPronouns: correctActiveCharacter.customPronouns || undefined,
+      experience: correctActiveCharacter.experience || 0,
+      level: correctActiveCharacter.level || 1,
+      stats: correctActiveCharacter.stats ? JSON.parse(correctActiveCharacter.stats) : null
     } as Character : null;
 
     const userData: User = {
@@ -133,7 +144,7 @@ export async function GET() {
       name: user.name || undefined,
       username: user.username || undefined,
       email: user.email,
-      activeCharacterId: user.activeCharacterId || undefined,
+      activeCharacterId: correctActiveCharacter?.id || undefined,
       characterSlots: user.characterSlots,
       subscriptionPlan: (user.subscriptionPlan as 'tribute' | 'free') || undefined,
       subscriptionStatus: (user.subscriptionStatus as 'active' | 'canceled' | 'past_due' | 'inactive') || undefined,

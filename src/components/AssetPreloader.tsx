@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
-import { preloadAvatarPieces, preloadBackgroundMusic } from '@/lib/asset-cache';
+import { preloadAvatarPieces } from '@/lib/asset-cache';
+import { cacheAudio } from '@/lib/audio-cache';
 import { allPieces } from '@/lib/layered-avatars';
 
 interface AssetPreloaderProps {
@@ -32,7 +33,9 @@ export default function AssetPreloader({ children }: AssetPreloaderProps) {
         ];
 
         console.log('Preloading background music...');
-        await preloadBackgroundMusic(musicFiles);
+        // Use IndexedDB for music caching (more efficient than localStorage)
+        const musicPromises = musicFiles.map(file => cacheAudio(file, 'audio/mpeg'));
+        await Promise.allSettled(musicPromises);
         console.log('Background music preloaded successfully');
       } catch (error) {
         console.error('Error preloading assets:', error);
