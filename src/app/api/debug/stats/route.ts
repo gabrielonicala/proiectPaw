@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { decryptText } from '@/lib/encryption';
 
 export async function GET(request: NextRequest) {
   try {
@@ -77,16 +78,39 @@ export async function GET(request: NextRequest) {
       }
     });
 
+    // Decrypt stat progressions entries
+    const decryptedStatProgressions = await Promise.all(
+      statProgressions.map(async (progression) => ({
+        ...progression,
+        entry: progression.entry ? {
+          ...progression.entry,
+          originalText: await decryptText(progression.entry.originalText),
+          reimaginedText: progression.entry.reimaginedText 
+            ? await decryptText(progression.entry.reimaginedText) 
+            : null
+        } : null
+      }))
+    );
+
+    // Decrypt recent entries
+    const decryptedRecentEntries = await Promise.all(
+      recentEntries.map(async (entry) => ({
+        ...entry,
+        originalText: await decryptText(entry.originalText),
+        reimaginedText: entry.reimaginedText 
+          ? await decryptText(entry.reimaginedText) 
+          : null,
+        statAnalysis: entry.statAnalysis ? JSON.parse(entry.statAnalysis) : null
+      }))
+    );
+
     return NextResponse.json({
       character: {
         ...character,
         stats: character.stats ? JSON.parse(character.stats) : null
       },
-      statProgressions,
-      recentEntries: recentEntries.map(entry => ({
-        ...entry,
-        statAnalysis: entry.statAnalysis ? JSON.parse(entry.statAnalysis) : null
-      }))
+      statProgressions: decryptedStatProgressions,
+      recentEntries: decryptedRecentEntries
     });
 
   } catch (error) {

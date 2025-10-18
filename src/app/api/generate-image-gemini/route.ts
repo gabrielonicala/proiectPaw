@@ -123,7 +123,7 @@ function createGeminiPrompt(originalText: string, themeConfig: any, character: a
   ${getThemeSpecificGuidance(themeConfig.name)}
 
   VISUAL STYLE: 
-  - Digital art, 1024x1024, high quality, detailed
+  - Pixel art, 1024x1024, high quality, detailed
   - Character is central focus, larger and more prominent
   - Show the actual experience described in an appropriate setting
   - NO TEXT OR WORDS in the image - pure visual scene only

@@ -74,9 +74,8 @@ export async function POST(request: NextRequest) {
       worldStateKeys: Object.keys(memory.worldState || {})
     });
 
-    const systemPrompt = `You are a creative fantasy story generator. Transform the user's real-life experiences into engaging stories with a ${themeConfig.name} aesthetic.
+    const systemPrompt = `You are a creative fantasy story generator. Transform the user's real-life experiences into engaging stories with the following aesthetic:
 
-Theme: ${themeConfig.name}
 Description: ${themeConfig.description}
 Story Prompts: ${themeConfig.storyPrompts?.join(', ') || 'Adventure and discovery'}
 
@@ -85,43 +84,77 @@ ${memoryContext}
 
 CRITICAL TRANSFORMATION RULES:
 - PRESERVE the core activity/event from the original text
-- COMPLETELY TRANSFORM all characters to fit the ${themeConfig.name} theme (costumes, appearance, equipment)
 - TRANSFORM the entire setting to be authentically ${themeConfig.name} (not just background elements)
 - The main action/activity must remain recognizable but reimagined
 - ALWAYS use the character's name "${characterData.name}" as the main character - never use any other name
 - Use the character's pronouns (${characterPronouns}) when referring to ${characterData.name}
 - MAINTAIN CONTINUITY with previous entries - reference ongoing relationships, locations, and plots when relevant
-- Example: "played soccer" with Crimson Tides = ${characterData.name} and other pirates in pirate costumes playing soccer on a beach with their ship docked nearby
+- DO NOT use the theme name in the story - only use the theme description
+- Example: "played soccer" in Pirate theme = ${characterData.name} and other pirates in pirate costumes playing soccer on a beach with their ship docked nearby
 
 Guidelines:
 - Keep the core activity and emotions from the original text
-- ALL characters must be described as wearing ${themeConfig.name} costumes and having ${themeConfig.name} appearance
 - Transform the ENTIRE setting into ${themeConfig.name} style - not just background elements
 - ALWAYS refer to the main character as "${characterData.name}" - never use any other name
 - Use ${characterPronouns} pronouns when referring to ${characterData.name}
 - Create vivid, immersive descriptions that preserve the original experience
 - Make it feel like the original activity, but with EVERYTHING reimagined as ${themeConfig.name}
-- Length: Keep it concise but complete - aim for 3-4 sentences that tell a complete mini-story
-- CONTINUITY: NATURALLY reference previous events, relationships, or ongoing plots when they enhance the story
-- USE THE MEMORY CONTEXT: Reference the character's previous journey, world state, and recent entries when relevant
+- Length: Keep it concise but complete - aim for 5-6 sentences that tell a complete mini-story
+- CONTINUITY: NATURALLY reference previous events, relationships, or ongoing plots if/when they enhance the story
+- USE THE MEMORY CONTEXT: Reference the character's previous journey, world state, and recent entries if/when relevant
 - WEAVE CONTINUITY SUBTLY: Make connections feel natural and organic, not forced or obvious
-- REFERENCE SPECIFIC ELEMENTS: Mention locations, objects, or emotional states from previous entries
+- REFERENCE SPECIFIC ELEMENTS: Mention locations, objects, or emotional states from previous entries if/when relevant
 - NARRATIVE FLOW: Let continuity emerge naturally through shared locations, objects, emotions, or relationships
 - AVOID REPETITIVE OPENINGS: Don't start multiple stories with the same phrase or pattern
 - VARY YOUR OPENINGS: Use different starting approaches - direct action, character thoughts, environmental details, dialogue, etc.
-- THEME-SPECIFIC ELEMENTS: Only use locations, objects, and references that belong to the ${themeConfig.name} theme - don't mix elements from other themes`;
+- THEME-SPECIFIC ELEMENTS: Only use locations, objects, and references that belong to the ${themeConfig.name} theme - don't mix elements from other themes
+- CHARACTER NAMING: When introducing new characters, give them specific names (not generic titles like "comrade", "stranger", "merchant"). Use names that fit the ${themeConfig.name} theme`;
 
     const userPrompt = `Transform this real-life experience into a ${themeConfig.name} story featuring ${characterData.name}:
 
 "${originalText}"
 
-Create a concise but complete mini-story (3-4 sentences) that shows the core activity from the original text happening in a COMPLETELY ${themeConfig.name} setting. ALL characters must be described as wearing ${themeConfig.name} costumes and having ${themeConfig.name} appearance. The main action should be clearly recognizable but with EVERYTHING reimagined as ${themeConfig.name} - characters, setting, equipment, and atmosphere.
+Create a concise but complete mini-story (5-6 sentences) that shows the core activity from the original text happening in a COMPLETELY ${themeConfig.name} setting. ALL characters must be described as wearing ${themeConfig.name} costumes and having ${themeConfig.name} appearance. The main action should be clearly recognizable but with EVERYTHING reimagined as ${themeConfig.name} - characters, setting, equipment, and atmosphere.
 
 CONTINUITY REQUIREMENT: If this experience relates to previous entries in the character's memory, NATURALLY weave those connections into the story. For example:
 - If they're in the same location, mention it organically
 - If they're continuing an activity, let it flow naturally
 - Reference previous meals, objects, or emotions subtly
-- Let continuity emerge through shared elements, not forced temporal phrases`;
+- Let continuity emerge through shared elements, not forced temporal phrases
+
+After writing the story, also analyze the content and extract any new relationships, locations, or goals that emerge. Return your response in this exact JSON format:
+{
+  "story": "Your generated story here",
+  "worldState": {
+    "relationships": [
+      {
+        "name": "CharacterName",
+        "relationshipType": "relationship type (e.g., friend, mentor, rival, ally)",
+        "context": "what activity/context this relationship is about (e.g., gym partner, library companion, work colleague)",
+        "establishedIn": "brief description of when/where it was established"
+      }
+    ],
+    "locations": [
+      {
+        "reimaginedName": "Fantasy name used in the story",
+        "realName": "what it actually represents (e.g., gym, library, office, home)",
+        "context": "what activities happen there",
+        "establishedIn": "brief description of when/where it was established"
+      }
+    ],
+    "goals": [
+      {
+        "description": "Goal description",
+        "status": "active|completed|failed"
+      }
+    ]
+  }
+}
+
+IMPORTANT: 
+- RELATIONSHIPS: Only include actual character NAMES (not titles, roles, or generic terms like "comrade", "stranger", "merchant", etc.). The character must have a specific name like "Marcus", "Elena", "Captain Blackthorn", etc. Include the CONTEXT of the relationship (e.g., "gym partner", "library companion", "work colleague") to distinguish between different relationships with the same person.
+- LOCATIONS: Include any specific locations mentioned in the story. Provide both the fantasy name used in the story and what it actually represents in real life. Include context about what activities happen there.
+- GOALS: Only include goals that are explicitly mentioned. Mark as "completed" if the story shows the goal being achieved, "failed" if it's clearly not achieved, or "active" if it's ongoing.`;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -129,7 +162,7 @@ CONTINUITY REQUIREMENT: If this experience relates to previous entries in the ch
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
       ],
-      max_tokens: 300,
+      max_tokens: 700,
       temperature: 0.8,
     });
 
@@ -139,17 +172,37 @@ CONTINUITY REQUIREMENT: If this experience relates to previous entries in the ch
       throw new Error('No response from OpenAI');
     }
 
-    // Update character memory with the new entry
+    // Parse the JSON response
+    let storyText: string;
+    let worldStateUpdate: { 
+      relationships: Array<{ name: string; relationshipType: string; context: string; establishedIn: string }>; 
+      locations: Array<{ reimaginedName: string; realName: string; context: string; establishedIn: string }>;
+      goals: Array<{ description: string; status: string }>; 
+    } = { relationships: [], locations: [], goals: [] };
+
+    try {
+      const parsedResponse = JSON.parse(generatedText);
+      storyText = parsedResponse.story;
+      worldStateUpdate = parsedResponse.worldState || { relationships: [], locations: [], goals: [] };
+    } catch (error) {
+      // Fallback: treat the entire response as the story if JSON parsing fails
+      console.warn('Failed to parse JSON response, using entire response as story:', error);
+      storyText = generatedText;
+    }
+
+    // Update character memory with the new entry and world state
     await updateCharacterMemory(character.id, {
       originalText,
-      reimaginedText: generatedText
+      reimaginedText: storyText,
+      worldStateUpdate
     });
 
     return NextResponse.json({
       success: true,
-      reimaginedText: generatedText,
+      reimaginedText: storyText,
       outputType,
-      theme: themeConfig.id
+      theme: themeConfig.id,
+      worldStateUpdate
     });
 
   } catch (error) {

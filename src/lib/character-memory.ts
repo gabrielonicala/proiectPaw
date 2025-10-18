@@ -2,11 +2,34 @@ import { db } from './db';
 import { Character, CharacterMemory, JournalEntry } from '@prisma/client';
 import { themes } from '@/themes';
 
+export interface Goal {
+  id: string;
+  description: string;
+  status: 'active' | 'completed' | 'failed';
+  createdAt: Date;
+  completedAt?: Date;
+}
+
+export interface Relationship {
+  name: string;
+  relationshipType: string;
+  context: string; // what activity/context this relationship is about
+  establishedIn: string; // brief description of when/where it was established
+  lastMentioned: Date;
+}
+
+export interface Location {
+  reimaginedName: string; // the fantasy name used in stories
+  realName: string; // what it actually represents (e.g., "gym", "library", "office")
+  context: string; // what activities happen there
+  establishedIn: string; // brief description of when/where it was established
+  lastMentioned: Date;
+}
+
 export interface WorldState {
-  relationships: Record<string, string>; // name -> relationship type
-  locations: string[]; // visited/important locations
-  ongoingPlots: string[]; // ongoing storylines
-  characterTraits: string[]; // personality traits that have emerged
+  relationships: Relationship[]; // array of relationship objects with context
+  locations: Location[]; // array of location objects with context
+  goals: Goal[]; // goals with status tracking
 }
 
 export interface RecentEntry {
@@ -26,7 +49,8 @@ export interface CharacterMemoryData {
 const MEMORY_LIMITS = {
   MAX_SUMMARY_LENGTH: 2000,
   MAX_RECENT_ENTRIES: 5,
-  MAX_WORLD_STATE_ITEMS: 20
+  MAX_GOALS: 10,
+  MAX_RELATIONSHIPS: 20
 } as const;
 
 /**
@@ -44,10 +68,9 @@ export async function getCharacterMemory(characterId: string): Promise<Character
         characterId,
         memory: '{}', // Provide default value for the old memory field
         worldState: JSON.stringify({
-          relationships: {},
+          relationships: [],
           locations: [],
-          ongoingPlots: [],
-          characterTraits: []
+          goals: []
         }),
         summaryLog: '',
         recentEntries: JSON.stringify([])
@@ -55,8 +78,42 @@ export async function getCharacterMemory(characterId: string): Promise<Character
     });
   }
 
+  const worldState = JSON.parse(memory.worldState || '{}');
+  
+  // Handle backward compatibility - migrate old structure to new structure
+  if (worldState.relationships && !Array.isArray(worldState.relationships)) {
+    // Convert old Record<string, string> format to new Relationship[] format
+    worldState.relationships = Object.entries(worldState.relationships).map(([name, relationshipType]) => ({
+      name,
+      relationshipType,
+      context: 'Unknown context',
+      establishedIn: 'Previous entry',
+      lastMentioned: new Date()
+    }));
+  }
+  
+  if (worldState.goals && !Array.isArray(worldState.goals)) {
+    // Convert old string[] format to new Goal[] format
+    worldState.goals = [];
+  }
+  
+  // Ensure all are arrays
+  if (!Array.isArray(worldState.relationships)) {
+    worldState.relationships = [];
+  }
+  if (!Array.isArray(worldState.locations)) {
+    worldState.locations = [];
+  }
+  if (!Array.isArray(worldState.goals)) {
+    worldState.goals = [];
+  }
+  
+  // Clean up any existing duplicate relationships and goals
+  worldState.relationships = deduplicateRelationships(worldState.relationships);
+  worldState.goals = deduplicateGoals(worldState.goals);
+
   return {
-    worldState: JSON.parse(memory.worldState || '{}'),
+    worldState,
     summaryLog: memory.summaryLog || '',
     recentEntries: JSON.parse(memory.recentEntries || '[]')
   };
@@ -67,7 +124,15 @@ export async function getCharacterMemory(characterId: string): Promise<Character
  */
 export async function updateCharacterMemory(
   characterId: string, 
-  newEntry: { originalText: string; reimaginedText: string | null }
+  newEntry: { 
+    originalText: string; 
+    reimaginedText: string | null;
+    worldStateUpdate?: { 
+      relationships: Array<{ name: string; relationshipType: string; context: string; establishedIn: string }>; 
+      locations: Array<{ reimaginedName: string; realName: string; context: string; establishedIn: string }>;
+      goals: Array<{ description: string; status: string }>; 
+    };
+  }
 ): Promise<void> {
   const memory = await getCharacterMemory(characterId);
   
@@ -85,7 +150,7 @@ export async function updateCharacterMemory(
   // Update summary log (this will be enhanced with AI summarization later)
   const updatedSummaryLog = await updateSummaryLog(memory.summaryLog, newEntry);
 
-  // Update world state (this will be enhanced with AI analysis later)
+  // Update world state with data from story generation
   const updatedWorldState = await updateWorldState(memory.worldState, newEntry);
 
   // Monitor memory usage
@@ -160,12 +225,384 @@ async function compressSummary(summary: string): Promise<string> {
 
 /**
  * Update world state with new entry
- * TODO: Enhance with AI analysis
  */
-async function updateWorldState(currentState: WorldState, newEntry: { originalText: string; reimaginedText: string | null }): Promise<WorldState> {
-  // For now, just return current state
-  // Later, we'll use AI to analyze and update relationships, locations, etc.
-  return currentState;
+async function updateWorldState(
+  currentState: WorldState, 
+  newEntry: { 
+    originalText: string; 
+    reimaginedText: string | null;
+    worldStateUpdate?: { 
+      relationships: Array<{ name: string; relationshipType: string; context: string; establishedIn: string }>; 
+      locations: Array<{ reimaginedName: string; realName: string; context: string; establishedIn: string }>;
+      goals: Array<{ description: string; status: string }>; 
+    };
+  }
+): Promise<WorldState> {
+  if (!newEntry.worldStateUpdate) {
+    return currentState;
+  }
+
+  // Update relationships with context-aware deduplication
+  const updatedRelationships = updateRelationships(currentState.relationships, newEntry.worldStateUpdate.relationships);
+
+  // Update locations with context-aware deduplication
+  const updatedLocations = updateLocations(currentState.locations, newEntry.worldStateUpdate.locations);
+
+  // Update goals with smart deduplication and status tracking
+  const updatedGoals = updateGoals(currentState.goals, newEntry.worldStateUpdate.goals);
+
+  return {
+    relationships: updatedRelationships,
+    locations: updatedLocations,
+    goals: updatedGoals
+  };
+}
+
+/**
+ * Update relationships with context-aware deduplication
+ */
+function updateRelationships(
+  currentRelationships: Relationship[], 
+  newRelationships: Array<{ name: string; relationshipType: string; context: string; establishedIn: string }>
+): Relationship[] {
+  const updatedRelationships = [...currentRelationships];
+  
+  for (const newRel of newRelationships) {
+    // Filter out generic terms
+    const lowerName = newRel.name.toLowerCase();
+    const genericTerms = [
+      'comrade', 'stranger', 'merchant', 'guard', 'soldier', 'knight', 'wizard', 'mage',
+      'prince', 'princess', 'king', 'queen', 'lord', 'lady', 'captain', 'commander',
+      'friend', 'enemy', 'ally', 'rival', 'mentor', 'student', 'teacher', 'master',
+      'servant', 'butler', 'maid', 'peasant', 'noble', 'commoner', 'traveler', 'wanderer'
+    ];
+    
+    if (genericTerms.includes(lowerName)) {
+      continue; // Skip generic terms
+    }
+    
+    // Check if this person already exists in a similar context
+    const existingIndex = updatedRelationships.findIndex(
+      rel => rel.name.toLowerCase() === newRel.name.toLowerCase() && 
+             isSimilarContext(rel.context, newRel.context)
+    );
+    
+    if (existingIndex >= 0) {
+      // Update existing relationship (update lastMentioned)
+      updatedRelationships[existingIndex].lastMentioned = new Date();
+    } else {
+      // Add new relationship
+      const relationship: Relationship = {
+        name: newRel.name,
+        relationshipType: newRel.relationshipType,
+        context: newRel.context,
+        establishedIn: newRel.establishedIn,
+        lastMentioned: new Date()
+      };
+      updatedRelationships.push(relationship);
+    }
+  }
+  
+  // Limit relationships to prevent unbounded growth
+  return updatedRelationships.slice(0, MEMORY_LIMITS.MAX_RELATIONSHIPS);
+}
+
+/**
+ * Update locations with context-aware deduplication
+ */
+function updateLocations(
+  currentLocations: Location[], 
+  newLocations: Array<{ reimaginedName: string; realName: string; context: string; establishedIn: string }>
+): Location[] {
+  const updatedLocations = [...currentLocations];
+  
+  for (const newLoc of newLocations) {
+    // Check if this real location already exists (same real name and context)
+    const existingIndex = updatedLocations.findIndex(
+      loc => loc.realName.toLowerCase() === newLoc.realName.toLowerCase() && 
+             loc.context.toLowerCase() === newLoc.context.toLowerCase()
+    );
+    
+    if (existingIndex >= 0) {
+      // Update existing location (update reimagined name and lastMentioned)
+      updatedLocations[existingIndex].reimaginedName = newLoc.reimaginedName;
+      updatedLocations[existingIndex].lastMentioned = new Date();
+    } else {
+      // Add new location
+      const location: Location = {
+        reimaginedName: newLoc.reimaginedName,
+        realName: newLoc.realName,
+        context: newLoc.context,
+        establishedIn: newLoc.establishedIn,
+        lastMentioned: new Date()
+      };
+      updatedLocations.push(location);
+    }
+  }
+  
+  // Limit locations to prevent unbounded growth
+  return updatedLocations.slice(0, MEMORY_LIMITS.MAX_RELATIONSHIPS);
+}
+
+/**
+ * Update goals with smart deduplication and status tracking
+ */
+function updateGoals(currentGoals: Goal[], newGoals: Array<{ description: string; status: string }>): Goal[] {
+  const updatedGoals = [...currentGoals];
+  
+  for (const newGoal of newGoals) {
+    // Skip invalid goals
+    if (!newGoal || !newGoal.description || !newGoal.status) {
+      continue;
+    }
+    
+    // Check for similar existing goals (fuzzy matching)
+    const existingGoalIndex = updatedGoals.findIndex(existingGoal => 
+      existingGoal.description && isSimilarGoal(existingGoal.description, newGoal.description)
+    );
+    
+    if (existingGoalIndex >= 0) {
+      // Update existing goal status
+      const existingGoal = updatedGoals[existingGoalIndex];
+      if (newGoal.status === 'completed' || newGoal.status === 'failed') {
+        existingGoal.status = newGoal.status as 'completed' | 'failed';
+        existingGoal.completedAt = new Date();
+      }
+    } else {
+      // Add new goal
+      const goal: Goal = {
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        description: newGoal.description,
+        status: newGoal.status as 'active' | 'completed' | 'failed',
+        createdAt: new Date(),
+        completedAt: newGoal.status === 'completed' || newGoal.status === 'failed' ? new Date() : undefined
+      };
+      updatedGoals.push(goal);
+    }
+  }
+  
+  // Remove completed/failed goals that are older than 30 days
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  
+  const filteredGoals = updatedGoals.filter(goal => {
+    // Skip invalid goals
+    if (!goal || !goal.description) return false;
+    
+    if (goal.status === 'active') return true;
+    if (goal.completedAt && goal.completedAt > thirtyDaysAgo) return true;
+    return false;
+  });
+  
+  return filteredGoals.slice(0, MEMORY_LIMITS.MAX_GOALS);
+}
+
+/**
+ * Check if two goals are similar (for deduplication)
+ */
+function isSimilarGoal(goal1: string, goal2: string): boolean {
+  // Handle undefined/null values
+  if (!goal1 || !goal2) return false;
+  
+  const normalize = (text: string) => text.toLowerCase()
+    .replace(/[^\w\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  
+  const norm1 = normalize(goal1);
+  const norm2 = normalize(goal2);
+  
+  // Check for exact match
+  if (norm1 === norm2) return true;
+  
+  // Check for high similarity (same core concept)
+  const words1 = norm1.split(' ');
+  const words2 = norm2.split(' ');
+  
+  // If they share most words, they're similar
+  const commonWords = words1.filter(word => words2.includes(word));
+  const similarity = commonWords.length / Math.max(words1.length, words2.length);
+  
+  // Check for goal-specific synonyms and concepts
+  const goalSynonyms = {
+    'muscle': ['muscles', 'muscular', 'strength', 'strong', 'build', 'building'],
+    'six-pack': ['abs', 'abdominal', 'core', 'stomach', 'belly'],
+    'vocabulary': ['words', 'language', 'speech', 'expression', 'communication'],
+    'fitness': ['health', 'exercise', 'workout', 'training', 'physical'],
+    'weight': ['lose', 'losing', 'reduce', 'reduction', 'shed'],
+    'body': ['physique', 'form', 'shape', 'figure', 'appearance'],
+    'improve': ['enhance', 'better', 'develop', 'advance', 'progress'],
+    'achieve': ['accomplish', 'reach', 'attain', 'gain', 'obtain']
+  };
+  
+  // Check if goals share key concepts through synonyms
+  for (const [key, synonyms] of Object.entries(goalSynonyms)) {
+    const hasKey1 = words1.includes(key) || words1.some(word => synonyms.includes(word));
+    const hasKey2 = words2.includes(key) || words2.some(word => synonyms.includes(word));
+    
+    if (hasKey1 && hasKey2) {
+      // If both goals share a key concept, check if they're similar enough
+      const conceptWords1 = words1.filter(word => word === key || synonyms.includes(word));
+      const conceptWords2 = words2.filter(word => word === key || synonyms.includes(word));
+      
+      // If they share the same key concepts, they're likely the same goal
+      if (conceptWords1.length > 0 && conceptWords2.length > 0) {
+        return true;
+      }
+    }
+  }
+  
+  return similarity > 0.6; // Lowered threshold to 60% for better detection
+}
+
+/**
+ * Check if two relationship contexts are similar (for deduplication)
+ */
+function isSimilarContext(context1: string, context2: string): boolean {
+  // Handle undefined/null values
+  if (!context1 || !context2) return false;
+  
+  const normalize = (text: string) => text.toLowerCase()
+    .replace(/[^\w\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  
+  const norm1 = normalize(context1);
+  const norm2 = normalize(context2);
+  
+  // Check for exact match
+  if (norm1 === norm2) return true;
+  
+  // Check for high similarity (same core concept)
+  const words1 = norm1.split(' ');
+  const words2 = norm2.split(' ');
+  
+  // If they share most words, they're similar
+  const commonWords = words1.filter(word => words2.includes(word));
+  const similarity = commonWords.length / Math.max(words1.length, words2.length);
+  
+  // Also check for specific context synonyms
+  const contextSynonyms = {
+    'gym': ['training', 'fitness', 'workout', 'exercise'],
+    'library': ['studying', 'learning', 'research', 'reading'],
+    'work': ['office', 'job', 'career', 'professional'],
+    'school': ['education', 'academic', 'university', 'college'],
+    'home': ['house', 'residence', 'living'],
+    'partner': ['companion', 'buddy', 'friend', 'ally']
+  };
+  
+  // Check if contexts are synonyms
+  for (const [key, synonyms] of Object.entries(contextSynonyms)) {
+    const hasKey1 = words1.includes(key) || words1.some(word => synonyms.includes(word));
+    const hasKey2 = words2.includes(key) || words2.some(word => synonyms.includes(word));
+    
+    if (hasKey1 && hasKey2) {
+      return true;
+    }
+  }
+  
+  return similarity > 0.6; // 60% similarity threshold for contexts
+}
+
+/**
+ * Deduplicate existing relationships by merging similar ones
+ */
+function deduplicateRelationships(relationships: Relationship[]): Relationship[] {
+  const deduplicated: Relationship[] = [];
+  
+  for (const rel of relationships) {
+    // Check if this relationship already exists in a similar form
+    const existingIndex = deduplicated.findIndex(
+      existing => existing.name.toLowerCase() === rel.name.toLowerCase() && 
+                  isSimilarContext(existing.context, rel.context)
+    );
+    
+    if (existingIndex >= 0) {
+      // Merge with existing relationship (keep the more recent one or merge details)
+      const existing = deduplicated[existingIndex];
+      if (rel.lastMentioned > existing.lastMentioned) {
+        // Replace with the more recent one
+        deduplicated[existingIndex] = rel;
+      }
+      // Otherwise keep the existing one
+    } else {
+      // Add new relationship
+      deduplicated.push(rel);
+    }
+  }
+  
+  return deduplicated;
+}
+
+/**
+ * Deduplicate existing goals by merging similar ones
+ */
+function deduplicateGoals(goals: Goal[]): Goal[] {
+  const deduplicated: Goal[] = [];
+  
+  for (const goal of goals) {
+    // Check if this goal already exists in a similar form
+    const existingIndex = deduplicated.findIndex(
+      existing => isSimilarGoal(existing.description, goal.description)
+    );
+    
+    if (existingIndex >= 0) {
+      // Merge with existing goal (keep the more recent one or merge details)
+      const existing = deduplicated[existingIndex];
+      if (goal.createdAt > existing.createdAt) {
+        // Replace with the more recent one
+        deduplicated[existingIndex] = goal;
+      }
+      // Otherwise keep the existing one
+    } else {
+      // Add new goal
+      deduplicated.push(goal);
+    }
+  }
+  
+  return deduplicated;
+}
+
+/**
+ * Clean up duplicate relationships and goals in the database for a character
+ * This can be called to fix existing duplicate data
+ */
+export async function cleanupDuplicateRelationships(characterId: string): Promise<void> {
+  const memory = await getCharacterMemory(characterId);
+  
+  const cleanedRelationships = deduplicateRelationships(memory.worldState.relationships);
+  const cleanedGoals = deduplicateGoals(memory.worldState.goals);
+  
+  // Check if there were actually duplicates removed
+  const relationshipsRemoved = memory.worldState.relationships.length - cleanedRelationships.length;
+  const goalsRemoved = memory.worldState.goals.length - cleanedGoals.length;
+  
+  if (relationshipsRemoved > 0 || goalsRemoved > 0) {
+    console.log(`Cleaned up ${relationshipsRemoved} duplicate relationships and ${goalsRemoved} duplicate goals for character ${characterId}`);
+    
+    // Update the database with cleaned data
+    await db.characterMemory.upsert({
+      where: { characterId },
+      create: {
+        characterId,
+        worldState: JSON.stringify({
+          relationships: cleanedRelationships,
+          locations: memory.worldState.locations,
+          goals: cleanedGoals
+        }),
+        summaryLog: memory.summaryLog,
+        recentEntries: JSON.stringify(memory.recentEntries)
+      },
+      update: {
+        worldState: JSON.stringify({
+          relationships: cleanedRelationships,
+          locations: memory.worldState.locations,
+          goals: cleanedGoals
+        }),
+        lastUpdated: new Date()
+      }
+    });
+  }
 }
 
 /**
@@ -212,10 +649,15 @@ Character Profile:
   // Build world state summary
   const worldStateSummary = memory.worldState ? `
 World State:
-- Relationships: ${Object.entries(memory.worldState.relationships).map(([name, type]) => `${name} (${type})`).join(', ') || 'None yet'}
-- Locations: ${memory.worldState.locations.join(', ') || 'None yet'}
-- Ongoing Plots: ${memory.worldState.ongoingPlots.join(', ') || 'None yet'}
-- Character Traits: ${memory.worldState.characterTraits.join(', ') || 'None yet'}
+- Relationships: ${Array.isArray(memory.worldState.relationships) 
+  ? memory.worldState.relationships.map(rel => `${rel.name} (${rel.relationshipType}) - ${rel.context}`).join(', ') 
+  : 'None yet'}
+- Locations: ${Array.isArray(memory.worldState.locations) 
+  ? memory.worldState.locations.map(loc => `${loc.reimaginedName} (${loc.realName}) - ${loc.context}`).join(', ') 
+  : 'None yet'}
+- Active Goals: ${Array.isArray(memory.worldState.goals) 
+  ? memory.worldState.goals.filter(goal => goal.status === 'active').map(goal => goal.description).join(', ') 
+  : 'None yet'}
 ` : '';
 
   // Build recent journey summary

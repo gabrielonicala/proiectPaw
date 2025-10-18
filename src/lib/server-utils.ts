@@ -2,6 +2,7 @@ import { JournalEntry } from "@/types";
 import { db } from "./db";
 import { validateUserSession } from "./auth";
 import { evaluateStatChanges, applyStatChanges } from "./stat-evaluation";
+import { encryptText, decryptText } from "./encryption";
 
 // Database functions for journal entries
 export async function saveEntryToDatabase(entry: Omit<JournalEntry, 'id' | 'createdAt' | 'updatedAt'> & { userId: string }): Promise<JournalEntry> {
@@ -11,12 +12,18 @@ export async function saveEntryToDatabase(entry: Omit<JournalEntry, 'id' | 'crea
     throw new Error('USER_ACCOUNT_DELETED');
   }
 
+  // Encrypt text fields directly
+  const encryptedOriginalText = await encryptText(entry.originalText);
+  const encryptedReimaginedText = entry.reimaginedText 
+    ? await encryptText(entry.reimaginedText) 
+    : null;
+
   const dbEntry = await db.journalEntry.create({
     data: {
       userId: entry.userId,
       characterId: entry.characterId,
-      originalText: entry.originalText,
-      reimaginedText: entry.reimaginedText,
+      originalText: encryptedOriginalText,
+      reimaginedText: encryptedReimaginedText,
       imageUrl: entry.imageUrl,
       // videoUrl: entry.videoUrl, // VIDEO GENERATION COMMENTED OUT
       // coming-soon entries don't need special handling
@@ -80,12 +87,15 @@ export async function saveEntryToDatabase(entry: Omit<JournalEntry, 'id' | 'crea
     }
   });
 
+  // Return decrypted data
   return {
     id: updatedEntry!.id,
     userId: updatedEntry!.userId,
     characterId: updatedEntry!.characterId,
-    originalText: updatedEntry!.originalText,
-    reimaginedText: updatedEntry!.reimaginedText || undefined,
+    originalText: await decryptText(updatedEntry!.originalText),
+    reimaginedText: updatedEntry!.reimaginedText 
+      ? await decryptText(updatedEntry!.reimaginedText) 
+      : undefined,
     imageUrl: updatedEntry!.imageUrl || undefined,
     // videoUrl: updatedEntry!.videoUrl || undefined, // VIDEO GENERATION COMMENTED OUT
     outputType: updatedEntry!.outputType as 'text' | 'image' | 'coming-soon',
@@ -109,21 +119,28 @@ export async function loadEntriesFromDatabase(userId: string): Promise<JournalEn
     orderBy: { createdAt: 'desc' },
   });
 
-  return dbEntries.map(entry => ({
-    id: entry.id,
-    userId: entry.userId,
-    characterId: entry.characterId,
-    originalText: entry.originalText,
-    reimaginedText: entry.reimaginedText || undefined,
-    imageUrl: entry.imageUrl || undefined,
-    // videoUrl: entry.videoUrl || undefined, // VIDEO GENERATION COMMENTED OUT
-    outputType: entry.outputType as 'text' | 'image' | 'coming-soon',
-    createdAt: entry.createdAt,
-    updatedAt: entry.updatedAt,
-    pastContext: entry.pastContext ? JSON.parse(entry.pastContext) : undefined,
-    expGained: entry.expGained || undefined,
-    statAnalysis: entry.statAnalysis || undefined,
-  }));
+  // Decrypt all entries
+  const decryptedEntries = await Promise.all(
+    dbEntries.map(async (entry) => ({
+      id: entry.id,
+      userId: entry.userId,
+      characterId: entry.characterId,
+      originalText: await decryptText(entry.originalText),
+      reimaginedText: entry.reimaginedText 
+        ? await decryptText(entry.reimaginedText) 
+        : undefined,
+      imageUrl: entry.imageUrl || undefined,
+      // videoUrl: entry.videoUrl || undefined, // VIDEO GENERATION COMMENTED OUT
+      outputType: entry.outputType as 'text' | 'image' | 'coming-soon',
+      createdAt: entry.createdAt,
+      updatedAt: entry.updatedAt,
+      pastContext: entry.pastContext ? JSON.parse(entry.pastContext) : undefined,
+      expGained: entry.expGained || undefined,
+      statAnalysis: entry.statAnalysis || undefined,
+    }))
+  );
+
+  return decryptedEntries;
 }
 
 export async function deleteEntryFromDatabase(entryId: string, userId: string): Promise<void> {
