@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { signIn, getSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
+import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 
 export default function SignInPage() {
   const [identifier, setIdentifier] = useState('');
@@ -26,8 +26,8 @@ export default function SignInPage() {
     }
 
     try {
-      // First, check if credentials are valid and if email is verified
-      const verificationResponse = await fetch('/api/auth/check-verification', {
+      // Use custom authentication API
+      const response = await fetch('/api/auth/signin-credentials', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -35,33 +35,19 @@ export default function SignInPage() {
         body: JSON.stringify({ identifier, password }),
       });
 
-      const verificationData = await verificationResponse.json();
+      const data = await response.json();
 
-      if (!verificationResponse.ok) {
-        if (verificationData.error === 'EMAIL_NOT_VERIFIED') {
+      if (!response.ok) {
+        if (data.error === 'EMAIL_NOT_VERIFIED') {
           setError('Please verify your email address before signing in. Check your inbox for a verification email.');
         } else {
-          setError('Invalid email/username or password');
+          setError(data.error || 'Invalid email/username or password');
         }
         return;
       }
 
-      // If verification check passed, proceed with NextAuth signin
-      const result = await signIn('credentials', {
-        identifier,
-        password,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        setError('An error occurred during sign in. Please try again.');
-      } else {
-        // Get the session to ensure user is logged in
-        const session = await getSession();
-        if (session) {
-          router.push('/');
-        }
-      }
+      // Success - force a full page reload to ensure session cookie is recognized
+      window.location.href = '/';
     } catch {
       setError('An error occurred. Please try again.');
     } finally {
@@ -254,6 +240,15 @@ export default function SignInPage() {
           <div className="text-center mb-6">
             <h1 className="text-3xl font-bold text-white mb-2 font-pixel">Welcome Back</h1>
             <p className="text-gray-300 font-pixel">Sign in to continue</p>
+          </div>
+
+          {/* Google Sign-In Option */}
+          <div className="mb-6">
+            <GoogleSignInButton 
+              variant="signin"
+              className="w-full"
+            />
+            <div className="text-center text-white/70 my-4 text-sm font-pixel">or</div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">

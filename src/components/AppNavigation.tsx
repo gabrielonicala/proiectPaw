@@ -133,13 +133,12 @@ export default function AppNavigation({
             <Button onClick={onProfileView} variant="secondary" className="md:hidden" theme={theme}>
               👤
             </Button>
-            {/* Tribute button hidden for now */}
-            {/* <Button onClick={onTributeView} variant="secondary" className="hidden md:flex" theme={theme}>
+            <Button onClick={onTributeView} variant="secondary" className="hidden md:flex" theme={theme}>
               Tribute
             </Button>
             <Button onClick={onTributeView} variant="secondary" className="md:hidden" theme={theme}>
               💎
-            </Button> */}
+            </Button>
           </>
         ) : (
           // Other pages: Back button and optional logout
