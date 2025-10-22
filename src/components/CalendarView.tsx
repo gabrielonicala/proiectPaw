@@ -11,7 +11,7 @@ import AppNavigation from './AppNavigation';
 import { JournalEntry, User, Character } from '@/types';
 import { useEntries } from '@/hooks/useEntries';
 import { themes } from '@/themes';
-// import Footer from './Footer';
+import Footer from './Footer';
 
 interface CalendarViewProps {
   user: User;
@@ -466,7 +466,7 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
         />
       )}
       </div>
-      {/* <Footer /> */}
+      <Footer />
     </div>
   );
 }

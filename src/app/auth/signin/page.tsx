@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
@@ -12,7 +12,16 @@ export default function SignInPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const message = searchParams.get('message');
+    if (message === 'account-linked') {
+      setSuccessMessage('Account successfully linked! You can now sign in with Google.');
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -283,6 +292,12 @@ export default function SignInPage() {
             {error && (
               <div className="text-red-400 text-sm text-center font-pixel">
                 {error}
+              </div>
+            )}
+
+            {successMessage && (
+              <div className="text-green-400 text-sm text-center font-pixel">
+                {successMessage}
               </div>
             )}
 

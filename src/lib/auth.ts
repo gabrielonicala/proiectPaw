@@ -5,6 +5,11 @@ import bcrypt from 'bcryptjs';
 import { db } from './db';
 import { getUniqueUsername } from './username-generator';
 
+// Extend global type for temporary OAuth data storage
+declare global {
+  var tempOAuthData: Map<string, any> | undefined;
+}
+
 export const authOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   adapter: PrismaAdapter(db),
@@ -32,10 +37,75 @@ export const authOptions = {
       return session;
     },
     async signIn({ user, account, profile, email, credentials }: { user: any; account?: any; profile?: any; email?: any; credentials?: any }) {
-      // Let PrismaAdapter handle everything for Google OAuth
+      // Handle Google OAuth with existing user account linking
       if (account?.provider === "google") {
         console.log('Google OAuth sign-in attempt for:', user.email);
-        return true; // Allow PrismaAdapter to handle user/account creation
+        
+        // Check if a user with this email already exists
+        const existingUser = await db.user.findUnique({
+          where: { email: user.email }
+        });
+        
+        if (existingUser) {
+          console.log('Found existing user with email:', user.email, 'Checking if OAuth account is already linked...');
+          
+          // Check if OAuth account is already linked
+          const existingAccount = await db.account.findFirst({
+            where: {
+              userId: existingUser.id,
+              provider: account.provider,
+              providerAccountId: account.providerAccountId
+            }
+          });
+          
+          if (existingAccount) {
+            console.log('OAuth account already linked to existing user');
+            // Update the user object to use the existing user's ID
+            user.id = existingUser.id;
+            user.username = existingUser.username;
+            return true;
+          }
+          
+          // Account exists but OAuth is not linked - redirect to confirmation page
+          console.log('Account exists but OAuth not linked, redirecting to confirmation page');
+          
+          // Generate a temporary token to store OAuth data
+          const tempToken = require('crypto').randomBytes(32).toString('hex');
+          const tempData = {
+            email: user.email,
+            provider: account.provider,
+            providerAccountId: account.providerAccountId,
+            access_token: account.access_token,
+            refresh_token: account.refresh_token,
+            expires_at: account.expires_at,
+            token_type: account.token_type,
+            scope: account.scope,
+            id_token: account.id_token,
+            session_state: account.session_state,
+            type: account.type,
+            timestamp: Date.now()
+          };
+          
+          // Store temporarily (in production, use Redis or similar)
+          // For now, we'll use a simple in-memory store
+          if (!global.tempOAuthData) {
+            global.tempOAuthData = new Map();
+          }
+          global.tempOAuthData.set(tempToken, tempData);
+          
+          // Clean up old tokens (older than 10 minutes)
+          const tenMinutesAgo = Date.now() - (10 * 60 * 1000);
+          for (const [token, data] of global.tempOAuthData.entries()) {
+            if (data.timestamp < tenMinutesAgo) {
+              global.tempOAuthData.delete(token);
+            }
+          }
+          
+          return `/auth/link-account?token=${tempToken}`;
+        }
+        
+        // No existing user found, let PrismaAdapter create a new one
+        return true;
       }
       
       return true;
