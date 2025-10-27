@@ -37,13 +37,16 @@ export const themes: Record<string, ThemeConfig> = {
     detailedDescription: 'Enter a neon-soaked future where technology and humanity collide. This theme turns your experiences into high-tech adventures through rain-drenched streets, corporate conspiracies, and digital rebellions. Expect stories of hackers, AI consciousness, and the eternal struggle between megacorps and freedom fighters.',
     colors: {
       primary: '#00FF88',
-      secondary: '#FF0080',
-      accent: '#FFFF00',
+      secondary: '#00FFFF',
+      accent: '#FF8C00',
       background: '#0A0A0A',
       text: '#FFFFFF',
       border: '#00FF88'
     },
-    background: 'linear-gradient(135deg, #0A0A0A 0%, #1A0A1A 100%)',
+    background: `
+      linear-gradient(90deg, #0A0A0A, #00FF88, #00FFFF, #FF8C00),
+      linear-gradient(180deg, #00FFFF, #0A0A0A, #00FF88, #FF8C00)
+    `,
     effects: ['neon-glow', 'rain-streaks', 'hologram-flicker'],
     sounds: ['dark-synthwave', 'glitch-pulses', 'cyber-ambient'],
     animations: ['neon-pulse', 'rain-fall', 'glitch-effect'],
@@ -80,13 +83,16 @@ export const themes: Record<string, ThemeConfig> = {
     detailedDescription: 'Dive into the shadowy world of noir detectives and unsolved mysteries. This theme transforms your daily experiences into gripping crime stories filled with cigarette smoke, dim desk lamps, and hidden clues. Perfect for stories about missing persons, crime syndicates, and the psychological tension of the hunt for truth.',
     colors: {
       primary: '#B8860B',
-      secondary: '#8B4513',
+      secondary: '#8B0000',
       accent: '#FFD700',
-      background: '#1C1C1C',
+      background: '#000000',
       text: '#F5F5DC',
       border: '#B8860B'
     },
-    background: 'linear-gradient(135deg, #1A1A1A 0%, #0F0F0F 100%)',
+    background: `
+      linear-gradient(135deg, #000000, #B8860B, #8B0000, #FFD700),
+      linear-gradient(225deg, #8B0000, #000000, #B8860B, #FFD700)
+    `,
     effects: ['cigarette-smoke', 'desk-lamp-glow', 'fog-wisps'],
     sounds: ['saxophone-noir', 'suspenseful-piano', 'city-ambient'],
     animations: ['smoke-rise', 'lamp-flicker', 'fog-drift'],
@@ -118,30 +124,33 @@ export const themes: Record<string, ThemeConfig> = {
   'blazeheart-saga': {
     id: 'blazeheart-saga',
     name: 'Blazeheart Saga',
-    emoji: '🔥',
-    description: 'Shōnen Protagonist',
-    detailedDescription: 'Channel the spirit of classic anime heroes with fiery determination and unbreakable bonds. This theme turns your challenges into epic training arcs, rival battles, and inspiring adventures. Expect stories about never giving up, the power of friendship, and overcoming impossible odds through sheer willpower and determination.',
+    emoji: '⚔️',
+    description: 'Samurai Warrior',
+    detailedDescription: 'Embrace the way of the warrior with honor, discipline, and unwavering resolve. This theme transforms your experiences into epic tales of bushido, ancient battles, and the path of the sword. Expect stories about honor, sacrifice, master-student relationships, and the eternal struggle between duty and personal desires.',
     colors: {
-      primary: '#FF4500',
-      secondary: '#FF8C00',
+      primary: '#8B0000',
+      secondary: '#FFFFFF',
       accent: '#FFD700',
-      background: '#1A0A0A',
-      text: '#FFFFFF',
-      border: '#FF4500'
+      background: '#000000',
+      text: '#F5F5F5',
+      border: '#8B0000'
     },
-    background: 'linear-gradient(135deg, #1A0A0A 0%, #2A0A0A 100%)',
-    effects: ['energy-burst', 'flame-trails', 'power-aura'],
-    sounds: ['upbeat-rock', 'orchestral-shonen', 'battle-music'],
-    animations: ['energy-wave', 'flame-flicker', 'power-up'],
+    background: `
+      linear-gradient(60deg, #000000, #8B0000, #FFFFFF, #FFD700, #2F4F4F),
+      linear-gradient(120deg, #FFD700, #000000, #8B0000, #FFFFFF, #2F4F4F)
+    `,
+    effects: ['sword-gleam', 'cherry-blossoms', 'honor-aura'],
+    sounds: ['traditional-japanese', 'taiko-drums', 'zen-ambient'],
+    animations: ['sword-strike', 'cherry-fall', 'honor-pulse'],
     storyPrompts: [
-      'The hero\'s journey begins with a single step',
-      'Training montages and never giving up',
-      'Friendship that transcends all obstacles',
-      'The final battle that determines everything',
-      'Destiny calls, and the hero answers'
+      'The path of the sword begins with a single step',
+      'Training under a master and learning discipline',
+      'Honor that guides every decision',
+      'The final duel that tests your resolve',
+      'Sacrifice for the greater good'
     ],
     archetype: {
-      name: 'Hero', // Changed from 'Samurai' to be more anime-generic
+      name: 'Samurai',
       stats: {
         // Original descriptions (commented out for reference):
         // 'Discipline': 'Your mental fortitude and control over your emotions.',
@@ -193,14 +202,17 @@ export const themes: Record<string, ThemeConfig> = {
     description: 'Dark Fantasy',
     detailedDescription: 'Enter a realm of gothic castles, ancient curses, and mysterious shadows. This theme transforms your experiences into dark fantasy tales filled with forbidden magic, cursed artifacts, and the eternal struggle between light and darkness. Perfect for stories about ancient evils, gothic mysteries, and the price of power.',
     colors: {
-      primary: '#4B0082',
-      secondary: '#8B008B',
-      accent: '#DC143C',
-      background: '#0A0A0A',
+      primary: '#8B008B',
+      secondary: '#4B0082',
+      accent: '#DAA520',
+      background: '#000000',
       text: '#E6E6FA',
-      border: '#4B0082'
+      border: '#8B008B'
     },
-    background: 'linear-gradient(135deg, #0A0A0A 0%, #1A0A1A 100%)',
+    background: `
+      linear-gradient(75deg, #000000, #8B008B, #4B0082, #DAA520),
+      linear-gradient(255deg, #4B0082, #000000, #8B008B, #DAA520)
+    `,
     effects: ['gothic-shadows', 'candle-flicker', 'mystical-aura'],
     sounds: ['gothic-choir', 'dark-ambient', 'mystical-chimes'],
     animations: ['shadow-dance', 'candle-flicker', 'mystical-pulse'],
@@ -236,14 +248,17 @@ export const themes: Record<string, ThemeConfig> = {
     description: 'Sci-Fi Exploration',
     detailedDescription: 'Embark on cosmic adventures across the vast expanse of space. This theme transforms your experiences into epic space odysseys filled with alien encounters, distant worlds, and the infinite possibilities of the cosmos. Perfect for stories about exploration, first contact, and humanity\'s place among the stars.',
     colors: {
-      primary: '#00BFFF',
-      secondary: '#4169E1',
+      primary: '#4169E1',
+      secondary: '#1E90FF',
       accent: '#FFD700',
-      background: '#000033',
+      background: '#000000',
       text: '#E6F3FF',
-      border: '#00BFFF'
+      border: '#4169E1'
     },
-    background: 'linear-gradient(135deg, #000033 0%, #000066 100%)',
+    background: `
+      linear-gradient(0deg, #000000, #4169E1, #1E90FF, #FFD700),
+      linear-gradient(90deg, #1E90FF, #000000, #4169E1, #FFD700)
+    `,
     effects: ['star-field', 'nebula-glow', 'cosmic-dust'],
     sounds: ['space-ambient', 'sci-fi-synth', 'cosmic-echoes'],
     animations: ['star-twinkle', 'nebula-drift', 'cosmic-pulse'],
@@ -280,13 +295,16 @@ export const themes: Record<string, ThemeConfig> = {
     detailedDescription: 'Step into a realm of wizards, kingdoms, and ancient prophecies. This theme transforms your experiences into epic fantasy adventures filled with magical academies, legendary artifacts, and the eternal struggle between good and evil. Perfect for stories about chosen heroes, magical quests, and the power of destiny.',
     colors: {
       primary: '#DAA520',
-      secondary: '#CD853F',
-      accent: '#DC143C',
-      background: '#2F1B14',
+      secondary: '#FF6B35',
+      accent: '#00FF88',
+      background: '#000000',
       text: '#F5F5DC',
       border: '#DAA520'
     },
-    background: 'linear-gradient(135deg, #2F1B14 0%, #1A0F0A 100%)',
+    background: `
+      linear-gradient(45deg, #000000, #DAA520, #FF6B35, #00FF88),
+      linear-gradient(135deg, #FF6B35, #000000, #DAA520, #00FF88)
+    `,
     effects: ['parchment-texture', 'quill-ink', 'magical-glow'],
     sounds: ['medieval-music', 'magical-chimes', 'castle-ambient'],
     animations: ['parchment-unroll', 'ink-flow', 'magical-sparkle'],
@@ -320,16 +338,19 @@ export const themes: Record<string, ThemeConfig> = {
     name: 'Wild West',
     emoji: '🤠',
     description: 'Frontier Justice',
-    detailedDescription: 'Saddle up for adventures in the lawless frontier where justice is served by the barrel of a gun. This theme transforms your experiences into Wild West tales filled with mysterious strangers, gold rushes, and the eternal struggle between law and chaos. Perfect for stories about lone gunslingers, frontier justice, and the untamed spirit of the west.',
+    detailedDescription: 'Saddle up for adventures in the lawless frontier where justice is served by the barrel of a gun. This theme transforms your experiences into Wild West tales filled with mysterious strangers, gold rushes, and the eternal struggle between law and chaos. Perfect for stories about lone gunslingers and the untamed spirit of the west.',
     colors: {
       primary: '#D2691E',
-      secondary: '#CD853F',
-      accent: '#F4A460',
-      background: '#8B4513',
+      secondary: '#FFD700',
+      accent: '#FF0000',
+      background: '#000000',
       text: '#F5DEB3',
       border: '#D2691E'
     },
-    background: 'linear-gradient(135deg, #8B4513 0%, #A0522D 25%, #D2691E 50%, #CD853F 75%, #8B4513 100%)',
+    background: `
+      linear-gradient(15deg, #000000, #D2691E, #FFD700, #FF0000),
+      linear-gradient(195deg, #FFD700, #000000, #D2691E, #FF0000)
+    `,
     effects: ['dust-particles', 'tumbleweed-roll', 'sunset-glow'],
     sounds: ['acoustic-guitar', 'harmonica-melody', 'horse-hooves', 'saloon-piano'],
     animations: ['dust-swirl', 'sunset-fade', 'tumbleweed-bounce'],
@@ -372,7 +393,10 @@ export const themes: Record<string, ThemeConfig> = {
       text: '#F0F8FF',
       border: '#8B0000'
     },
-    background: 'linear-gradient(135deg, #191970 0%, #000080 25%, #8B0000 50%, #4682B4 75%, #191970 100%)',
+    background: `
+      linear-gradient(120deg, #191970, #000080, #8B0000, #4682B4),
+      linear-gradient(240deg, #000080, #191970, #8B0000, #4682B4)
+    `,
     effects: ['ocean-waves', 'storm-clouds', 'treasure-glow'],
     sounds: ['sea-shanty', 'ocean-waves', 'ship-creaking'],
     animations: ['wave-motion', 'storm-lightning', 'sail-billow'],

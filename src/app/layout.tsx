@@ -4,8 +4,8 @@ import "./globals.css";
 import "../styles/custom-cursor.css";
 import SessionProvider from "@/components/SessionProvider";
 import AssetPreloader from "@/components/AssetPreloader";
-import { Analytics } from '@vercel/analytics/react';
-import { SpeedInsights } from '@vercel/speed-insights/next';
+import CookieConsentBanner from "@/components/CookieConsentBanner";
+import ConditionalAnalytics from "@/components/ConditionalAnalytics";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -53,8 +53,8 @@ export default function RootLayout({
             {children}
           </AssetPreloader>
         </SessionProvider>
-        <Analytics />
-        <SpeedInsights />
+        <CookieConsentBanner />
+        <ConditionalAnalytics />
       </body>
     </html>
   );

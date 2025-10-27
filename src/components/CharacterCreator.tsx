@@ -466,6 +466,7 @@ export default function CharacterCreator({ user, onCharacterCreate, onBack, curr
               <LayeredAvatarBuilder
                 onSave={handleLayeredAvatarSelect}
                 onCancel={() => setStep('theme')}
+                theme={selectedTheme}
               />
             {/* )} */}
           </div>
@@ -485,7 +486,7 @@ export default function CharacterCreator({ user, onCharacterCreate, onBack, curr
                   <h2 className="font-pixel text-2xl text-white mb-4">
                     Character Preview
                   </h2>
-                  <div className="flex justify-center items-center gap-6">
+                  <div className="flex justify-center items-center">
                     {selectedAvatar?.options?.layeredAvatar ? (
                       <LayeredAvatarRenderer
                         layeredAvatar={selectedAvatar.options.layeredAvatar}
@@ -500,14 +501,6 @@ export default function CharacterCreator({ user, onCharacterCreate, onBack, curr
                         }}
                       />
                     )}
-                    <div className="text-left">
-                      <p className="font-pixel" style={{ color: themes[selectedTheme].colors.text }}>
-                        <span style={{ color: themes[selectedTheme].colors.accent }}>Theme:</span> {themes[selectedTheme].name}
-                      </p>
-                      <p className="font-pixel" style={{ color: themes[selectedTheme].colors.text }}>
-                        <span style={{ color: themes[selectedTheme].colors.accent }}>Avatar:</span> Custom Character
-                      </p>
-                    </div>
                   </div>
                 </div>
 

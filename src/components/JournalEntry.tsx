@@ -336,6 +336,23 @@ export default function JournalEntry({
 
   return (
     <div className="min-h-screen flex flex-col">
+      <style jsx>{`
+        .loading-dots {
+          animation: loadingDots 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes loadingDots {
+          0%, 20% {
+            opacity: 0;
+          }
+          50% {
+            opacity: 1;
+          }
+          80%, 100% {
+            opacity: 0;
+          }
+        }
+      `}</style>
       <div className="flex-1 p-4">
       {/* Pixel art background */}
       <MovingGradientBackground theme={migrateTheme(activeCharacter.theme) as Theme} />
@@ -537,22 +554,42 @@ export default function JournalEntry({
                   <div className="flex justify-between items-center mb-2">
                     <div className="flex flex-col">
                       <h3 className="font-pixel text-yellow-400 text-xl">What happened today?</h3>
-                      {usageData && !usageLoading && (
-                        <div className="mt-2">
-                          <div className="text-center">
-                            <div className="flex justify-start text-sm gap-2">
-                              <span className="font-pixel text-white">📖 <span>{usageData.usage.chapters.used}/{usageData.usage.chapters.limit || '?'}</span></span>
-                              {usageData.limits.plan !== 'free' && (
-                                <span className="font-pixel text-white">🖼️ <span>{usageData.usage.scenes.used}/{usageData.usage.scenes.limit || '?'}</span></span>
+                      <div className="mt-2">
+                        <div className="text-center">
+                          <div className="flex justify-start text-sm gap-2">
+                            <span className="font-pixel text-white">📖 <span>
+                              {usageLoading ? (
+                                <span className="loading-dots">•••</span>
+                              ) : usageData ? (
+                                `${usageData.usage.chapters.used}/${usageData.usage.chapters.limit || '?'}`
+                              ) : (
+                                '•••'
                               )}
-                            </div>
+                            </span></span>
+                            <span className="font-pixel text-white">🖼️ <span>
+                              {usageLoading ? (
+                                <span className="loading-dots">•••</span>
+                              ) : usageData ? (
+                                `${usageData.usage.scenes.used}/${usageData.usage.scenes.limit || '?'}`
+                              ) : (
+                                '•••'
+                              )}
+                            </span></span>
                           </div>
                         </div>
-                      )}
+                      </div>
                     </div>
-                    {usageData && !usageLoading && (
-                      <QuotaCountdown theme={migrateTheme(activeCharacter.theme)} />
-                    )}
+                    <div className="text-right">
+                      <div className="font-pixel text-white text-sm">
+                        {usageLoading ? (
+                          <span>REFRESH IN <span className="loading-dots">•••</span></span>
+                        ) : usageData ? (
+                          <QuotaCountdown theme={migrateTheme(activeCharacter.theme)} />
+                        ) : (
+                          <span>REFRESH IN <span className="loading-dots">•••</span></span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                   
                 <div className="relative">
@@ -593,7 +630,8 @@ Hint: Rich details weave the most captivating tales.`}
                         variant={selectedOutput === output.value ? 'accent' : 'secondary'}
                         size="sm"
                           theme={migrateTheme(activeCharacter.theme) as Theme}
-                          className="text-sm py-2 flex-1"
+                          className="text-base py-2 flex-1 border-2 border-black"
+                          style={{ textShadow: '1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000' }}
                       >
                         {output.emoji} {output.label}
                       </Button>
@@ -620,7 +658,8 @@ Hint: Rich details weave the most captivating tales.`}
                   variant="primary"
                   size="lg"
                     theme={migrateTheme(activeCharacter.theme) as Theme}
-                    className="w-full text-base py-3 relative overflow-hidden"
+                    className="w-full text-base py-3 relative overflow-hidden border-2 border-black"
+                    style={{ textShadow: '1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000' }}
                 >
                     <span className="relative z-10 flex items-center justify-center">
                       <motion.span 

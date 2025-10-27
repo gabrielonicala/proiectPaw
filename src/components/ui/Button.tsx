@@ -65,6 +65,16 @@ export default function Button({
       };
     }
     
+    // Special handling for Blazeheart Saga theme navigation buttons
+    if (theme === 'blazeheart-saga' && variant === 'secondary') {
+      return {
+        background: `linear-gradient(to bottom, #8B0000, ${adjustColor('#8B0000', -20)})`,
+        borderColor: '#8B0000',
+        color: '#FFFFFF',
+        boxShadow: `0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)`
+      };
+    }
+    
     const colorMap = {
       primary: colors.primary,
       secondary: colors.secondary,
