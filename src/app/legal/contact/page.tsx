@@ -137,7 +137,7 @@ export default function ContactPage() {
           }}
         ></div>
         
-        {/* Blazeheart Saga - Red */}
+        {/* Steel Spirit - Red */}
         <div 
           className="absolute w-7 h-7 pixelated opacity-70"
           style={{

@@ -80,7 +80,7 @@ export const themes: Record<string, ThemeConfig> = {
     name: 'Crimson Casefiles',
     emoji: '🕵️',
     description: 'Detective Mystery',
-    detailedDescription: 'Dive into the shadowy world of noir detectives and unsolved mysteries. This theme transforms your daily experiences into gripping crime stories filled with cigarette smoke, dim desk lamps, and hidden clues. Perfect for stories about missing persons, crime syndicates, and the psychological tension of the hunt for truth.',
+    detailedDescription: 'Step into the shadowy world of mystery and intrigue where every detail matters and nothing is as it seems. This theme transforms your daily experiences into compelling detective stories filled with hidden clues, unexpected twists, and the satisfaction of solving puzzles. Whether you\'re investigating a simple case or uncovering a complex conspiracy, every story becomes a thrilling journey through the art of deduction, where keen observation and sharp intuition lead to the truth.',
     colors: {
       primary: '#B8860B',
       secondary: '#8B0000',
@@ -97,11 +97,18 @@ export const themes: Record<string, ThemeConfig> = {
     sounds: ['saxophone-noir', 'suspenseful-piano', 'city-ambient'],
     animations: ['smoke-rise', 'lamp-flicker', 'fog-drift'],
     storyPrompts: [
-      'A missing person case that leads to the city\'s dark underbelly',
-      'Late night stakeouts and cigarette smoke',
+      'A missing person case that leads to unexpected places',
+      'Late night stakeouts and the patience of surveillance',
       'The detective who never gives up, no matter the cost',
       'A crime syndicate with connections in high places',
-      'Psychological tension in the interrogation room'
+      'Psychological tension in the interrogation room',
+      'Following a trail of evidence through the city streets',
+      'The moment when all the pieces finally click together',
+      'A witness who holds the key to solving the case',
+      'The weight of justice and the burden of truth',
+      'A case that tests the detective\'s moral compass',
+      'The satisfaction of bringing closure to victims\' families',
+      'A mystery that spans decades and multiple generations'
     ],
     archetype: {
       name: 'Detective',
@@ -123,10 +130,10 @@ export const themes: Record<string, ThemeConfig> = {
   },
   'blazeheart-saga': {
     id: 'blazeheart-saga',
-    name: 'Blazeheart Saga',
+    name: 'Steel Spirit',
     emoji: '⚔️',
     description: 'Samurai Warrior',
-    detailedDescription: 'Embrace the way of the warrior with honor, discipline, and unwavering resolve. This theme transforms your experiences into epic tales of bushido, ancient battles, and the path of the sword. Expect stories about honor, sacrifice, master-student relationships, and the eternal struggle between duty and personal desires.',
+    detailedDescription: 'Step into a world where every moment is a lesson in bushido. This theme transforms your daily experiences into immersive tales of samurai life, from quiet moments of meditation to intense training sessions, honing both mind and body. Experience the weight of honor, the discipline of daily practice, and the profound wisdom of masters who guide your path. Whether you\'re studying ancient texts, perfecting your sword technique, or facing moral dilemmas that test your resolve, every story becomes a chapter in your journey toward becoming a true warrior.',
     colors: {
       primary: '#8B0000',
       secondary: '#FFFFFF',
@@ -140,14 +147,21 @@ export const themes: Record<string, ThemeConfig> = {
       linear-gradient(120deg, #FFD700, #000000, #8B0000, #FFFFFF, #2F4F4F)
     `,
     effects: ['sword-gleam', 'cherry-blossoms', 'honor-aura'],
-    sounds: ['traditional-japanese', 'taiko-drums', 'zen-ambient'],
+    sounds: ['steel-spirit', 'traditional-japanese', 'taiko-drums', 'zen-ambient'],
     animations: ['sword-strike', 'cherry-fall', 'honor-pulse'],
     storyPrompts: [
-      'The path of the sword begins with a single step',
-      'Training under a master and learning discipline',
-      'Honor that guides every decision',
-      'The final duel that tests your resolve',
-      'Sacrifice for the greater good'
+      'Meditation, forging both mind and body',
+      'Training under the watchful eye of a sensei',
+      'The weight of a katana at your side, a symbol of both power and responsibility',
+      'The tea ceremony, finding peace in ritual and tradition',
+      'A challenge from a rival warrior that tests your skill and honor',
+      'Protecting the innocent from evildoers',
+      'The sound of cherry blossoms falling as you contemplate your duty',
+      'A master\'s lesson about the true meaning of bushido',
+      'The honor of serving your lord, even when it conflicts with personal desires',
+      'The discipline of daily practice, even when no one is watching',
+      'Reading ancient scrolls by candlelight, seeking wisdom from the past',
+      'The moment of stillness before drawing your blade in defense of others'
     ],
     archetype: {
       name: 'Samurai',

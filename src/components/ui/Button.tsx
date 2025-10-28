@@ -65,7 +65,7 @@ export default function Button({
       };
     }
     
-    // Special handling for Blazeheart Saga theme navigation buttons
+    // Special handling for Steel Spirit theme navigation buttons
     if (theme === 'blazeheart-saga' && variant === 'secondary') {
       return {
         background: `linear-gradient(to bottom, #8B0000, ${adjustColor('#8B0000', -20)})`,

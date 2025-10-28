@@ -156,7 +156,7 @@ export default function LinkAccountPage() {
           }}
         ></div>
         
-        {/* Blazeheart Saga - Red */}
+        {/* Steel Spirit - Red */}
         <div 
           className="absolute w-5 h-5 pixelated opacity-65"
           style={{

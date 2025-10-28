@@ -142,7 +142,7 @@ export default function LandingPage() {
     },
     { 
       id: 'blazeheart-saga', 
-      name: 'Blazeheart Saga', 
+      name: 'Steel Spirit', 
       icon: Swords,
       color: '#8B0000', 
       background: `
@@ -759,7 +759,7 @@ export default function LandingPage() {
               >
                 <div className="px-6 pb-6">
                   <p className="text-gray-300 font-pixel leading-relaxed">
-                    Quillia is a fantasy journaling app that transforms your daily experiences into epic adventures. 
+                    Quillia is a journaling app that transforms your daily experiences into epic adventures. 
                     Choose from multiple themes, create unique characters, and write your story in a magical, 
                     immersive environment that makes every day feel like a quest.
                   </p>
@@ -916,8 +916,7 @@ export default function LandingPage() {
                 <div className="px-6 pb-6">
                   <p className="text-gray-300 font-pixel leading-relaxed">
                     Getting started is easy! Simply sign up for an account, choose your favorite theme, create your 
-                    character, and start writing your first adventure. The app will guide you through each step 
-                    to ensure you have the perfect setup for your fantasy journey.
+                    character, and start writing. Each step flows smoothly into the next, ensuring you have the perfect setup for the beginning of your journey.
                   </p>
                 </div>
               </motion.div>
@@ -940,7 +939,7 @@ export default function LandingPage() {
               Ready to Begin Your Journey?
             </h2>
             <p className="font-pixel text-xl text-gray-300 mb-8 max-w-3xl mx-auto text-center">
-              Join thousands of adventurers who have transformed their daily lives into epic fantasy stories. Your adventure awaits.
+              Join others who are writing their story with Quillia. Transform your daily life into a new adventure now!
             </p>
             <div className="flex justify-center">
               <button 
