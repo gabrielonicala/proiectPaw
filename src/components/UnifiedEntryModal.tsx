@@ -41,6 +41,7 @@ export default function UnifiedEntryModal({
   const [isContentLoading, setIsContentLoading] = useState(true);
   const [showCopyToast, setShowCopyToast] = useState(false);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
+  // Chapter numbering intentionally removed per request; keep section label generic
 
   // Determine if we're using entry data or generated content
   const isUsingGeneratedContent = !entry && generatedContent;
@@ -134,7 +135,7 @@ export default function UnifiedEntryModal({
   const downloadFullEntry = async (entry: JournalEntry) => {
     setIsDownloading(true);
     try {
-      const content = `Original Entry: ${entry.originalText}\n\nGenerated Adventure: ${entry.reimaginedText || 'Image entry'}`;
+      const content = `The Inspiration: ${entry.originalText}\n\nThe Chapter: ${entry.reimaginedText || 'Image entry'}`;
       const blob = new Blob([content], { type: 'text/plain' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -212,16 +213,12 @@ export default function UnifiedEntryModal({
                 )}
                 <div className="mt-2 px-2 py-1 text-xs text-white/90 font-pixel bg-black/30 rounded">
                   <div className="flex justify-between">
-                    <span>Generated:</span>
+                    <span>Painted:</span>
                     <span>{new Date().toLocaleDateString()}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Theme:</span>
                     <span>{themes[migrateTheme(activeCharacter?.theme || 'obsidian-veil')]?.name || 'Adventure'}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Time:</span>
-                    <span>{new Date().toLocaleTimeString()}</span>
                   </div>
                 </div>
               </div>
@@ -252,6 +249,13 @@ export default function UnifiedEntryModal({
   }
 
   // For text entries, use the detailed modal style (like EntryDetailModal)
+  const resolvedTheme = migrateTheme(activeCharacter?.theme || 'obsidian-veil');
+  const isTreasureTides = resolvedTheme === 'crimson-tides';
+  const adventureBgClass = isTreasureTides
+    ? 'bg-[#0B1533]/95'
+    : 'bg-gradient-to-b from-yellow-900/20 to-orange-900/20';
+  const originalBgClass = isTreasureTides ? 'bg-[#0B1533]/95' : 'bg-gray-800/50';
+  const statsBgClass = isTreasureTides ? 'bg-[#0B1533]/95' : 'bg-gradient-to-b from-green-900/20 to-blue-900/20';
   return (
     <AnimatePresence>
       {isOpen && (
@@ -289,8 +293,8 @@ export default function UnifiedEntryModal({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
               >
-                <h3 className="font-pixel text-lg lg:text-base text-white mb-3">Original Entry:</h3>
-                <Card theme={activeCharacter?.theme || 'obsidian-veil'} effect="vintage" className="bg-gray-800/50 overflow-y-auto lg:max-h-80">
+                <h3 className="font-pixel text-lg lg:text-base text-white mb-3">The Inspiration:</h3>
+                <Card theme={activeCharacter?.theme || 'obsidian-veil'} effect="vintage" className={`overflow-y-auto lg:max-h-80`} style={isTreasureTides ? { background: '#0B1533F2' } : {}}>
                   <p className="text-gray-200 lg:text-sm leading-relaxed">{currentOriginalText}</p>
                 </Card>
               </motion.div>
@@ -304,8 +308,8 @@ export default function UnifiedEntryModal({
                   transition={{ delay: 0.2 }}
                   className="lg:col-span-2 lg:flex lg:flex-col lg:h-full"
                 >
-                  <h3 className="font-pixel text-lg lg:text-base text-white mb-3 lg:mb-2">Your Adventure:</h3>
-                  <Card theme={activeCharacter?.theme || 'obsidian-veil'} effect="glow" className="bg-gradient-to-b from-yellow-900/20 to-orange-900/20 lg:flex-1 lg:max-h-80 lg:overflow-y-auto">
+                  <h3 className="font-pixel text-lg lg:text-base text-white mb-3 lg:mb-2">The Chapter:</h3>
+                  <Card theme={activeCharacter?.theme || 'obsidian-veil'} effect="glow" className={`lg:flex-1 lg:max-h-80 lg:overflow-y-auto`} style={isTreasureTides ? { background: '#0B1533F2' } : {}}>
                     {currentOutputType === 'text' && currentContent && (
                       <motion.div
                         initial={{ opacity: 0 }}
@@ -337,7 +341,7 @@ export default function UnifiedEntryModal({
                     className="lg:col-span-1 lg:flex lg:flex-col lg:h-full"
                   >
                     <h3 className="font-pixel text-lg lg:text-base text-white mb-3 lg:mb-2">📊 Character Growth:</h3>
-                    <Card theme={activeCharacter?.theme || 'obsidian-veil'} effect="glow" className="bg-gradient-to-b from-green-900/20 to-blue-900/20 lg:flex-1 lg:flex lg:flex-col lg:max-h-80">
+                    <Card theme={activeCharacter?.theme || 'obsidian-veil'} effect="glow" className={`lg:flex-1 lg:flex lg:flex-col lg:max-h-80`} style={isTreasureTides ? { background: '#0B1533F2' } : {}}>
                       <div className="space-y-3 lg:space-y-2 lg:flex-1 lg:overflow-y-auto lg:pr-2">
                         {Object.entries(JSON.parse(entry.statAnalysis))
                           .filter(([_, change]: [string, any]) => change.change !== 0)

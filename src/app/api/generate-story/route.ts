@@ -114,7 +114,8 @@ Guidelines:
 - INSPIRATION USAGE: The inspiration elements are examples of the theme's atmosphere, not requirements to include. Use them as reference for tone and style, but focus only on the actual activity described in the original text.
 - NATURAL WRITING: Write in a conversational, natural style. Avoid overly formal language, excessive adjectives, or dramatic flourishes. Tell the story simply and directly, as if describing what actually happened.
 - FANTASY WRITING: Create vibrant, engaging fantasy that transforms reality into immersive adventure. Make it feel alive and exciting, not dry or formulaic. Draw the reader into the experience.
-- NATURAL NAMING: Create unique, theme-appropriate names for locations and objects. Avoid overly mystical or cliché fantasy names like "Garden of Tranquility", "Tea House of Reflection", "Market of the Dawn", "Steel Lotus Temple", or any "X of the Y" format. Instead, create names that feel authentic to the theme while being creative and memorable.`;
+      - NATURAL NAMING: Create unique, theme-appropriate names for locations and objects. Avoid overly mystical or cliché fantasy names like "Garden of Tranquility", "Tea House of Reflection", "Market of the Dawn", "Steel Lotus Temple", or any "X of the Y" format. Instead, create names that feel authentic to the theme while being creative and memorable.
+      - THEME LEXICON: Use vocabulary, idioms, metaphors, and turns of phrase that naturally fit the given theme. Keep it subtle and consistent—avoid parody, overdone slang, or heavy-handed dialect. Let word choice and rhythm reflect the theme without listing or explaining it.`;
 
     const userPrompt = `Transform this real-life experience into a new story in the given theme featuring ${characterData.name}:
 
@@ -133,8 +134,10 @@ INSPIRATION GUIDANCE: The inspiration elements show the theme's style and atmosp
 FANTASY STORYTELLING: Transform the reality into vibrant, engaging fantasy. Make it feel alive and immersive, not dry or formulaic. Create a story that draws the reader in and makes them feel like they're experiencing the adventure.
 
 NAMING STYLE: Create unique, theme-appropriate names for locations and objects. Avoid cliché fantasy names like "Garden of Tranquility", "Tea House of Reflection", "Market of the Dawn", "Steel Lotus Temple", or any "X of the Y" format. Instead, create names that feel authentic to the theme while being creative and memorable.
-
-CONTINUITY REQUIREMENT: If this experience relates to previous entries in the character's memory, NATURALLY weave those connections into the story. For example:
+      
+      LEXICON: Use vocabulary and idioms that fit the theme naturally. Keep it subtle and consistent; avoid exaggerated slang or caricature. Do not include lists of terms or explanations—let the language reflect the theme organically.
+      
+      CONTINUITY REQUIREMENT: If this experience relates to previous entries in the character's memory, NATURALLY weave those connections into the story. For example:
 - If they're in the same location, mention it organically
 - If they're continuing an activity, let it flow naturally
 - Reference previous meals, objects, or emotions subtly
@@ -206,6 +209,73 @@ IMPORTANT:
       // Fallback: treat the entire response as the story if JSON parsing fails
       console.warn('Failed to parse JSON response, using entire response as story:', error);
       storyText = generatedText;
+    }
+
+    // Second pass: polish vocabulary to fit a broad theme lexicon label and re-extract world state
+    // Runs unconditionally to improve tone; keeps plot and length stable
+    try {
+      const THEME_STYLE_LABEL: Record<string, string> = {
+        'wild-west': 'Wild West',
+        'crimson-tides': 'Pirate',
+        'blazeheart-saga': 'Edo Samurai',
+        'crimson-casefiles': 'Detective Noir',
+        'ivory-quill': 'Scholarly arcane',
+        'neon-ashes': 'Cyberpunk',
+        'obsidian-veil': 'Occult horror',
+        'starlit-horizon': 'Spacefaring science fiction'
+      };
+      const themeLabel = THEME_STYLE_LABEL[themeConfig.id] || themeConfig.name || 'Fantasy';
+
+      const polishSystem = `You rewrite fiction while keeping plot and length the same. Do not add or remove events. No em dashes (—); use commas instead. Keep the protagonist name "${characterData.name}" exactly unchanged.`;
+      const polishUser = `Rewrite this story to use more of a ${themeLabel}-themed vocabulary. After rewriting, analyze the rewritten version and return JSON with the rewritten story and extracted world state.
+
+ORIGINAL STORY:
+"""
+${storyText}
+"""
+
+Return exactly this JSON shape:
+{
+  "story": "Rewritten story here",
+  "worldState": {
+    "relationships": [
+      { "name": "CharacterName", "relationshipType": "type", "context": "context", "establishedIn": "when/where" }
+    ],
+    "locations": [
+      { "reimaginedName": "Name in story", "realName": "what it represents", "context": "what happens there", "establishedIn": "when/where" }
+    ],
+    "goals": [
+      { "description": "Goal", "status": "active|completed|failed" }
+    ]
+  }
+}`;
+
+      const polish = await openai.chat.completions.create({
+        model: "gpt-4.1",
+        messages: [
+          { role: "system", content: polishSystem },
+          { role: "user", content: polishUser }
+        ],
+        max_tokens: 700,
+        temperature: 0.7,
+      });
+
+      const polishText = polish.choices[0]?.message?.content;
+      if (polishText) {
+        try {
+          const parsed = JSON.parse(polishText);
+          if (parsed.story && typeof parsed.story === 'string') {
+            storyText = parsed.story;
+          }
+          if (parsed.worldState) {
+            worldStateUpdate = parsed.worldState;
+          }
+        } catch (err) {
+          console.warn('Failed to parse polish JSON; keeping original story/worldState', err);
+        }
+      }
+    } catch (err) {
+      console.warn('Polish pass failed; continuing with original story', err);
     }
 
     // Update character memory with the new entry and world state

@@ -222,8 +222,8 @@ function getThemeSpecificGuidance(themeName: string): string {
       - Colors: Dusty browns, warm oranges, desert tans, sunset reds
       - Avoid: Modern elements, bright colors, urban settings`;
       
-    case 'crimson tides':
-      return `- CRIMSON TIDES AESTHETIC: Pirate, nautical, adventurous, maritime
+    case 'treasure tides':
+      return `- TREASURE TIDES AESTHETIC: Pirate, nautical, adventurous, maritime
       - Visual Style: Nautical, maritime with ocean-inspired colors
       - Atmosphere: Adventurous, maritime, free-spirited, swashbuckling
       - Elements: Ships, ocean waves, treasure maps, pirate flags, nautical gear
