@@ -32,8 +32,8 @@ export async function saveEntryToDatabase(entry: Omit<JournalEntry, 'id' | 'crea
     },
   });
 
-  // Evaluate stat changes for text entries only
-  if (entry.outputType === 'text' && entry.reimaginedText) {
+  // Evaluate stat changes for text entries and image entries that have reimaginedText (generated chapter)
+  if ((entry.outputType === 'text' || entry.outputType === 'image') && entry.reimaginedText) {
     try {
       // Get character info for stat evaluation
       const character = await db.character.findUnique({

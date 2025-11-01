@@ -16,7 +16,7 @@ import { migrateTheme } from '@/lib/theme-migration';
 import { getImageProvider, getReferenceImages } from '@/lib/image-generation-config';
 import { useDailyUsage } from '@/hooks/useDailyUsage';
 import QuotaCountdown from './QuotaCountdown';
-import Footer from './Footer';
+// import Footer from './Footer';
 
 interface JournalEntryProps {
   user: User;
@@ -44,7 +44,7 @@ const REFERENCE_IMAGES = getReferenceImages();
 
 const outputTypes: { value: OutputType; label: string; emoji: string }[] = [
   { value: 'text', label: 'Chapter', emoji: '📖' },
-  { value: 'image', label: 'Scene (Experimental)', emoji: '🖼️' },
+  { value: 'image', label: 'Scene', emoji: '🖼️' },
   // { value: 'coming-soon', label: 'Episode', emoji: '🎬' } // Coming Soon placeholder - commented out for now
 ];
 
@@ -227,17 +227,23 @@ export default function JournalEntry({
       const themeConfig = themes[migratedTheme];
       
       let content = '';
+      let generatedChapter: string | undefined = undefined;
       
       switch (selectedOutput) {
         case 'text':
           content = await generateReimaginedText(entryText, themeConfig, pastContext, activeCharacter);
           break;
       case 'image':
+        // First generate the chapter to ensure image and story are aligned
+        console.log('📖 Generating chapter first for image alignment...');
+        generatedChapter = await generateReimaginedText(entryText, themeConfig, pastContext, activeCharacter);
+        console.log('✅ Chapter generated, now generating image...');
+        
         // Use configured image generation provider
         const provider = getImageProvider();
         if (provider === 'gemini') {
-          console.log('🎨 Generating image with Google Gemini...');
-          content = await generateImageGemini(entryText, themeConfig, activeCharacter);
+          console.log('🎨 Generating image with Google Gemini based on chapter...');
+          content = await generateImageGemini(entryText, themeConfig, activeCharacter, generatedChapter);
           console.log('✅ Gemini image generation completed, URL:', content);
           setImageProvider('Google Gemini');
         } else if (provider === 'stable-diffusion') {
@@ -269,9 +275,10 @@ export default function JournalEntry({
       // Don't save content policy violations to database
       if (content !== 'CONTENT_POLICY_VIOLATION') {
         // Save the entry to database (this will also trigger stat evaluation)
+        // For image entries, save the generated chapter as reimaginedText so stats can be evaluated
         const entryData = {
           originalText: entryText,
-          reimaginedText: selectedOutput === 'text' ? content : undefined,
+          reimaginedText: selectedOutput === 'text' ? content : (selectedOutput === 'image' ? generatedChapter : undefined),
           imageUrl: selectedOutput === 'image' ? content : undefined,
           outputType: selectedOutput,
           characterId: activeCharacter.id,
@@ -716,7 +723,7 @@ Hint: Rich details weave the most captivating tales.`}
         )}
       </div>
       </div>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }

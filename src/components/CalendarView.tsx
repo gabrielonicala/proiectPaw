@@ -11,7 +11,7 @@ import AppNavigation from './AppNavigation';
 import { JournalEntry, User, Character } from '@/types';
 import { useEntries } from '@/hooks/useEntries';
 import { themes } from '@/themes';
-import Footer from './Footer';
+// import Footer from './Footer';
 
 interface CalendarViewProps {
   user: User;
@@ -167,7 +167,7 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
               className="w-12 h-12 border-4 border-yellow-400 border-t-transparent pixelated mb-4"
             />
             <p className="font-pixel text-yellow-300 text-lg">
-              Loading calendar data...
+              Loading calendar...
             </p>
           </motion.div>
         )}
@@ -466,7 +466,7 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
         />
       )}
       </div>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }

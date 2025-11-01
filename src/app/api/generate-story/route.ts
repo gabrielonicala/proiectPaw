@@ -214,20 +214,31 @@ IMPORTANT:
     // Second pass: polish vocabulary to fit a broad theme lexicon label and re-extract world state
     // Runs unconditionally to improve tone; keeps plot and length stable
     try {
+      // const THEME_STYLE_LABEL: Record<string, string> = {
+      //   'wild-west': 'Wild West',
+      //   'crimson-tides': 'Pirate',
+      //   'blazeheart-saga': 'Edo Samurai',
+      //   'crimson-casefiles': 'Detective Noir',
+      //   'ivory-quill': 'Scholarly arcane',
+      //   'neon-ashes': 'Cyberpunk',
+      //   'obsidian-veil': 'Occult horror',
+      //   'starlit-horizon': 'Spacefaring science fiction'
+      // };
       const THEME_STYLE_LABEL: Record<string, string> = {
-        'wild-west': 'Wild West',
-        'crimson-tides': 'Pirate',
+        'wild-west': 'Lawless Frontier Western',
+        'crimson-tides': 'Seafaring Pirate Epic',
         'blazeheart-saga': 'Edo Samurai',
-        'crimson-casefiles': 'Detective Noir',
+        'crimson-casefiles': 'Gritty 1940s Detective',
         'ivory-quill': 'Scholarly arcane',
-        'neon-ashes': 'Cyberpunk',
-        'obsidian-veil': 'Occult horror',
-        'starlit-horizon': 'Spacefaring science fiction'
+        'neon-ashes': 'Cyberpunk Dystopia',
+        'obsidian-veil': 'Whispered Eldritch Fantasy',
+        'starlit-horizon': 'Interstellar Discovery Fiction'
       };
       const themeLabel = THEME_STYLE_LABEL[themeConfig.id] || themeConfig.name || 'Fantasy';
 
       const polishSystem = `You rewrite fiction while keeping plot and length the same. Do not add or remove events. No em dashes (—); use commas instead. Keep the protagonist name "${characterData.name}" exactly unchanged.`;
-      const polishUser = `Rewrite this story to use more of a ${themeLabel}-themed vocabulary. After rewriting, analyze the rewritten version and return JSON with the rewritten story and extracted world state.
+      // Rewrite this story to use more of a ${themeLabel}-themed vocabulary
+      const polishUser = `Rewrite this story in the style of a ${themeLabel} setting — using vocabulary, metaphors, and imagery typical of [short descriptor]. Keep it immersive and natural, not parody-like. After rewriting, analyze the rewritten version and return JSON with the rewritten story and extracted world state.
 
 ORIGINAL STORY:
 """

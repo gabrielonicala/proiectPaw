@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import Footer from '@/components/Footer';
+// import Footer from '@/components/Footer';
 
 export default function PrivacyPage() {
   return (
@@ -432,7 +432,7 @@ export default function PrivacyPage() {
         </div>
       </div>
       </div>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }

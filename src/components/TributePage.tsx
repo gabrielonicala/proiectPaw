@@ -12,7 +12,7 @@ import AlertModal from '@/components/AlertModal';
 import { User, Character } from '@/types';
 import { USE_SHARED_LIMITS } from '@/lib/subscription-limits';
 import { migrateTheme } from '@/lib/theme-migration';
-import Footer from './Footer';
+// import Footer from './Footer';
 
 interface SubscriptionData {
   hasSubscription: boolean;
@@ -330,7 +330,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
         </div>
       </div>
       </div>
-      <Footer />
+      {/* <Footer /> */}
       
       {/* Custom Modals */}
       <ConfirmationModal

@@ -14,7 +14,7 @@ import { themes } from '@/themes';
 import { migrateTheme } from '@/lib/theme-migration';
 import { getCachedImageUrl } from '@/lib/asset-cache';
 import { queueOfflineChange } from '@/lib/offline-sync';
-import Footer from './Footer';
+// import Footer from './Footer';
 
 interface CharacterSelectorProps {
   characters: Character[];
@@ -657,7 +657,7 @@ export default function CharacterSelector({
         </motion.div>
       )}
       </div>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }

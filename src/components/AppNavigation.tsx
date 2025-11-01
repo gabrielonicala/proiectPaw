@@ -34,7 +34,7 @@ export default function AppNavigation({
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
-      await signOut({ callbackUrl: '/auth/signin' });
+      await signOut({ callbackUrl: '/home' });
     } catch (error) {
       console.error('Logout error:', error);
       setIsLoggingOut(false);

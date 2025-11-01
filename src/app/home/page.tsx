@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import Button from '@/components/ui/Button';
 import Footer from '@/components/Footer';
 import { themes } from '@/themes';
@@ -13,6 +14,7 @@ import { Zap, Search, Swords, Moon, Rocket, Scroll, Target, Anchor, ChevronDown 
 
 export default function LandingPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [currentTheme, setCurrentTheme] = useState<Theme>('velour-nights');
   const [isVisible, setIsVisible] = useState(false);
   const [currentThemeIndex, setCurrentThemeIndex] = useState(0);
@@ -32,6 +34,20 @@ export default function LandingPage() {
     
     // Navigate immediately - let the fade happen during navigation
     router.push(path);
+  };
+
+  const handleEnterClick = () => {
+    if (status === 'loading') {
+      return; // Wait for auth status to be determined
+    }
+    
+    if (session) {
+      // User is logged in, go to main app
+      navigateWithTransition('/');
+    } else {
+      // User is not logged in, go to sign in
+      navigateWithTransition('/auth/signin');
+    }
   };
 
   const smoothScrollTo = (elementId: string) => {
@@ -410,11 +426,11 @@ export default function LandingPage() {
             transition={{ duration: 0.5, delay: 0.2 }}
           >
             <button 
-              onClick={() => navigateWithTransition('/auth/signin')}
+              onClick={handleEnterClick}
               className="font-pixel bg-transparent hover:bg-white/20 text-white hover:text-white px-6 py-3 rounded-lg shadow-lg hover:shadow-white/25 transition-all duration-300 font-bold" 
               style={{ fontSize: '1.375rem' }}
             >
-              Sign In
+              Enter
             </button>
           </motion.div>
         </div>
@@ -467,7 +483,7 @@ export default function LandingPage() {
               className="flex flex-col sm:flex-row gap-4 justify-center items-center"
             >
               <button 
-                onClick={() => navigateWithTransition('/auth/signin')}
+                onClick={handleEnterClick}
                 className="font-pixel bg-gradient-to-r from-pink-600 to-pink-800 hover:from-pink-500 hover:to-pink-700 text-white px-8 py-4 rounded-lg border-2 border-pink-400 shadow-lg hover:shadow-pink-500/25 transition-all duration-300 text-lg font-bold"
               >
                 Start Your Adventure
@@ -943,7 +959,7 @@ export default function LandingPage() {
             </p>
             <div className="flex justify-center">
               <button 
-                onClick={() => navigateWithTransition('/auth/signin')}
+                onClick={handleEnterClick}
                 className="font-pixel bg-gradient-to-r from-pink-600 to-pink-800 hover:from-pink-500 hover:to-pink-700 text-white px-8 py-4 rounded-lg border-2 border-pink-400 shadow-lg hover:shadow-pink-500/25 transition-all duration-300 text-lg font-bold"
               >
                 Start Your Adventure

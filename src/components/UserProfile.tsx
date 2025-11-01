@@ -16,7 +16,7 @@ import LayeredAvatarBuilder from './LayeredAvatarBuilder';
 import { LayeredAvatar } from '@/lib/layered-avatars';
 import { calculateCharacterStats } from '@/lib/character-stats';
 import { getCachedImageUrl } from '@/lib/asset-cache';
-import Footer from './Footer';
+// import Footer from './Footer';
 
 interface UserProfileProps {
   user: User;
@@ -226,7 +226,7 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
               className="w-12 h-12 border-4 border-yellow-400 border-t-transparent pixelated mb-4"
             />
             <p className="font-pixel text-yellow-300 text-lg">
-              Loading character data...
+              Loading profile...
             </p>
           </motion.div>
         )}
@@ -710,7 +710,7 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
         />
       )}
       </div>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }

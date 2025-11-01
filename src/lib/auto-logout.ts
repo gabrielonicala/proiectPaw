@@ -15,13 +15,13 @@ export async function handleAutoLogout() {
     
     // Sign out the user
     await signOut({ 
-      callbackUrl: '/auth/signin',
+      callbackUrl: '/home',
       redirect: true 
     });
   } catch (error) {
     console.error('Error during auto-logout:', error);
-    // Force redirect to signin page even if signOut fails
-    window.location.href = '/auth/signin';
+    // Force redirect to landing page even if signOut fails
+    window.location.href = '/home';
   }
 }
 
