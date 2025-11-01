@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getCachedAudio, cacheAudio } from '@/lib/audio-cache';
+import { themes } from '@/themes';
 
 interface BackgroundMusicProps {
   theme?: string;
@@ -504,7 +505,7 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
               {/* Theme Indicator */}
               <div className="text-center">
                 <span className="text-gray-400 font-pixel text-xs">
-                  {currentTrack.name.toUpperCase()}
+                  {(themes[theme as keyof typeof themes]?.name || currentTrack.name).toUpperCase()}
                 </span>
               </div>
             </motion.div>
