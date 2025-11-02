@@ -34,7 +34,7 @@ export default function AppNavigation({
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
-      await signOut({ callbackUrl: '/auth/signin' });
+      await signOut({ callbackUrl: '/home' });
     } catch (error) {
       console.error('Logout error:', error);
       setIsLoggingOut(false);
@@ -133,7 +133,6 @@ export default function AppNavigation({
             <Button onClick={onProfileView} variant="secondary" className="md:hidden" theme={theme}>
               👤
             </Button>
-            {/* Tribute button hidden for now */}
             {/* <Button onClick={onTributeView} variant="secondary" className="hidden md:flex" theme={theme}>
               Tribute
             </Button>

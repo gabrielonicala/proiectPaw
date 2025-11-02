@@ -4,19 +4,24 @@ import Card from './ui/Card';
 import Button from './ui/Button';
 import { AvatarPiece, LayeredAvatar, headPieces, torsoPieces, legsPieces, createLayeredAvatar } from '@/lib/layered-avatars';
 import { getCachedImageUrl } from '@/lib/asset-cache';
+import { Theme } from '@/types';
+import { themes } from '@/themes';
 
 interface LayeredAvatarBuilderProps {
   onSave: (avatar: LayeredAvatar) => void;
   onCancel: () => void;
   currentAvatar?: LayeredAvatar;
+  theme?: Theme;
 }
 
-export default function LayeredAvatarBuilder({ onSave, onCancel, currentAvatar }: LayeredAvatarBuilderProps) {
+export default function LayeredAvatarBuilder({ onSave, onCancel, currentAvatar, theme = 'obsidian-veil' }: LayeredAvatarBuilderProps) {
   const [selectedHead, setSelectedHead] = useState<AvatarPiece>(currentAvatar?.head || headPieces[0]);
   const [selectedTorso, setSelectedTorso] = useState<AvatarPiece>(currentAvatar?.torso || torsoPieces[0]);
   const [selectedLegs, setSelectedLegs] = useState<AvatarPiece>(currentAvatar?.legs || legsPieces[0]);
   const [activeCategory, setActiveCategory] = useState<'head' | 'torso' | 'legs'>('head');
   // Gender filter removed to avoid gender branding
+
+  const themeConfig = themes[theme];
 
   const headRef = useRef<HTMLDivElement>(null);
   const torsoRef = useRef<HTMLDivElement>(null);
@@ -55,19 +60,25 @@ export default function LayeredAvatarBuilder({ onSave, onCancel, currentAvatar }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed top-0 left-0 right-0 bottom-0 bg-black/50 flex items-center justify-center z-[10002]" style={{ margin: 0, padding: 0 }}>
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
-        className="bg-gray-900 rounded-lg p-2 sm:p-4 max-w-4xl w-full h-[90vh] sm:h-[600px] overflow-hidden flex flex-col"
+        className="bg-gray-900 rounded-lg p-2 sm:p-4 max-w-4xl w-full h-[90vh] sm:h-[600px] overflow-hidden flex flex-col mx-4 my-4"
+        style={{
+          backgroundColor: themeConfig.colors.background,
+          borderColor: themeConfig.colors.border,
+          border: `2px solid ${themeConfig.colors.border}`
+        }}
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-pixel text-xl text-white">Build Your Avatar</h2>
+          <h2 className="font-pixel text-xl" style={{ color: themeConfig.colors.text }}>Build Your Avatar</h2>
           <button
             onClick={onCancel}
-            className="text-gray-400 hover:text-white text-2xl"
+            className="text-2xl hover:opacity-70 transition-opacity"
+            style={{ color: themeConfig.colors.text }}
           >
             ×
           </button>
@@ -142,9 +153,14 @@ export default function LayeredAvatarBuilder({ onSave, onCancel, currentAvatar }
                   onClick={() => scrollToCategory(category)}
                   className={`px-2 py-1 sm:px-4 sm:py-2 rounded font-pixel text-xs sm:text-sm transition-all ${
                     activeCategory === category
-                      ? 'bg-orange-500 text-white'
-                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      ? ''
+                      : 'hover:opacity-70'
                   }`}
+                  style={{
+                    backgroundColor: activeCategory === category ? themeConfig.colors.accent : themeConfig.colors.secondary,
+                    color: activeCategory === category ? '#FFFFFF' : themeConfig.colors.text,
+                    border: `1px solid ${themeConfig.colors.border}`
+                  }}
                 >
                   {category.charAt(0).toUpperCase() + category.slice(1)}
                 </button>
@@ -155,7 +171,7 @@ export default function LayeredAvatarBuilder({ onSave, onCancel, currentAvatar }
             <div className="flex-1 overflow-y-auto space-y-6">
               {/* Head Pieces */}
               <div ref={headRef} className="space-y-2">
-                <h4 className="font-pixel text-lg text-orange-400">Head Pieces ({currentPieces.head.length})</h4>
+                <h4 className="font-pixel text-lg" style={{ color: themeConfig.colors.accent }}>Head Pieces ({currentPieces.head.length})</h4>
                 <div className="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-6 gap-1 sm:gap-2">
                   {currentPieces.head.map((piece) => (
                     <motion.div
@@ -167,7 +183,7 @@ export default function LayeredAvatarBuilder({ onSave, onCancel, currentAvatar }
                       }`}
                       onClick={() => handlePieceSelect(piece)}
                     >
-                      <Card className="p-1 sm:p-2 text-center">
+                      <Card className="p-1 sm:p-2 text-center" theme={theme}>
                         <div className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-1 relative">
                           <img
                             src={getCachedImageUrl(piece.imagePath)}
@@ -194,7 +210,7 @@ export default function LayeredAvatarBuilder({ onSave, onCancel, currentAvatar }
 
               {/* Torso Pieces */}
               <div ref={torsoRef} className="space-y-2">
-                <h4 className="font-pixel text-lg text-orange-400">Torso Pieces ({currentPieces.torso.length})</h4>
+                <h4 className="font-pixel text-lg" style={{ color: themeConfig.colors.accent }}>Torso Pieces ({currentPieces.torso.length})</h4>
                 <div className="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-6 gap-1 sm:gap-2">
                   {currentPieces.torso.map((piece) => (
                     <motion.div
@@ -206,7 +222,7 @@ export default function LayeredAvatarBuilder({ onSave, onCancel, currentAvatar }
                       }`}
                       onClick={() => handlePieceSelect(piece)}
                     >
-                      <Card className="p-1 sm:p-2 text-center">
+                      <Card className="p-1 sm:p-2 text-center" theme={theme}>
                         <div className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-1 relative">
                           <img
                             src={getCachedImageUrl(piece.imagePath)}
@@ -233,7 +249,7 @@ export default function LayeredAvatarBuilder({ onSave, onCancel, currentAvatar }
 
               {/* Legs Pieces */}
               <div ref={legsRef} className="space-y-2">
-                <h4 className="font-pixel text-lg text-orange-400">Legs Pieces ({currentPieces.legs.length})</h4>
+                <h4 className="font-pixel text-lg" style={{ color: themeConfig.colors.accent }}>Legs Pieces ({currentPieces.legs.length})</h4>
                 <div className="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-6 gap-1 sm:gap-2">
                   {currentPieces.legs.map((piece) => (
                     <motion.div
@@ -245,7 +261,7 @@ export default function LayeredAvatarBuilder({ onSave, onCancel, currentAvatar }
                       }`}
                       onClick={() => handlePieceSelect(piece)}
                     >
-                      <Card className="p-1 sm:p-2 text-center">
+                      <Card className="p-1 sm:p-2 text-center" theme={theme}>
                         <div className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-1 relative">
                           <img
                             src={getCachedImageUrl(piece.imagePath)}
@@ -274,16 +290,19 @@ export default function LayeredAvatarBuilder({ onSave, onCancel, currentAvatar }
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 mt-4 pt-4 border-t border-gray-700">
+        <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 mt-4 pt-4" style={{ borderTop: `1px solid ${themeConfig.colors.border}` }}>
           <Button
             onClick={onCancel}
             variant="secondary"
+            theme={theme}
             className="px-3 py-2 text-sm"
           >
             Cancel
           </Button>
           <Button
             onClick={handleSave}
+            variant="primary"
+            theme={theme}
             className="px-3 py-2 text-sm"
           >
             Save Avatar

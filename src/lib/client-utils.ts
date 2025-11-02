@@ -339,7 +339,8 @@ export async function generateImageSD(
 export async function generateImageGemini(
   originalText: string, 
   themeConfig: ThemeConfig,
-  character: Character
+  character: Character,
+  generatedChapter?: string
 ): Promise<string> {
   try {
     const response = await fetch('/api/generate-image-gemini', {
@@ -350,7 +351,8 @@ export async function generateImageGemini(
       body: JSON.stringify({
         originalText,
         themeConfig,
-        character
+        character,
+        generatedChapter
       }),
     });
 

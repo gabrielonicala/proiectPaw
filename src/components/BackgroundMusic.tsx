@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getCachedAudio, cacheAudio } from '@/lib/audio-cache';
+import { themes } from '@/themes';
 
 interface BackgroundMusicProps {
   theme?: string;
@@ -31,10 +32,10 @@ const themeMusic = {
     description: 'Film noir jazz for shadowy detective stories'
   },
   'blazeheart-saga': {
-    name: 'Shōnen Protagonist',
-    url: '/music/blazeheart-saga.mp3',
-    fallbackUrl: '/music/blazeheart-saga.ogg',
-    description: 'Epic J-rock for fiery determination and training arcs'
+    name: 'Steel Spirit',
+    url: '/music/steel-spirit.mp3',
+    fallbackUrl: '/music/steel-spirit.ogg',
+    description: 'Traditional Japanese music for samurai training and honor'
   },
   'echoes-of-dawn': {
     name: 'Nostalgia',
@@ -504,7 +505,7 @@ export default function BackgroundMusic({ theme = 'dark-academia' }: BackgroundM
               {/* Theme Indicator */}
               <div className="text-center">
                 <span className="text-gray-400 font-pixel text-xs">
-                  {theme.replace(/-/g, ' ').toUpperCase()}
+                  {(themes[theme as keyof typeof themes]?.name || currentTrack.name).toUpperCase()}
                 </span>
               </div>
             </motion.div>

@@ -20,7 +20,7 @@ export const avatarDescriptions: Record<string, string> = {
   'male-head-17': 'light green beanie, glasses, light blue skin',
   'male-head-18': 'light beige magician hat with brown stripe at the base, blue skin, green eyes',
   'male-head-19': 'pink beanie, opaque glasses, pointy ears',
-  'male-head-20': 'light grey magician hat with purple stripe at the base, one-piece glasses, black skin, red beard',
+  'male-head-20': 'light grey magician hat with purple stripe at the base, one-piece glasses, jet black #000000 HEX skin, red muttonchops',
   
   // Female heads - using actual IDs from avatar system
   'female-head-avatar': 'short black hair, parted in the middle, caucasian skin',

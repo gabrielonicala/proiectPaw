@@ -22,6 +22,7 @@ export default function EntryDetailModal({ entry, user, activeCharacter, isOpen,
   const [isContentLoading, setIsContentLoading] = useState(true);
   const [showCopyToast, setShowCopyToast] = useState(false);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
+  // Chapter numbering intentionally removed per request
 
   // Check if content is loaded
   const isContentReady = entry ? ((entry.outputType === 'text' && entry.reimaginedText) || 
@@ -62,6 +63,14 @@ export default function EntryDetailModal({ entry, user, activeCharacter, isOpen,
   }, [isOpen]);
 
   if (!entry) return null;
+
+  const resolvedTheme = activeCharacter?.theme || 'obsidian-veil';
+  const isTreasureTides = resolvedTheme === 'crimson-tides';
+  const adventureBgClass = isTreasureTides
+    ? 'bg-[#0B1533]/95'
+    : 'bg-gradient-to-b from-yellow-900/20 to-orange-900/20';
+  const originalBgClass = isTreasureTides ? 'bg-[#0B1533]/95' : 'bg-gray-800/50';
+  const statsBgClass = isTreasureTides ? 'bg-[#0B1533]/95' : 'bg-gradient-to-b from-green-900/20 to-blue-900/20';
 
   // Download functions
   const downloadMediaOnly = async (entry: JournalEntry) => {
@@ -203,8 +212,8 @@ export default function EntryDetailModal({ entry, user, activeCharacter, isOpen,
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.1 }}
                 >
-                  <h3 className="font-pixel text-lg lg:text-base text-white mb-3">Original Entry:</h3>
-                  <Card theme={activeCharacter?.theme || 'obsidian-veil'} effect="vintage" className="bg-gray-800/50 overflow-y-auto">
+                  <h3 className="font-pixel text-lg lg:text-base text-white mb-3">The Inspiration:</h3>
+                  <Card theme={activeCharacter?.theme || 'obsidian-veil'} effect="vintage" className={`overflow-y-auto`} style={isTreasureTides ? { background: '#0B1533F2' } : {}}>
                     <p className="text-gray-200 lg:text-sm leading-relaxed">{entry.originalText}</p>
                   </Card>
                 </motion.div>
@@ -218,8 +227,8 @@ export default function EntryDetailModal({ entry, user, activeCharacter, isOpen,
                   transition={{ delay: 0.2 }}
                     className="lg:col-span-2 lg:flex lg:flex-col lg:h-full"
                 >
-                    <h3 className="font-pixel text-lg lg:text-base text-white mb-3 lg:mb-2">Your Adventure:</h3>
-                    <Card theme={activeCharacter?.theme || 'obsidian-veil'} effect="glow" className="bg-gradient-to-b from-yellow-900/20 to-orange-900/20 lg:flex-1 lg:max-h-82 lg:overflow-y-auto lg:pr-2">
+                    <h3 className="font-pixel text-lg lg:text-base text-white mb-3 lg:mb-2">The Chapter:</h3>
+                    <Card theme={activeCharacter?.theme || 'obsidian-veil'} effect="glow" className={`lg:flex-1 lg:max-h-82 lg:overflow-y-auto lg:pr-2`} style={isTreasureTides ? { background: '#0B1533F2' } : {}}>        
                     {entry.outputType === 'text' && entry.reimaginedText && (
                       <motion.div
                         initial={{ opacity: 0 }}
@@ -252,16 +261,12 @@ export default function EntryDetailModal({ entry, user, activeCharacter, isOpen,
                   </div>
                           <div className="px-1 py-0.5 text-xs text-white/90 font-pixel space-y-0 text-left">
                             <div className="flex justify-between">
-                              <span>Generated:</span>
+                              <span>Painted:</span>
                               <span>{format(new Date(entry.createdAt), 'M/d/yyyy')}</span>
                             </div>
                             <div className="flex justify-between">
                               <span>Style:</span>
                               <span>{entry.character?.theme ? themes[entry.character.theme]?.name || entry.character.theme.charAt(0).toUpperCase() + entry.character.theme.slice(1) : 'Adventure'}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Time:</span>
-                              <span>{format(new Date(entry.createdAt), 'h:mm a')}</span>
                             </div>
                           </div>
                         </div>
@@ -352,7 +357,7 @@ export default function EntryDetailModal({ entry, user, activeCharacter, isOpen,
                       className="lg:col-span-1 lg:flex lg:flex-col lg:h-full"
                     >
                       <h3 className="font-pixel text-lg lg:text-base text-white mb-3 lg:mb-2">📊 Character Growth:</h3>
-                      <Card theme={activeCharacter?.theme || 'obsidian-veil'} effect="glow" className="bg-gradient-to-b from-green-900/20 to-blue-900/20 lg:flex-1 lg:flex lg:flex-col lg:max-h-75">
+                      <Card theme={activeCharacter?.theme || 'obsidian-veil'} effect="glow" className={`lg:flex-1 lg:flex lg:flex-col lg:max-h-75`} style={isTreasureTides ? { background: '#0B1533F2' } : {}}>
                         <div className="space-y-3 lg:space-y-2 lg:flex-1 lg:overflow-y-auto lg:pr-2">
                           {/* Original code (commented out) - shows all stats including 0 changes */}
                           {/* {Object.entries(JSON.parse(entry.statAnalysis)).map(([statName, change]: [string, any]) => (

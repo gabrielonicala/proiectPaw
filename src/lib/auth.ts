@@ -1,71 +1,26 @@
 // import type { NextAuthOptions } from 'next-auth';
-import CredentialsProvider from 'next-auth/providers/credentials';
+import GoogleProvider from 'next-auth/providers/google';
+import { PrismaAdapter } from '@auth/prisma-adapter';
 import bcrypt from 'bcryptjs';
 import { db } from './db';
-import { env } from './env';
+import { getUniqueUsername } from './username-generator';
+
+// Extend global type for temporary OAuth data storage
+declare global {
+  var tempOAuthData: Map<string, any> | undefined;
+}
 
 export const authOptions = {
-  secret: env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET,
+  adapter: PrismaAdapter(db),
   providers: [
-    CredentialsProvider({
-      name: 'credentials',
-      credentials: {
-        identifier: { label: 'Email or Username', type: 'text' },
-        password: { label: 'Password', type: 'password' }
-      },
-      async authorize(credentials) {
-        if (!credentials?.identifier || !credentials?.password) {
-          console.log('Missing credentials');
-          return null;
-        }
-
-        // Try to find user by email first, then by username
-        const user = await db.user.findFirst({
-          where: {
-            OR: [
-              { email: credentials.identifier },
-              { username: credentials.identifier }
-            ]
-          }
-        });
-
-        if (!user) {
-          console.log('User not found:', credentials.identifier);
-          return null;
-        }
-
-        if (!user.password) {
-          console.log('User has no password set:', credentials.identifier);
-          return null;
-        }
-
-        const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
-        if (!isPasswordValid) {
-          console.log('Invalid password for user:', credentials.identifier);
-          return null;
-        }
-
-        // Check if email is verified
-        if (!user.emailVerified) {
-          console.log('Email not verified for user:', credentials.identifier);
-          return null;
-        }
-
-        console.log('Authentication successful for user:', credentials.identifier);
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          username: user.username,
-        };
-      }
-    })
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
   ],
   session: {
-    strategy: 'jwt' as const,
-    maxAge: 30 * 24 * 60 * 60, // 30 days in seconds
-  },
-  jwt: {
+    strategy: 'database' as const,
     maxAge: 30 * 24 * 60 * 60, // 30 days in seconds
   },
   pages: {
@@ -73,24 +28,116 @@ export const authOptions = {
     signUp: '/auth/signup',
   },
   callbacks: {
-    async jwt({ token, user }: { token: any; user?: any }) {
+    async session({ session, user }: { session: any; user: any }) {
       if (user) {
-        token.id = user.id;
-        token.username = user.username;
-      }
-      return token;
-    },
-    async session({ session, token }: { session: any; token: any }) {
-      if (token) {
-        session.user.id = token.id as string;
-        session.user.username = token.username as string;
+        console.log('Session callback - user object:', { id: user.id, email: user.email, username: user.username });
+        session.user.id = user.id;
+        session.user.username = user.username;
       }
       return session;
     },
     async signIn({ user, account, profile, email, credentials }: { user: any; account?: any; profile?: any; email?: any; credentials?: any }) {
-      // This callback runs after the authorize function
-      // We can add additional checks here if needed
+      // Handle Google OAuth with existing user account linking
+      if (account?.provider === "google") {
+        console.log('Google OAuth sign-in attempt for:', user.email);
+        
+        // Check if a user with this email already exists
+        const existingUser = await db.user.findUnique({
+          where: { email: user.email }
+        });
+        
+        if (existingUser) {
+          console.log('Found existing user with email:', user.email, 'Checking if OAuth account is already linked...');
+          
+          // Check if OAuth account is already linked
+          const existingAccount = await db.account.findFirst({
+            where: {
+              userId: existingUser.id,
+              provider: account.provider,
+              providerAccountId: account.providerAccountId
+            }
+          });
+          
+          if (existingAccount) {
+            console.log('OAuth account already linked to existing user');
+            // Update the user object to use the existing user's ID
+            user.id = existingUser.id;
+            user.username = existingUser.username;
+            return true;
+          }
+          
+          // Account exists but OAuth is not linked - redirect to confirmation page
+          console.log('Account exists but OAuth not linked, redirecting to confirmation page');
+          
+          // Generate a temporary token to store OAuth data
+          const tempToken = require('crypto').randomBytes(32).toString('hex');
+          const tempData = {
+            email: user.email,
+            provider: account.provider,
+            providerAccountId: account.providerAccountId,
+            access_token: account.access_token,
+            refresh_token: account.refresh_token,
+            expires_at: account.expires_at,
+            token_type: account.token_type,
+            scope: account.scope,
+            id_token: account.id_token,
+            session_state: account.session_state,
+            type: account.type,
+            timestamp: Date.now()
+          };
+          
+          // Store temporarily (in production, use Redis or similar)
+          // For now, we'll use a simple in-memory store
+          if (!global.tempOAuthData) {
+            global.tempOAuthData = new Map();
+          }
+          global.tempOAuthData.set(tempToken, tempData);
+          
+          // Clean up old tokens (older than 10 minutes)
+          const tenMinutesAgo = Date.now() - (10 * 60 * 1000);
+          for (const [token, data] of global.tempOAuthData.entries()) {
+            if (data.timestamp < tenMinutesAgo) {
+              global.tempOAuthData.delete(token);
+            }
+          }
+          
+          return `/auth/link-account?token=${tempToken}`;
+        }
+        
+        // No existing user found, let PrismaAdapter create a new one
+        return true;
+      }
+      
       return true;
+    },
+  },
+  events: {
+    async createUser({ user }: { user: any }) {
+      // Setup new Google users
+      if (user.email && !user.username) {
+        try {
+          const username = await getUniqueUsername();
+          const now = new Date();
+          const oneYearFromNow = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+          
+          await db.user.update({
+            where: { id: user.id },
+            data: { 
+              username,
+              emailVerified: now, // Google users are pre-verified
+              // For testing: give tribute subscription for 1 year
+              subscriptionPlan: 'tribute',
+              subscriptionStatus: 'active',
+              subscriptionEndsAt: oneYearFromNow,
+              characterSlots: 3, // Tribute users get 3 character slots
+            }
+          });
+          console.log('Generated username for new Google user:', user.email, '->', username);
+          console.log('Set emailVerified and tribute subscription (1 year) for testing');
+        } catch (error) {
+          console.error('Error generating username for new user:', error);
+        }
+      }
     },
   },
 };
@@ -109,5 +156,50 @@ export async function validateUserSession(userId: string): Promise<boolean> {
   } catch (error) {
     console.error('Error validating user session:', error);
     return false;
+  }
+}
+
+/**
+ * Custom email/password authentication function
+ * This replaces the CredentialsProvider with a simpler approach
+ */
+export async function authenticateUser(identifier: string, password: string) {
+  try {
+    // Find user by email or username
+    const user = await db.user.findFirst({
+      where: {
+        OR: [
+          { email: identifier },
+          { username: identifier }
+        ]
+      }
+    });
+
+    if (!user || !user.password) {
+      return null;
+    }
+
+    // Check password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return null;
+    }
+
+    // Check if email is verified
+    if (!user.emailVerified) {
+      return null;
+    }
+
+    console.log('Authentication successful for user:', identifier);
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      username: user.username,
+      image: user.image,
+    };
+  } catch (error) {
+    console.error('Error in authenticateUser:', error);
+    return null;
   }
 }

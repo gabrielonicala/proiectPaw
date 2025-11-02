@@ -204,7 +204,7 @@ export default function AuthWrapper() {
             }}
           ></div>
           
-          {/* Crimson Tides - Dark Red */}
+          {/* Treasure Tides - Dark Red */}
           <div 
             className="absolute w-6 h-6 pixelated opacity-55" 
             style={{

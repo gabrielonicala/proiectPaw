@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { ReactNode } from 'react';
+import { ReactNode, CSSProperties } from 'react';
 import { Theme } from '@/types';
 import { themes } from '@/themes';
 
@@ -14,6 +14,7 @@ interface CardProps {
   onClick?: () => void;
   theme?: Theme;
   effect?: string;
+  style?: CSSProperties;
 }
 
 export default function Card({
@@ -23,7 +24,8 @@ export default function Card({
   hover = false,
   onClick,
   theme,
-  effect
+  effect,
+  style
 }: CardProps) {
   // Get theme colors
   const themeConfig = themes[theme || 'obsidian-veil'];
@@ -71,7 +73,7 @@ export default function Card({
     <Component
       {...motionProps}
       onClick={onClick}
-      style={getCardStyle()}
+      style={{ ...getCardStyle(), ...(style || {}) }}
       className={cn(
         baseClasses, 
         pixelatedClasses, 

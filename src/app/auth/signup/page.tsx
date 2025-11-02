@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
+import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 
 export default function SignUpPage() {
   const [username, setUsername] = useState('');
@@ -167,7 +168,7 @@ export default function SignUpPage() {
           }}
         ></div>
         
-        {/* Blazeheart Saga - Red */}
+        {/* Steel Spirit - Red */}
         <div 
           className="absolute w-7 h-7 pixelated opacity-70"
           style={{
@@ -267,6 +268,15 @@ export default function SignUpPage() {
             <p className="text-gray-300 font-pixel">Create your account to begin</p>
           </div>
 
+          {/* Google Sign-Up Option */}
+          {/* <div className="mb-6">
+            <GoogleSignInButton 
+              variant="signup"
+              className="w-full"
+            />
+            <div className="text-center text-white/70 my-4 -mb-4 text-sm font-pixel">or</div>
+          </div> */}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2 font-pixel">
@@ -339,11 +349,13 @@ export default function SignUpPage() {
             </Button>
           </form>
 
+          {/* Forgot password link - only needed on sign-in page
           <div className="mt-4 text-center">
             <a href="/auth/forgot-password" className="text-blue-400 hover:text-blue-300 text-sm font-pixel">
               Forgot your password?
             </a>
           </div>
+          */}
 
           <div className="mt-6 text-center">
             <p className="text-gray-300 font-pixel">
