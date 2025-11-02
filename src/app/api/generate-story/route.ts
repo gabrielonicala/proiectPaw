@@ -183,7 +183,7 @@ IMPORTANT:
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
       ],
-      max_tokens: 700,
+      max_tokens: 1500,
       temperature: 0.8,
     });
 
@@ -267,7 +267,7 @@ Return exactly this JSON shape:
           { role: "system", content: polishSystem },
           { role: "user", content: polishUser }
         ],
-        max_tokens: 700,
+        max_tokens: 1500,
         temperature: 0.7,
       });
 

@@ -13,7 +13,7 @@ export default function ConditionalAnalytics() {
     if (!canUseAnalytics()) {
       // Disable Vercel Analytics
       if (typeof window !== 'undefined') {
-        window.gtag = window.gtag || function() {
+        (window as any).gtag = (window as any).gtag || function() {
           // No-op function to prevent errors
         };
       }

@@ -249,7 +249,7 @@ export default function PrivacyPage() {
               
               <h3 className="text-lg font-medium mb-3 text-orange-300 font-serif">Legal Basis for Processing (GDPR):</h3>
               <ul className="list-disc pl-6 mb-4 text-gray-300 font-serif leading-relaxed space-y-2">
-                <li><strong>Contract Performance:</strong> Providing the service you've requested</li>
+                <li><strong>Contract Performance:</strong> Providing the service you&apos;ve requested</li>
                 <li><strong>Legitimate Interest:</strong> Service improvement, security, and analytics</li>
                 <li><strong>Consent:</strong> Optional features and marketing communications</li>
                 <li><strong>Legal Obligation:</strong> Compliance with applicable laws and regulations</li>
@@ -272,7 +272,7 @@ export default function PrivacyPage() {
               <ul className="list-disc pl-6 mb-4 text-gray-300 font-serif leading-relaxed space-y-2">
                 <li>All third-party services are bound by appropriate data protection agreements</li>
                 <li>Journal entries are sent to AI services in plain text for processing, then encrypted for storage</li>
-                <li>We minimize data sharing to only what's necessary for service provision</li>
+                <li>We minimize data sharing to only what&apos;s necessary for service provision</li>
                 <li>We do not sell your personal data to third parties</li>
                 <li>AI services may process your journal entries according to their own privacy policies</li>
               </ul>
@@ -338,7 +338,7 @@ export default function PrivacyPage() {
                 To exercise any of these rights, contact us at <Link href="mailto:contact@quillia.app" className="text-orange-400 hover:text-orange-300">contact@quillia.app</Link>. We will respond to your request within 30 days.
               </p>
               <p className="mb-4 text-gray-300 font-serif leading-relaxed">
-                <strong>Supervisory Authority:</strong> If you're not satisfied with our response, you can contact your local data protection authority.
+                <strong>Supervisory Authority:</strong> If you&apos;re not satisfied with our response, you can contact your local data protection authority.
               </p>
             </section>
 
@@ -416,7 +416,7 @@ export default function PrivacyPage() {
               
               <h3 className="text-lg font-medium mb-3 text-orange-300 font-serif">Supervisory Authority:</h3>
               <p className="mb-4 text-gray-300 font-serif leading-relaxed">
-                If you're not satisfied with our response, you can contact your local data protection authority. For EU users, this is typically your country's data protection authority.
+                If you&apos;re not satisfied with our response, you can contact your local data protection authority. For EU users, this is typically your country&apos;s data protection authority.
               </p>
             </section>
           </div>

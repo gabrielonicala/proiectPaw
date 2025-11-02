@@ -216,7 +216,7 @@ export default function TermsPage() {
                 <li><strong>AI Image Generation:</strong> OpenAI DALL-E 3 and Google Gemini create visual content for your stories</li>
                 <li><strong>Character System:</strong> Create and manage multiple fantasy characters with unique personalities and memories</li>
                 <li><strong>Theme-Based Adventures:</strong> Multiple fantasy themes including pirate, detective, cowboy, and more</li>
-                <li><strong>Character Memory:</strong> AI maintains continuity across your character's adventures and relationships</li>
+                <li><strong>Character Memory:</strong> AI maintains continuity across your character&apos;s adventures and relationships</li>
                 <li><strong>Progress Tracking:</strong> Experience points, character levels, and achievement systems</li>
                 <li><strong>Calendar Integration:</strong> Track your fantasy journey over time</li>
                 <li><strong>Layered Avatar System:</strong> Customize character appearances with modular avatar pieces</li>
@@ -317,7 +317,7 @@ export default function TermsPage() {
                 <li>Subscription fees are non-refundable</li>
                 <li>Cancellation takes effect at the end of the current billing period</li>
                 <li>Failed payments may result in subscription suspension</li>
-                <li>We reserve the right to change pricing with 30 days' notice</li>
+                <li>We reserve the right to change pricing with 30 days&apos; notice</li>
               </ul>
             </section>
 
@@ -350,7 +350,7 @@ export default function TermsPage() {
                 These Terms are governed by the laws of Romania. Any disputes shall be resolved in the courts of Romania.
               </p>
               <p className="mb-4 text-gray-300 font-serif leading-relaxed">
-                For EU users, you have the right to use the European Commission's Online Dispute Resolution platform at https://ec.europa.eu/consumers/odr/.
+                For EU users, you have the right to use the European Commission&apos;s Online Dispute Resolution platform at https://ec.europa.eu/consumers/odr/.
               </p>
             </section>
 

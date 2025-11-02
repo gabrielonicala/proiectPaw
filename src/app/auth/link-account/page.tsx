@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
 
-export default function LinkAccountPage() {
+function LinkAccountContent() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -255,11 +255,6 @@ export default function LinkAccountPage() {
                 placeholder="Enter your password"
                 required
                 className="w-full"
-                style={{ 
-                  userSelect: 'auto',
-                  pointerEvents: 'auto',
-                  cursor: 'text'
-                }}
               />
             </div>
 
@@ -296,5 +291,13 @@ export default function LinkAccountPage() {
         </div>
       </Card>
     </div>
+  );
+}
+
+export default function LinkAccountPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <LinkAccountContent />
+    </Suspense>
   );
 }

@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 
-export default function SignInPage() {
+function SignInContent() {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -252,13 +252,13 @@ export default function SignInPage() {
           </div>
 
           {/* Google Sign-In Option */}
-          <div className="mb-6">
+          {/* <div className="mb-6">
             <GoogleSignInButton 
               variant="signin"
               className="w-full"
             />
             <div className="text-center text-white/70 my-4 text-sm font-pixel">or</div>
-          </div>
+          </div> */}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -351,5 +351,13 @@ export default function SignInPage() {
         </div>
       </Card>
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <SignInContent />
+    </Suspense>
   );
 }

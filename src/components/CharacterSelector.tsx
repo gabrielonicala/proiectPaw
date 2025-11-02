@@ -566,6 +566,7 @@ export default function CharacterSelector({
           onSave={handleAvatarSave}
           onCancel={handleAvatarCancel}
           currentAvatar={editingCharacter.avatar?.options?.layeredAvatar}
+          theme={editingCharacter.theme}
         />
       )}
 

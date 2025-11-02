@@ -120,6 +120,14 @@ User's avatar: ${avatarDescription}
 
 - Character preserves the avatar's general colors while the outfit is transformed to fit the ${styleDesc} setting. IMPORTANT: it is mandatory to preserve the skin color. 
 
+Character representation:
+- Respect all pronouns and gender references mentioned in the scene text when portraying background characters. For the main character, refer to the pronouns and appearance descriptor in the user's avatar 
+- Accurately represent the gender identity of any characters described using pronouns
+
+Physical accuracy:
+- Ensure all characters interact correctly with objects and environments - no body parts intersecting or passing through solid objects
+- Maintain proper spatial relationships between characters, objects, and the environment
+
 Visual style: detailed digital art, cinematic composition, 1024x1024, no text or lettering.
 
 Cinematography:

@@ -84,12 +84,32 @@ export default function Button({
     
     const baseColor = colorMap[variant];
     
-    return {
+    const baseStyle = {
       background: `linear-gradient(to bottom, ${baseColor}, ${adjustColor(baseColor, -20)})`,
       borderColor: baseColor,
       color: colors.text,
       boxShadow: `0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)`
     };
+    
+    // Add text-shadow border for secondary buttons with white/light text for better visibility
+    if (variant === 'secondary') {
+      // Check if text is white or very light (hex codes starting with #F, #E, or exact matches)
+      const isLightText = colors.text === '#FFFFFF' || 
+                         colors.text === '#F5F5F5' || 
+                         colors.text === '#F5DEB3' ||
+                         colors.text === '#E6E6FA' ||
+                         colors.text === '#E6F3FF' ||
+                         colors.text?.match(/^#[EF][0-9A-Fa-f]/);
+      
+      if (isLightText) {
+        return {
+          ...baseStyle,
+          textShadow: '1px 1px 0px rgba(0, 0, 0, 0.8), -1px -1px 0px rgba(0, 0, 0, 0.8), 1px -1px 0px rgba(0, 0, 0, 0.8), -1px 1px 0px rgba(0, 0, 0, 0.8), 0px 1px 0px rgba(0, 0, 0, 0.8), 0px -1px 0px rgba(0, 0, 0, 0.8), 1px 0px 0px rgba(0, 0, 0, 0.8), -1px 0px 0px rgba(0, 0, 0, 0.8)'
+        };
+      }
+    }
+    
+    return baseStyle;
   };
 
   // Helper function to adjust color brightness

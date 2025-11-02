@@ -269,13 +269,13 @@ export default function SignUpPage() {
           </div>
 
           {/* Google Sign-Up Option */}
-          <div className="mb-6">
+          {/* <div className="mb-6">
             <GoogleSignInButton 
               variant="signup"
               className="w-full"
             />
             <div className="text-center text-white/70 my-4 -mb-4 text-sm font-pixel">or</div>
-          </div>
+          </div> */}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

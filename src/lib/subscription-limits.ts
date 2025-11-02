@@ -14,7 +14,7 @@ export const SUBSCRIPTION_LIMITS = {
     CHARACTER_SLOTS: 3,
     // Shared limits (alternative approach)
     DAILY_CHAPTERS_SHARED: 30, // Total across all characters
-    DAILY_SCENES_SHARED: 3,    // Total across all characters
+    DAILY_SCENES_SHARED: 30,    // Total across all characters
   }
 } as const;
 
