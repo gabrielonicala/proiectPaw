@@ -80,6 +80,10 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  
+  // Get the day of the week for the first day of the month (0 = Sunday, 1 = Monday, etc.)
+  // Convert to Monday-based week: Sunday (0) -> 6, Monday (1) -> 0, Tuesday (2) -> 1, etc.
+  const firstDayOfWeek = (monthStart.getDay() + 6) % 7;
 
   const getEntriesForDate = (date: Date) => {
     return entries.filter(entry => 
@@ -231,7 +235,7 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
 
               {/* Calendar Grid */}
               <div className="grid grid-cols-7 gap-1 mb-4">
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
                   <div key={day} className="font-pixel text-sm text-gray-400 text-center p-2">
                     {day}
                   </div>
@@ -239,6 +243,11 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
               </div>
 
               <div className="grid grid-cols-7 gap-1">
+                {/* Empty cells for days before the first day of the month */}
+                {Array.from({ length: firstDayOfWeek }).map((_, index) => (
+                  <div key={`empty-${index}`} className="aspect-square md:aspect-[4/3] lg:aspect-[4/3] aspect-[1/1.5]" />
+                ))}
+                
                 {daysInMonth.map((day, index) => {
                   const dayEntries = getEntriesForDate(day);
                   const isSelected = selectedDate && isSameDay(day, selectedDate);
@@ -249,7 +258,7 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
                       key={day.toISOString()}
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: index * 0.02 }}
+                      transition={{ delay: (firstDayOfWeek + index) * 0.02 }}
                       onClick={() => setSelectedDate(day)}
                       className={`
                         aspect-square md:aspect-[4/3] lg:aspect-[4/3] aspect-[1/1.5] p-2 text-sm font-pixel border-2 transition-all duration-200
