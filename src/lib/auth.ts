@@ -5,11 +5,6 @@ import bcrypt from 'bcryptjs';
 import { db } from './db';
 import { getUniqueUsername } from './username-generator';
 
-// Extend global type for temporary OAuth data storage
-declare global {
-  var tempOAuthData: Map<string, any> | undefined;
-}
-
 export const authOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   adapter: PrismaAdapter(db),
