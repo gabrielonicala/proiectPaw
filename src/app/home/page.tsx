@@ -403,10 +403,10 @@ export default function LandingPage() {
       icon: Scroll,
       color: '#DAA520', 
       background: `
-        linear-gradient(45deg, #000000, #DAA520, #FF6B35, #00FF88),
-        linear-gradient(135deg, #FF6B35, #000000, #DAA520, #00FF88)
+        linear-gradient(120deg, #DAA520, #FF6B35, #00FF88, #FF8C00),
+        linear-gradient(240deg, #FF6B35, #DAA520, #00FF88, #FF8C00)
       `,
-      backgroundSize: '450% 450%',
+      backgroundSize: '400% 400%',
       animation: 'parchmentFlow 6s ease infinite',
       description: 'Enter a world where magic flows through ancient tomes and every word holds power. This theme transforms your daily experiences into epic high fantasy adventures where you become a scholar-mage, wielding knowledge as your greatest weapon. Whether you\'re studying in a mystical library, negotiating with noble houses, or uncovering lost spells, each moment becomes part of a grand tapestry of destiny.'
     },
@@ -416,8 +416,8 @@ export default function LandingPage() {
       icon: Target,
       color: '#D2691E', 
       background: `
-        linear-gradient(15deg, #000000, #D2691E, #FFD700, #FF0000),
-        linear-gradient(195deg, #FFD700, #000000, #D2691E, #FF0000)
+        linear-gradient(15deg, #000000, #D2691E, #FF8C00, #FFD700, #FF0000),
+        linear-gradient(195deg, #FFD700, #FF8C00, #000000, #D2691E, #FF0000)
       `,
       backgroundSize: '500% 500%',
       animation: 'dustStorm 7s ease infinite',
@@ -687,7 +687,7 @@ export default function LandingPage() {
               <button 
                 ref={startButtonRef}
                 onClick={handleEnterClick}
-                className="font-pixel bg-white text-black hover:text-white hover:bg-gradient-to-r hover:from-yellow-400 hover:via-pink-500 hover:to-purple-600 px-8 py-4 rounded-lg border-2 border-black shadow-lg hover:shadow-gray-400/25 hover:scale-105 transition-all duration-300 text-lg font-bold"
+                className="font-pixel bg-white text-black hover:text-white hover:bg-gradient-to-r hover:from-yellow-400 hover:via-pink-500 hover:to-purple-600 px-8 py-4 rounded-lg border-2 border-black shadow-lg hover:shadow-gray-400/25 hover:scale-105 transition-all duration-300 text-xl font-bold"
                 style={{ textShadow: 'none' }}
               >
                 Start Your Adventure
@@ -747,8 +747,8 @@ export default function LandingPage() {
                 </div>
               </div>
               <div className="order-2 lg:order-2">
-                <Card theme="blazeheart-saga" className="p-6">
-                  <div className="flex items-start gap-4 mb-4">
+                <div className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-lg p-6 hover:border-white/40 transition-all duration-300">
+                  <div className="flex items-center gap-4 mb-4">
                     <div
                       className="w-16 h-16 pixelated border-2 flex-shrink-0"
                       style={{ 
@@ -758,7 +758,6 @@ export default function LandingPage() {
                     />
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-2xl">{themes['blazeheart-saga'].emoji}</span>
                         <h3 className="font-pixel text-xl" style={{ color: themes['blazeheart-saga'].colors.text }}>
                           {themes['blazeheart-saga'].name}
                         </h3>
@@ -768,10 +767,10 @@ export default function LandingPage() {
                       </p>
                     </div>
                   </div>
-                  <p className="font-pixel text-sm leading-relaxed mb-4" style={{ color: themes['blazeheart-saga'].colors.text }}>
+                  <p className="readable-text leading-relaxed mb-4" style={{ color: '#F0F0F0' }}>
                     {themes['blazeheart-saga'].detailedDescription}
                   </p>
-                </Card>
+                </div>
               </div>
               </div>
             </motion.div>
@@ -786,8 +785,8 @@ export default function LandingPage() {
           >
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
               <div className="order-2 lg:order-1">
-                <Card theme="blazeheart-saga" className="p-6">
-                  <h2 className="font-pixel text-xl mb-4" style={{ color: themes['blazeheart-saga'].colors.text }}>
+                <div className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-lg p-6 hover:border-white/40 transition-all duration-300">
+                  <h2 className="font-pixel text-xl mb-4 text-white">
                     Build Your Avatar
                   </h2>
                   <div className="flex flex-col lg:flex-row gap-6">
@@ -850,13 +849,12 @@ export default function LandingPage() {
                             <button
                               key={category}
                               onClick={() => setShowcaseActiveCategory(categoryKey)}
-                              className={`flex-1 px-4 py-2 pixelated font-pixel text-sm transition-all font-bold ${
+                              className={`flex-1 px-4 py-2 pixelated font-pixel text-sm transition-all font-bold border-2 border-white/20 ${
                                 isActive ? 'shadow-lg' : 'opacity-70 hover:opacity-100'
                               }`}
                               style={{
                                 backgroundColor: isActive ? themes['blazeheart-saga'].colors.accent : 'transparent',
                                 color: themes['blazeheart-saga'].colors.text,
-                                border: `2px solid ${themes['blazeheart-saga'].colors.border}`,
                                 boxShadow: isActive ? `0 0 10px ${themes['blazeheart-saga'].colors.accent}40` : 'none'
                               }}
                             >
@@ -879,10 +877,10 @@ export default function LandingPage() {
                                 <div
                                   key={piece.id}
                                   className={`w-full aspect-square pixelated border-2 transition-all hover:scale-105 cursor-pointer p-1 ${
-                                    isSelected ? 'ring-2 ring-orange-500' : ''
+                                    isSelected ? 'ring-2 ring-orange-500' : 'border-white/20'
                                   }`}
                                   style={{ 
-                                    borderColor: isSelected ? themes['blazeheart-saga'].colors.accent : themes['blazeheart-saga'].colors.border,
+                                    borderColor: isSelected ? themes['blazeheart-saga'].colors.accent : undefined,
                                     backgroundColor: themes['blazeheart-saga'].colors.background + '80'
                                   }}
                                 >
@@ -912,10 +910,10 @@ export default function LandingPage() {
                                 <div
                                   key={piece.id}
                                   className={`w-full aspect-square pixelated border-2 transition-all hover:scale-105 cursor-pointer p-1 ${
-                                    isSelected ? 'ring-2 ring-orange-500' : ''
+                                    isSelected ? 'ring-2 ring-orange-500' : 'border-white/20'
                                   }`}
                                   style={{ 
-                                    borderColor: isSelected ? themes['blazeheart-saga'].colors.accent : themes['blazeheart-saga'].colors.border,
+                                    borderColor: isSelected ? themes['blazeheart-saga'].colors.accent : undefined,
                                     backgroundColor: themes['blazeheart-saga'].colors.background + '80'
                                   }}
                                 >
@@ -945,10 +943,10 @@ export default function LandingPage() {
                                 <div
                                   key={piece.id}
                                   className={`w-full aspect-square pixelated border-2 transition-all hover:scale-105 cursor-pointer p-1 ${
-                                    isSelected ? 'ring-2 ring-orange-500' : ''
+                                    isSelected ? 'ring-2 ring-orange-500' : 'border-white/20'
                                   }`}
                                   style={{ 
-                                    borderColor: isSelected ? themes['blazeheart-saga'].colors.accent : themes['blazeheart-saga'].colors.border,
+                                    borderColor: isSelected ? themes['blazeheart-saga'].colors.accent : undefined,
                                     backgroundColor: themes['blazeheart-saga'].colors.background + '80'
                                   }}
                                 >
@@ -968,7 +966,7 @@ export default function LandingPage() {
                       )}
                     </div>
                   </div>
-                </Card>
+                </div>
               </div>
               <div className="order-1 lg:order-2">
               <div className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-lg p-8 hover:border-white/40 transition-all duration-300">
@@ -1013,7 +1011,7 @@ export default function LandingPage() {
                 </div>
               </div>
               <div className="order-2 lg:order-2">
-                <Card theme="blazeheart-saga" className="p-6">
+                <div className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-lg p-6 hover:border-white/40 transition-all duration-300">
                   <div className="space-y-3">
                     <div className="text-center">
                       <h3 className="font-pixel text-lg mb-1" style={{ color: themes['blazeheart-saga'].colors.accent }}>
@@ -1028,12 +1026,11 @@ export default function LandingPage() {
                         value="I helped my neighbor carry some heavy boxes into her new apartment. She offered me a drink as thanks, but I politely declined."
                         readOnly
                         rows={5}
-                        className="w-full p-4 pixelated border-2 resize-none leading-relaxed focus:outline-none"
+                        className="w-full p-4 readable-text border-2 resize-none leading-relaxed focus:outline-none journal-textarea"
                         style={{
-                          backgroundColor: themes['blazeheart-saga'].colors.background,
-                          borderColor: themes['blazeheart-saga'].colors.border,
-                          color: themes['blazeheart-saga'].colors.text,
-                          boxShadow: `inset 0 2px 4px ${themes['blazeheart-saga'].colors.background}80`,
+                          background: 'linear-gradient(to bottom, #374151, #1F2937)',
+                          borderColor: '#1F2937',
+                          color: '#FFFFFF',
                         }}
                       />
                       {/* Enhanced decorative squares */}
@@ -1056,37 +1053,35 @@ export default function LandingPage() {
                     </div>
                     <div className="space-y-3 pt-0.5 border-t text-center" style={{ borderColor: themes['blazeheart-saga'].colors.border + '40' }}>
                       <p className="font-pixel text-sm" style={{ color: themes['blazeheart-saga'].colors.text }}>
-                        What kind of adventure should Ann go on?
+                        What do you want to create today?
                       </p>
-                      <div className="flex gap-0.5 w-full">
+                      <div className="flex gap-2 w-full">
                         <button
-                          className="flex-1 px-6 py-4 pixelated font-pixel text-base font-bold transition-all flex items-center justify-center gap-2"
+                          className="flex-1 px-6 py-2 pixelated font-pixel text-base font-bold transition-all flex items-center justify-center gap-2 border-2"
                           style={{
-                            background: `linear-gradient(to bottom, #8B0000, #5C0000)`,
+                            background: 'linear-gradient(to bottom, #1F2937, #111827)',
+                            borderColor: '#1F2937',
                             color: '#FFFFFF',
-                            border: `1px solid #000000`,
-                            boxShadow: 'none'
+                            textShadow: '1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000',
                           }}
                         >
-                          <span className="text-xl">📖</span>
-                          <span>Chapter</span>
+                          Chapter
                         </button>
                         <button
-                          className="flex-1 px-6 py-4 pixelated font-pixel text-base font-bold transition-all flex items-center justify-center gap-2"
+                          className="flex-1 px-6 py-2 pixelated font-pixel text-base font-bold transition-all flex items-center justify-center gap-2 border-2"
                           style={{
-                            background: `linear-gradient(to bottom, #FFD700, #FFA500)`,
+                            background: themes['blazeheart-saga'].colors.accent,
+                            borderColor: themes['blazeheart-saga'].colors.border,
                             color: '#FFFFFF',
-                            border: `1px solid #000000`,
-                            boxShadow: 'none'
+                            textShadow: '1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000',
                           }}
                         >
-                          <span className="text-xl">🖼️</span>
-                          <span>Scene</span>
+                          Scene
                         </button>
                       </div>
                     </div>
                   </div>
-                </Card>
+                </div>
               </div>
               </div>
             </motion.div>
@@ -1114,11 +1109,7 @@ export default function LandingPage() {
                 className="lg:flex lg:flex-col h-auto"
               >
                 <h3 className="font-pixel text-lg text-white mb-3">The Painted Scene:</h3>
-                <Card 
-                  theme="blazeheart-saga" 
-                  effect="glow" 
-                  className="lg:flex lg:flex-col lg:max-h-[500px] !p-0"
-                >
+                <div className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-lg lg:flex lg:flex-col lg:max-h-[500px] hover:border-white/40 transition-all duration-300 modal-text-container" style={{ background: 'linear-gradient(to bottom, #374151, #1F2937)' }}>
                   <div className="lg:flex-1 lg:overflow-hidden lg:flex lg:items-center lg:justify-center w-full h-full p-0">
                     <Image
                       src={showcaseData.imageUrl}
@@ -1139,7 +1130,7 @@ export default function LandingPage() {
                       }}
                     />
                   </div>
-                </Card>
+                </div>
               </div>
 
               {/* Chapter Column */}
@@ -1153,11 +1144,11 @@ export default function LandingPage() {
                 }
               >
                 <h3 className="font-pixel text-lg text-white mb-3">The Matching Chapter:</h3>
-                <Card theme="blazeheart-saga" effect="glow" className="lg:flex-1 lg:overflow-y-auto !pt-2 !pr-2 !pb-2 !pl-4">
-                  <div className="text-white leading-relaxed text-sm pr-2">
+                <div className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-lg lg:flex-1 lg:flex lg:flex-col lg:overflow-y-auto p-4 hover:border-white/40 transition-all duration-300 modal-text-container" style={{ background: 'linear-gradient(to bottom, #374151, #1F2937)' }}>
+                  <div className="readable-text leading-relaxed flex-1 overflow-y-auto pr-2" style={{ color: '#F0F0F0' }}>
                     {showcaseData.chapter}
                   </div>
-                </Card>
+                </div>
               </div>
 
               {/* Stat Growth Column */}
@@ -1173,7 +1164,7 @@ export default function LandingPage() {
                 <h3 className="font-pixel text-lg text-white mb-3">
                   📊 {showcaseData.characterName}{showcaseData.characterName.endsWith('s') ? "'" : "'s"} growth:
                 </h3>
-                <Card theme="blazeheart-saga" effect="glow" className="lg:flex-1 lg:flex lg:flex-col lg:overflow-y-auto">
+                <div className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-lg lg:flex-1 lg:flex lg:flex-col lg:overflow-y-auto p-4 hover:border-white/40 transition-all duration-300 modal-text-container" style={{ background: 'linear-gradient(to bottom, #374151, #1F2937)' }}>
                   <div className="space-y-3 flex-1 overflow-y-auto pr-2">
                     {Object.entries(showcaseData.statChanges)
                       .filter(([_, change]) => (change as any).change !== 0)
@@ -1184,7 +1175,7 @@ export default function LandingPage() {
                             key={statName}
                             className={`p-3 rounded-lg border-2 ${
                               statChange.change > 0
-                                ? 'bg-green-600/20 border-green-500/50'
+                                ? 'bg-green-600/35 border-green-500/65'
                                 : statChange.change < 0
                                   ? 'bg-red-600/20 border-red-500/50'
                                   : 'bg-gray-600/20 border-gray-500/50'
@@ -1198,7 +1189,7 @@ export default function LandingPage() {
                                 {statChange.change > 0 ? '+' : ''}{statChange.change}
                               </span>
                             </div>
-                            <p className="text-sm text-gray-300 mb-1">{statChange.reason}</p>
+                            <p className="text-sm text-gray-300 mb-1 readable-text">{statChange.reason}</p>
                             <div className="flex items-center justify-between">
                               <span className="text-xs text-gray-400">Confidence:</span>
                               <span className="text-xs text-blue-300 font-pixel">
@@ -1209,7 +1200,7 @@ export default function LandingPage() {
                         );
                       })}
                     {showcaseData.expGained && (
-                      <div className="mt-4 p-3 bg-blue-600/20 border-2 border-blue-500/50 rounded-lg">
+                      <div className="mt-4 p-3 bg-blue-600/35 border-2 border-blue-500/65 rounded-lg">
                         <div className="flex items-center justify-between">
                           <span className="font-pixel text-lg text-white">Exp. Gained</span>
                           <span className="font-pixel text-xl font-bold text-blue-300">
@@ -1219,7 +1210,7 @@ export default function LandingPage() {
                       </div>
                     )}
                   </div>
-                </Card>
+                </div>
               </div>
             </div>
           </motion.div>
@@ -1248,10 +1239,10 @@ export default function LandingPage() {
             {features.map((feature, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                viewport={{ once: true }}
+                // initial={{ opacity: 0, y: 50 }}
+                // whileInView={{ opacity: 1, y: 0 }}
+                // transition={{ duration: 0.6, delay: index * 0.1 }}
+                // viewport={{ once: true }}
                 className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-lg p-6 hover:border-white/40 transition-all duration-300"
               >
                 <div className="text-4xl mb-4">{feature.icon}</div>
@@ -1307,20 +1298,27 @@ export default function LandingPage() {
                      {themePreviews.slice(0, 4).map((theme, index) => (
                        <div
                          key={theme.id}
-                         className="backdrop-blur-sm border border-white/20 rounded-lg p-6 hover:border-white/40 transition-all duration-300 hover:scale-105"
+                         className={`border border-white/20 rounded-lg p-6 hover:border-white/40 transition-all duration-300 hover:scale-105 ${theme.id === 'ivory-quill' ? 'ivory-quill-overlay' : ''}`}
                          style={{
                            backgroundImage: theme.background,
                            backgroundSize: theme.backgroundSize,
-                           animation: theme.animation,
-                           borderColor: `${theme.color}40`
+                           backgroundPosition: theme.id === 'blazeheart-saga' ? '0% 70%' : theme.id === 'starlit-horizon' ? '0% 50%' : theme.id === 'neon-ashes' ? '50% 50%' : theme.id === 'crimson-tides' ? '0% 80%' : theme.id === 'ivory-quill' ? '0% 80%' : theme.id === 'wild-west' ? '0% 60%' : '0% 0%',
+                           // animation: theme.animation,
+                           borderColor: `${theme.color}40`,
+                           ...(theme.id === 'ivory-quill' ? {
+                             filter: 'saturate(1.3) brightness(1.1)'
+                           } : ['neon-ashes', 'starlit-horizon', 'wild-west'].includes(theme.id) ? {
+                             backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                             backgroundBlendMode: 'multiply'
+                           } : {})
                          }}
                        >
-                      <h3 className="font-pixel text-4xl font-bold text-white mb-3 text-center flex items-center justify-center gap-2">
+                      <h3 className="font-pixel text-5xl font-bold text-white mb-3 text-center flex items-center justify-center gap-2 theme-title-no-shadow">
                         <theme.icon className="w-6 h-6" />
                         {theme.name}
                       </h3>
                         <hr className="border-white/60 mb-4 border" style={{ boxShadow: '1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000' }} />
-                      <p className="text-gray-300 font-pixel text-sm leading-relaxed">
+                      <p className="text-gray-300 readable-text text-lg leading-relaxed theme-description-shadow" style={{ color: '#F0F0F0' }}>
                         {theme.description}
                       </p>
                     </div>
@@ -1334,20 +1332,27 @@ export default function LandingPage() {
                      {themePreviews.slice(4, 8).map((theme, index) => (
                        <div
                          key={theme.id}
-                         className="backdrop-blur-sm border border-white/20 rounded-lg p-6 hover:border-white/40 transition-all duration-300 hover:scale-105"
+                         className={`border border-white/20 rounded-lg p-6 hover:border-white/40 transition-all duration-300 hover:scale-105 ${theme.id === 'ivory-quill' ? 'ivory-quill-overlay' : ''}`}
                          style={{
                            backgroundImage: theme.background,
                            backgroundSize: theme.backgroundSize,
-                           animation: theme.animation,
-                           borderColor: `${theme.color}40`
+                           backgroundPosition: theme.id === 'blazeheart-saga' ? '0% 70%' : theme.id === 'starlit-horizon' ? '0% 50%' : theme.id === 'neon-ashes' ? '50% 50%' : theme.id === 'crimson-tides' ? '0% 80%' : theme.id === 'ivory-quill' ? '0% 80%' : theme.id === 'wild-west' ? '0% 60%' : '0% 0%',
+                           // animation: theme.animation,
+                           borderColor: `${theme.color}40`,
+                           ...(theme.id === 'ivory-quill' ? {
+                             filter: 'saturate(1.3) brightness(1.1)'
+                           } : ['neon-ashes', 'starlit-horizon', 'wild-west'].includes(theme.id) ? {
+                             backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                             backgroundBlendMode: 'multiply'
+                           } : {})
                          }}
                        >
-                      <h3 className="font-pixel text-4xl font-bold text-white mb-3 text-center flex items-center justify-center gap-2">
+                      <h3 className="font-pixel text-5xl font-bold text-white mb-3 text-center flex items-center justify-center gap-2 theme-title-no-shadow">
                         <theme.icon className="w-6 h-6" />
                         {theme.name}
                       </h3>
                         <hr className="border-white/60 mb-4 border" style={{ boxShadow: '1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000' }} />
-                      <p className="text-gray-300 font-pixel text-sm leading-relaxed">
+                      <p className="text-gray-300 readable-text text-lg leading-relaxed theme-description-shadow" style={{ color: '#F0F0F0' }}>
                         {theme.description}
                       </p>
                     </div>
@@ -1397,10 +1402,10 @@ export default function LandingPage() {
           <div className="space-y-6">
             {/* FAQ Item 1 */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              viewport={{ once: true }}
+              // initial={{ opacity: 0, y: 30 }}
+              // whileInView={{ opacity: 1, y: 0 }}
+              // transition={{ duration: 0.6, delay: 0.1 }}
+              // viewport={{ once: true }}
               className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-lg hover:border-white/40 transition-all duration-300"
             >
               <button
@@ -1426,7 +1431,7 @@ export default function LandingPage() {
                 className="overflow-hidden"
               >
                 <div className="px-6 pb-6">
-                  <p className="text-gray-300 font-pixel leading-relaxed">
+                  <p className="readable-text leading-relaxed" style={{ color: '#F0F0F0' }}>
                     Quillia is a journaling app that transforms your daily experiences into epic adventures. 
                     Choose from multiple themes, create unique characters, and write your story in a magical, 
                     immersive environment that makes every day feel like a quest.
@@ -1437,10 +1442,10 @@ export default function LandingPage() {
 
             {/* FAQ Item 2 */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              viewport={{ once: true }}
+              // initial={{ opacity: 0, y: 30 }}
+              // whileInView={{ opacity: 1, y: 0 }}
+              // transition={{ duration: 0.6, delay: 0.2 }}
+              // viewport={{ once: true }}
               className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-lg hover:border-white/40 transition-all duration-300"
             >
               <button
@@ -1466,7 +1471,7 @@ export default function LandingPage() {
                 className="overflow-hidden"
               >
                 <div className="px-6 pb-6">
-                  <p className="text-gray-300 font-pixel leading-relaxed">
+                  <p className="readable-text leading-relaxed" style={{ color: '#F0F0F0' }}>
                     Quillia offers 8 unique themes that let you become anything from a noble samurai to a mysterious detective or daring pirate sailing the seven seas, and even more. Each theme provides a completely different visual experience and atmosphere for your adventures.
                   </p>
                 </div>
@@ -1475,10 +1480,10 @@ export default function LandingPage() {
 
             {/* FAQ Item 3 */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              viewport={{ once: true }}
+              // initial={{ opacity: 0, y: 30 }}
+              // whileInView={{ opacity: 1, y: 0 }}
+              // transition={{ duration: 0.6, delay: 0.3 }}
+              // viewport={{ once: true }}
               className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-lg hover:border-white/40 transition-all duration-300"
             >
               <button
@@ -1504,7 +1509,7 @@ export default function LandingPage() {
                 className="overflow-hidden"
               >
                 <div className="px-6 pb-6">
-                  <p className="text-gray-300 font-pixel leading-relaxed">
+                  <p className="readable-text leading-relaxed" style={{ color: '#F0F0F0' }}>
                     Absolutely! Our layered avatar builder lets you create unique characters by mixing and matching 
                     various pieces. You can create characters that perfectly represent your fantasy persona.
                   </p>
@@ -1514,10 +1519,10 @@ export default function LandingPage() {
 
             {/* FAQ Item 4 */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              viewport={{ once: true }}
+              // initial={{ opacity: 0, y: 30 }}
+              // whileInView={{ opacity: 1, y: 0 }}
+              // transition={{ duration: 0.6, delay: 0.4 }}
+              // viewport={{ once: true }}
               className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-lg hover:border-white/40 transition-all duration-300"
             >
               <button
@@ -1543,7 +1548,7 @@ export default function LandingPage() {
                 className="overflow-hidden"
               >
                 <div className="px-6 pb-6">
-                  <p className="text-gray-300 font-pixel leading-relaxed">
+                  <p className="readable-text leading-relaxed" style={{ color: '#F0F0F0' }}>
                     Yes! We take your privacy seriously. All your journal entries and character data are encrypted 
                     and stored securely. You have full control over your data and can export or delete it at any time.
                   </p>
@@ -1553,10 +1558,10 @@ export default function LandingPage() {
 
             {/* FAQ Item 5 */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-              viewport={{ once: true }}
+              // initial={{ opacity: 0, y: 30 }}
+              // whileInView={{ opacity: 1, y: 0 }}
+              // transition={{ duration: 0.6, delay: 0.5 }}
+              // viewport={{ once: true }}
               className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-lg hover:border-white/40 transition-all duration-300"
             >
               <button
@@ -1582,7 +1587,7 @@ export default function LandingPage() {
                 className="overflow-hidden"
               >
                 <div className="px-6 pb-6">
-                  <p className="text-gray-300 font-pixel leading-relaxed">
+                  <p className="readable-text leading-relaxed" style={{ color: '#F0F0F0' }}>
                     Getting started is easy! Simply sign up for an account, choose your favorite theme, create your 
                     character, and start writing. Each step flows smoothly into the next, ensuring you have the perfect setup for the beginning of your journey.
                   </p>

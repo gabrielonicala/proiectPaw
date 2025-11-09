@@ -1,7 +1,8 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { Trash, Pencil, Check, X } from 'lucide-react';
 import Button from './ui/Button';
 import Card from './ui/Card';
 import Input from './ui/Input';
@@ -9,7 +10,7 @@ import LayeredAvatarRenderer from './LayeredAvatarRenderer';
 import LayeredAvatarBuilder from './LayeredAvatarBuilder';
 import AppNavigation from './AppNavigation';
 import MovingGradientBackground from './MovingGradientBackground';
-import { Character } from '@/types';
+import { Character, Theme } from '@/types';
 import { themes } from '@/themes';
 import { migrateTheme } from '@/lib/theme-migration';
 import { getCachedImageUrl } from '@/lib/asset-cache';
@@ -238,10 +239,98 @@ export default function CharacterSelector({
 
   const canCreateNew = characters.length < user.characterSlots;
 
+  // Get theme colors for background
+  const migratedTheme = migrateTheme(activeCharacter?.theme || 'obsidian-veil') as Theme;
+  const themeConfig = themes[migratedTheme];
+  const colors = themeConfig?.colors;
+
+  // Memoize particle positions and animation values to prevent reset on re-render
+  const particles = useMemo(() => {
+    return Array.from({ length: 20 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      duration: 3 + Math.random() * 2,
+      delay: Math.random() * 2,
+    }));
+  }, []); // Empty dependency array - only generate once
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div 
+      className="min-h-screen flex flex-col relative overflow-hidden"
+      style={{
+        background: colors ? `linear-gradient(to bottom, ${colors.background}, ${colors.primary}, ${colors.secondary})` : 'linear-gradient(to bottom, #581c87, #1e3a8a, #312e81)'
+      }}
+    >
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute top-1/4 left-1/4 w-32 h-32 opacity-20 pixelated"
+          style={{ backgroundColor: colors?.accent || '#fbbf24' }}
+          animate={{
+            rotate: 360,
+            scale: [1, 1.2, 1],
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
+        <motion.div
+          className="absolute top-3/4 right-1/4 w-24 h-24 opacity-20 pixelated"
+          style={{ backgroundColor: colors?.primary || '#ec4899' }}
+          animate={{
+            rotate: -360,
+            scale: [1, 0.8, 1],
+          }}
+          transition={{
+            duration: 3,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
+        <motion.div
+          className="absolute top-1/2 right-1/3 w-16 h-16 opacity-20 pixelated"
+          style={{ backgroundColor: colors?.secondary || '#10b981' }}
+          animate={{
+            y: [-20, 20, -20],
+            x: [-10, 10, -10],
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+      </div>
+
+      {/* Floating particles */}
+      <div className="absolute inset-0 pointer-events-none">
+        {particles.map((particle) => (
+          <motion.div
+            key={particle.id}
+            className="absolute w-1 h-1 opacity-30 pixelated"
+            style={{
+              left: `${particle.left}%`,
+              top: `${particle.top}%`,
+              backgroundColor: colors?.text || '#ffffff'
+            }}
+            animate={{
+              y: [0, -100, 0],
+              opacity: [0, 1, 0],
+            }}
+            transition={{
+              duration: particle.duration,
+              repeat: Infinity,
+              delay: particle.delay,
+            }}
+          />
+        ))}
+      </div>
+
       <div className="flex-1 p-4">
-      <MovingGradientBackground theme={activeCharacter?.theme || 'obsidian-veil'} />
+      {/* <MovingGradientBackground theme={activeCharacter?.theme || 'obsidian-veil'} /> */}
       
       <div className="max-w-6xl mx-auto relative z-10">
         {/* Header */}
@@ -351,19 +440,27 @@ export default function CharacterSelector({
                            onClick={() => handleSaveName(character.id)}
                            variant="primary"
                            size="sm"
-                           className="text-xs px-2 py-1"
+                           className="text-xs px-2 py-1 navbar-button-icon bg-transparent border-none"
                            theme={character.theme}
+                           style={{
+                             background: 'transparent',
+                             border: 'none'
+                           }}
                          >
-                           ✓
+                           <Check className="w-4 h-4" />
                          </Button>
                          <Button
                            onClick={handleCancelEditName}
                            variant="secondary"
                            size="sm"
-                           className="text-xs px-2 py-1"
+                           className="text-xs px-2 py-1 navbar-button-icon bg-transparent border-none"
                            theme={character.theme}
+                           style={{
+                             background: 'transparent',
+                             border: 'none'
+                           }}
                          >
-                           ✗
+                           <X className="w-4 h-4" />
                          </Button>
                       </div>
                     ) : (
@@ -378,10 +475,14 @@ export default function CharacterSelector({
                            }}
                            variant="secondary"
                            size="sm"
-                           className="text-xs px-1 py-1 opacity-60 hover:opacity-100"
+                           className="text-xs px-1 py-1 opacity-60 hover:opacity-100 navbar-button-icon bg-transparent border-none"
                            theme={character.theme}
+                           style={{
+                             background: 'transparent',
+                             border: 'none'
+                           }}
                          >
-                           ✏️
+                           <Pencil className="w-4 h-4" />
                          </Button>
                       </div>
                     )}
@@ -425,6 +526,10 @@ export default function CharacterSelector({
                              variant="secondary"
                              className="text-[10px] xs:text-xs sm:text-sm px-2 py-1 flex-1"
                              theme={character.theme}
+                             style={{
+                               background: 'linear-gradient(to bottom, #1F2937, #111827)',
+                               borderColor: '#1F2937'
+                             }}
                            >
                              EDIT AVATAR
                            </Button>
@@ -434,10 +539,14 @@ export default function CharacterSelector({
                                setShowDeleteConfirm(character.id);
                              }}
                              variant="secondary"
-                             className="text-xs px-2 py-1 bg-red-600 hover:bg-red-700 text-white"
+                             className="text-xs px-2 py-1 navbar-button-icon"
                              theme={character.theme}
+                             style={{
+                               background: 'linear-gradient(to bottom, #1F2937, #111827)',
+                               borderColor: '#1F2937'
+                             }}
                            >
-                             🗑️
+                             <Trash className="w-4 h-4" />
                            </Button>
                         </div>
                       )}

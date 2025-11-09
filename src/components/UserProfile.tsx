@@ -3,13 +3,15 @@
 import { motion } from 'framer-motion';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { HiInformationCircle } from "react-icons/hi";
+import { RefreshCw, Pencil } from 'lucide-react';
 import Button from './ui/Button';
 import Card from './ui/Card';
 import Input from './ui/Input';
 import MovingGradientBackground from './MovingGradientBackground';
 import AppNavigation from './AppNavigation';
-import { User, Character, Avatar } from '@/types';
+import { User, Character, Avatar, Theme } from '@/types';
 import { themes } from '@/themes';
+import { migrateTheme } from '@/lib/theme-migration';
 import { saveUser, saveUserPreferences } from '@/lib/client-utils';
 import { useEntries } from '@/hooks/useEntries';
 import LayeredAvatarBuilder from './LayeredAvatarBuilder';
@@ -197,10 +199,98 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
     }
   };
 
+  // Get theme colors for background
+  const migratedTheme = migrateTheme(activeCharacter.theme) as Theme;
+  const themeConfig = themes[migratedTheme];
+  const colors = themeConfig?.colors;
+
+  // Memoize particle positions and animation values to prevent reset on re-render
+  const particles = useMemo(() => {
+    return Array.from({ length: 20 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      duration: 3 + Math.random() * 2,
+      delay: Math.random() * 2,
+    }));
+  }, []); // Empty dependency array - only generate once
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div 
+      className="min-h-screen flex flex-col relative overflow-hidden"
+      style={{
+        background: colors ? `linear-gradient(to bottom, ${colors.background}, ${colors.primary}, ${colors.secondary})` : 'linear-gradient(to bottom, #581c87, #1e3a8a, #312e81)'
+      }}
+    >
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute top-1/4 left-1/4 w-32 h-32 opacity-20 pixelated"
+          style={{ backgroundColor: colors?.accent || '#fbbf24' }}
+          animate={{
+            rotate: 360,
+            scale: [1, 1.2, 1],
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
+        <motion.div
+          className="absolute top-3/4 right-1/4 w-24 h-24 opacity-20 pixelated"
+          style={{ backgroundColor: colors?.primary || '#ec4899' }}
+          animate={{
+            rotate: -360,
+            scale: [1, 0.8, 1],
+          }}
+          transition={{
+            duration: 3,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
+        <motion.div
+          className="absolute top-1/2 right-1/3 w-16 h-16 opacity-20 pixelated"
+          style={{ backgroundColor: colors?.secondary || '#10b981' }}
+          animate={{
+            y: [-20, 20, -20],
+            x: [-10, 10, -10],
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+      </div>
+
+      {/* Floating particles */}
+      <div className="absolute inset-0 pointer-events-none">
+        {particles.map((particle) => (
+          <motion.div
+            key={particle.id}
+            className="absolute w-1 h-1 opacity-30 pixelated"
+            style={{
+              left: `${particle.left}%`,
+              top: `${particle.top}%`,
+              backgroundColor: colors?.text || '#ffffff'
+            }}
+            animate={{
+              y: [0, -100, 0],
+              opacity: [0, 1, 0],
+            }}
+            transition={{
+              duration: particle.duration,
+              repeat: Infinity,
+              delay: particle.delay,
+            }}
+          />
+        ))}
+      </div>
+
       <div className="flex-1 p-1">
-      <MovingGradientBackground theme={activeCharacter.theme} />
+      {/* <MovingGradientBackground theme={activeCharacter.theme} /> */}
       
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Header */}
@@ -329,10 +419,14 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
                   <h2 className="font-pixel text-2xl text-white">{activeCharacter.name}</h2>
                   <button
                     onClick={() => onNavigateToCharacterSelect && onNavigateToCharacterSelect()}
-                    className="text-yellow-400 hover:text-yellow-300 transition-colors"
+                    className="text-yellow-400 hover:text-yellow-300 transition-colors navbar-button-icon bg-transparent border-none"
                     title="Switch character"
+                    style={{
+                      background: 'transparent',
+                      border: 'none'
+                    }}
                   >
-                    🔄
+                    <RefreshCw className="w-5 h-5" />
                   </button>
                 </div>
                 
@@ -372,10 +466,14 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
                       </span>
                       <button
                         onClick={() => setIsChangingUsername(true)}
-                        className="text-yellow-400 hover:text-yellow-300 transition-colors"
+                        className="text-yellow-400 hover:text-yellow-300 transition-colors navbar-button-icon bg-transparent border-none"
                         title="Edit username"
+                        style={{
+                          background: 'transparent',
+                          border: 'none'
+                        }}
                       >
-                        ✏️
+                        <Pencil className="w-4 h-4" />
                       </button>
                     </div>
                   )}
@@ -503,7 +601,7 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
                               </button>
                               {/* Tooltip */}
                               {openTooltip === statName && (
-                                <div className="absolute bottom-full left-0 transform translate-x-4 mb-2 px-3 py-2 bg-gray-900 text-white text-xs font-pixel rounded-lg shadow-lg z-10 w-56 text-center">
+                                <div className="absolute bottom-full left-0 transform translate-x-4 mb-2 px-3 py-2 bg-gray-900 text-white text-base readable-text rounded-lg shadow-lg z-10 w-56 text-center">
                                   {themes[activeCharacter.theme]?.archetype?.stats[statName]}
                                   <div className="absolute top-full left-8 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
                                 </div>

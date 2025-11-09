@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import Image from 'next/image';
 import Button from './ui/Button';
 import Input from './ui/Input';
@@ -67,6 +67,9 @@ export default function JournalEntry({
   const [entryText, setEntryText] = useState('');
   const [selectedOutput, setSelectedOutput] = useState<OutputType>('text');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generationStartTime, setGenerationStartTime] = useState<number | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [currentStage, setCurrentStage] = useState<string>('');
   const [generatedContent, setGeneratedContent] = useState<string | JournalEntry>('');
   const [imageError, setImageError] = useState(false);
   const [isClosingModal, setIsClosingModal] = useState(false);
@@ -117,10 +120,44 @@ export default function JournalEntry({
   useEffect(() => {
     if (isGenerating || isImageLoading) {
       onGeneratingStart();
+      if (isGenerating && !generationStartTime) {
+        setGenerationStartTime(Date.now());
+        setProgress(0);
+        setCurrentStage(selectedOutput === 'text' ? 'Reflecting on your experience...' : 'Preparing your scene...');
+      }
     } else {
       onGeneratingEnd();
+      setGenerationStartTime(null);
+      setProgress(0);
+      setCurrentStage('');
     }
-  }, [isGenerating, isImageLoading, onGeneratingStart, onGeneratingEnd]);
+  }, [isGenerating, isImageLoading, onGeneratingStart, onGeneratingEnd, generationStartTime]);
+
+  // Progress tracking based on elapsed time
+  useEffect(() => {
+    if (!isGenerating || !generationStartTime) {
+      return;
+    }
+
+      const expectedDuration = selectedOutput === 'text' ? 30000 : 60000; // 30s for chapters, 60s for scenes
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - generationStartTime;
+      const newProgress = Math.min((elapsed / expectedDuration) * 100, 98); // Cap at 98% until actually done
+      
+      setProgress(newProgress);
+
+      // Update stage based on progress
+      if (newProgress < 30) {
+        setCurrentStage(selectedOutput === 'text' ? 'Reflecting on your experience...' : 'Preparing your scene...');
+      } else if (newProgress < 70) {
+        setCurrentStage(selectedOutput === 'text' ? 'Writing your chapter...' : 'Painting your scene...');
+      } else {
+        setCurrentStage('Finalizing...');
+      }
+    }, 100); // Update every 100ms for smooth animation
+
+    return () => clearInterval(interval);
+  }, [isGenerating, generationStartTime, selectedOutput]);
 
   // const getThemeBorderClass = (theme: string) => {
   //   const borderClasses = {
@@ -301,6 +338,8 @@ export default function JournalEntry({
           
           // Entry created successfully with stat analysis
           // Now show the modal with the complete entry data
+          setProgress(100);
+          setCurrentStage('Complete!');
           setGeneratedContent(savedEntry);
           setShowModal(true);
           setIsGenerating(false);
@@ -331,6 +370,8 @@ export default function JournalEntry({
         }
       } else {
         // For content policy violations, show modal immediately without saving
+        setProgress(100);
+        setCurrentStage('Complete!');
         setGeneratedContent(content);
         setShowModal(true);
         setIsGenerating(false);
@@ -341,8 +382,29 @@ export default function JournalEntry({
     }
   };
 
+  // Get theme colors for background
+  const migratedTheme = migrateTheme(activeCharacter.theme) as Theme;
+  const themeConfig = themes[migratedTheme];
+  const colors = themeConfig?.colors;
+
+  // Memoize particle positions and animation values to prevent reset on re-render
+  const particles = useMemo(() => {
+    return Array.from({ length: 20 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      duration: 3 + Math.random() * 2,
+      delay: Math.random() * 2,
+    }));
+  }, []); // Empty dependency array - only generate once
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div 
+      className="min-h-screen flex flex-col relative overflow-hidden"
+      style={{
+        background: colors ? `linear-gradient(to bottom, ${colors.background}, ${colors.primary}, ${colors.secondary})` : 'linear-gradient(to bottom, #581c87, #1e3a8a, #312e81)'
+      }}
+    >
       <style jsx>{`
         .loading-dots {
           animation: loadingDots 1.5s ease-in-out infinite;
@@ -360,9 +422,77 @@ export default function JournalEntry({
           }
         }
       `}</style>
-      <div className="flex-1 p-4">
+      
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute top-1/4 left-1/4 w-32 h-32 opacity-20 pixelated"
+          style={{ backgroundColor: colors?.accent || '#fbbf24' }}
+          animate={{
+            rotate: 360,
+            scale: [1, 1.2, 1],
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
+        <motion.div
+          className="absolute top-3/4 right-1/4 w-24 h-24 opacity-20 pixelated"
+          style={{ backgroundColor: colors?.primary || '#ec4899' }}
+          animate={{
+            rotate: -360,
+            scale: [1, 0.8, 1],
+          }}
+          transition={{
+            duration: 3,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
+        <motion.div
+          className="absolute top-1/2 right-1/3 w-16 h-16 opacity-20 pixelated"
+          style={{ backgroundColor: colors?.secondary || '#10b981' }}
+          animate={{
+            y: [-20, 20, -20],
+            x: [-10, 10, -10],
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+      </div>
+
+      {/* Floating particles */}
+      <div className="absolute inset-0 pointer-events-none">
+        {particles.map((particle) => (
+          <motion.div
+            key={particle.id}
+            className="absolute w-1 h-1 opacity-30 pixelated"
+            style={{
+              left: `${particle.left}%`,
+              top: `${particle.top}%`,
+              backgroundColor: colors?.text || '#ffffff'
+            }}
+            animate={{
+              y: [0, -100, 0],
+              opacity: [0, 1, 0],
+            }}
+            transition={{
+              duration: particle.duration,
+              repeat: Infinity,
+              delay: particle.delay,
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="flex-1 p-4 relative z-10">
       {/* Pixel art background */}
-      <MovingGradientBackground theme={migrateTheme(activeCharacter.theme) as Theme} />
+      {/* <MovingGradientBackground theme={migrateTheme(activeCharacter.theme) as Theme} /> */}
 
       <div className="max-w-6xl mx-auto relative z-10">
         {/* Navigation Header */}
@@ -607,7 +737,7 @@ export default function JournalEntry({
 Hint: Rich details weave the most captivating tales.`}
                   type="textarea"
                   rows={6}
-                  className="w-full"
+                  className="w-full journal-textarea"
                   theme={migrateTheme(activeCharacter.theme) as Theme}
                   maxLength={selectedOutput === 'image' ? 300 : 500}
                   minLength={80}
@@ -627,22 +757,32 @@ Hint: Rich details weave the most captivating tales.`}
                     <div className="absolute top-1 right-1 text-purple-400 text-sm">✨</div>
                     <h3 className="font-pixel text-sm text-white mb-3 text-center">
                       <span className="mr-2">🎨</span>
-                      What kind of adventure should {activeCharacter.name} go on?
+                      What do you want to create today?
                     </h3>
                     <div className="flex gap-2 w-full">
-                    {outputTypes.map((output) => (
-                      <Button
-                        key={output.value}
-                        onClick={() => setSelectedOutput(output.value)}
-                        variant={selectedOutput === output.value ? 'accent' : 'secondary'}
-                        size="sm"
+                    {outputTypes.map((output) => {
+                      const isSelected = selectedOutput === output.value;
+                      return (
+                        <Button
+                          key={output.value}
+                          onClick={() => setSelectedOutput(output.value)}
+                          variant={isSelected ? 'accent' : 'secondary'}
+                          size="sm"
                           theme={migrateTheme(activeCharacter.theme) as Theme}
                           className="text-base py-2 flex-1 border-2 border-black"
-                          style={{ textShadow: '1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000' }}
-                      >
-                        {output.emoji} {output.label}
-                      </Button>
-                    ))}
+                          style={{
+                            textShadow: '1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000',
+                            fontSize: isSelected ? '1.125rem' : undefined,
+                            ...(isSelected ? {} : {
+                              background: 'linear-gradient(to bottom, #1F2937, #111827)',
+                              borderColor: '#1F2937'
+                            })
+                          }}
+                        >
+                          {output.emoji} {output.label}
+                        </Button>
+                      );
+                    })}
                     </div>
                   </div>
                 </div>
@@ -704,21 +844,66 @@ Hint: Rich details weave the most captivating tales.`}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/80 flex flex-col items-center justify-center z-[10000]"
           >
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              className="w-12 h-12 border-4 border-yellow-400 border-t-transparent pixelated mb-4"
-            />
-      <p className="font-pixel text-yellow-300 text-lg">
-        {isGenerating ? (
-          selectedOutput === 'text' ? 'Writing a chapter...' : 
-          selectedOutput === 'image' ? 'Painting a scene...' :
-          selectedOutput === 'coming-soon' ? 'Filming an episode...' :
-          'Creating your adventure...'
-        ) : (
-          'Loading your scene...'
-        )}
-      </p>
+            <div className="w-full flex flex-col items-center">
+              <div className="w-full max-w-md px-8 flex flex-col items-center">
+                {/* Progress Bar Container */}
+                <div className="relative mb-6 w-full">
+                  {/* Background bar */}
+                  <div className="w-full h-3 bg-gray-800 rounded-full overflow-hidden border border-gray-700">
+                    {/* Progress fill with glow effect */}
+                    <motion.div
+                      className="h-full bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-400 rounded-full relative overflow-hidden"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${progress}%` }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                      style={{
+                        boxShadow: `0 0 20px rgba(251, 191, 36, 0.6), 0 0 40px rgba(251, 191, 36, 0.3)`,
+                      }}
+                    >
+                      {/* Animated shine effect */}
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                        animate={{
+                          x: ['-100%', '200%'],
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: "linear",
+                        }}
+                      />
+                    </motion.div>
+                  </div>
+                  {/* Progress percentage */}
+                  <div className="absolute -top-6 right-0 font-pixel text-yellow-400 text-sm">
+                    {Math.round(progress)}%
+                  </div>
+                </div>
+                
+                {/* Stage text */}
+                <p className="font-pixel text-yellow-300 text-lg text-center mb-2 w-full">
+                  {isGenerating ? (
+                    currentStage || (
+                      selectedOutput === 'text' ? 'Writing a chapter...' : 
+                      selectedOutput === 'image' ? 'Painting a scene...' :
+                      selectedOutput === 'coming-soon' ? 'Filming an episode...' :
+                      'Creating your adventure...'
+                    )
+                  ) : (
+                    'Loading your scene...'
+                  )}
+                </p>
+              </div>
+              
+              {/* Estimated time remaining - centered on full screen */}
+              {isGenerating && generationStartTime && (
+                <p className="font-pixel text-gray-400 text-sm text-center md:whitespace-nowrap w-full px-4 mt-2">
+                  {selectedOutput === 'text' 
+                    ? 'This usually takes about half a minute...'
+                    : 'This usually takes about a minute...'}
+                </p>
+              )}
+            </div>
           </motion.div>
         )}
       </div>

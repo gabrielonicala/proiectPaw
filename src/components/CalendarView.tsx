@@ -1,16 +1,18 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday } from 'date-fns';
+import { Check } from 'lucide-react';
 import Button from './ui/Button';
 import Card from './ui/Card';
 import UnifiedEntryModal from './UnifiedEntryModal';
 import MovingGradientBackground from './MovingGradientBackground';
 import AppNavigation from './AppNavigation';
-import { JournalEntry, User, Character } from '@/types';
+import { JournalEntry, User, Character, Theme } from '@/types';
 import { useEntries } from '@/hooks/useEntries';
 import { themes } from '@/themes';
+import { migrateTheme } from '@/lib/theme-migration';
 // import Footer from './Footer';
 
 interface CalendarViewProps {
@@ -142,11 +144,99 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
     setIsModalOpen(true);
   };
 
+  // Get theme colors for background
+  const migratedTheme = migrateTheme(activeCharacter.theme) as Theme;
+  const themeConfig = themes[migratedTheme];
+  const colors = themeConfig?.colors;
+
+  // Memoize particle positions and animation values to prevent reset on re-render
+  const particles = useMemo(() => {
+    return Array.from({ length: 20 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      duration: 3 + Math.random() * 2,
+      delay: Math.random() * 2,
+    }));
+  }, []); // Empty dependency array - only generate once
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div 
+      className="min-h-screen flex flex-col relative overflow-hidden"
+      style={{
+        background: colors ? `linear-gradient(to bottom, ${colors.background}, ${colors.primary}, ${colors.secondary})` : 'linear-gradient(to bottom, #581c87, #1e3a8a, #312e81)'
+      }}
+    >
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute top-1/4 left-1/4 w-32 h-32 opacity-20 pixelated"
+          style={{ backgroundColor: colors?.accent || '#fbbf24' }}
+          animate={{
+            rotate: 360,
+            scale: [1, 1.2, 1],
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
+        <motion.div
+          className="absolute top-3/4 right-1/4 w-24 h-24 opacity-20 pixelated"
+          style={{ backgroundColor: colors?.primary || '#ec4899' }}
+          animate={{
+            rotate: -360,
+            scale: [1, 0.8, 1],
+          }}
+          transition={{
+            duration: 3,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
+        <motion.div
+          className="absolute top-1/2 right-1/3 w-16 h-16 opacity-20 pixelated"
+          style={{ backgroundColor: colors?.secondary || '#10b981' }}
+          animate={{
+            y: [-20, 20, -20],
+            x: [-10, 10, -10],
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+      </div>
+
+      {/* Floating particles */}
+      <div className="absolute inset-0 pointer-events-none">
+        {particles.map((particle) => (
+          <motion.div
+            key={particle.id}
+            className="absolute w-1 h-1 opacity-30 pixelated"
+            style={{
+              left: `${particle.left}%`,
+              top: `${particle.top}%`,
+              backgroundColor: colors?.text || '#ffffff'
+            }}
+            animate={{
+              y: [0, -100, 0],
+              opacity: [0, 1, 0],
+            }}
+            transition={{
+              duration: particle.duration,
+              repeat: Infinity,
+              delay: particle.delay,
+            }}
+          />
+        ))}
+      </div>
+
       <div className="flex-1 p-4">
       {/* Pixel art background */}
-      <MovingGradientBackground theme={activeCharacter.theme} />
+      {/* <MovingGradientBackground theme={activeCharacter.theme} /> */}
       
       <div className="max-w-6xl mx-auto relative z-10">
         {/* Header */}
@@ -192,11 +282,11 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
                   onClick={() => navigateMonth('prev')}
                   variant="secondary"
                   size="sm"
-                  className="hidden md:flex"
+                  className="hidden md:flex text-2xl"
                   disabled={!canGoPrev()}
                   theme={activeCharacter.theme}
                 >
-                  ← PREV
+                  ←
                 </Button>
                 <Button
                   onClick={() => navigateMonth('prev')}
@@ -215,11 +305,11 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
                   onClick={() => navigateMonth('next')}
                   variant="secondary"
                   size="sm"
-                  className="hidden md:flex"
+                  className="hidden md:flex text-2xl"
                   disabled={!canGoNext()}
                   theme={activeCharacter.theme}
                 >
-                  NEXT →
+                  →
                 </Button>
                 <Button
                   onClick={() => navigateMonth('next')}
@@ -281,9 +371,9 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
                             <div className="hidden md:block text-[10px] mt-1 leading-tight">
                               {dayEntries.length} {dayEntries.length === 1 ? 'adv.' : 'advs'}
                             </div>
-                            {/* Mobile: Show emoji indicator */}
-                            <div className="md:hidden text-xs -mt-2">
-                              📝
+                            {/* Mobile: Show icon indicator */}
+                            <div className="md:hidden -mt-4 flex justify-center navbar-button-icon">
+                              <Check className="w-3 h-3" />
                             </div>
                           </>
                         )}
@@ -343,12 +433,12 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
                       </div>
                       
                       <div className="text-sm text-white mb-2">
-                        <strong>Original:</strong> {entry.originalText.substring(0, 100)}...
+                        <strong>Inspiration:</strong> {entry.originalText.substring(0, 100)}...
                       </div>
                       
                       {entry.reimaginedText && (
                         <div className="text-sm text-gray-300 mb-2">
-                          <strong>Adventure:</strong> {entry.reimaginedText.substring(0, 100)}...
+                          <strong>Chapter:</strong> {entry.reimaginedText.substring(0, 100)}...
                         </div>
                       )}
                       

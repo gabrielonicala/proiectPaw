@@ -23,6 +23,39 @@ body {
   -webkit-touch-callout: none;
 }
 
+/* Readable font for text input areas */
+textarea, input[type="text"], input[type="email"] {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  letter-spacing: 0.01em;
+  color: #FFFFFF !important;
+}
+
+/* Readable font for modal content */
+.readable-text {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  line-height: 1.6;
+  letter-spacing: 0.01em;
+  color: #F0F0F0;
+}
+/* Allow Tailwind font-size classes to override - default to 1rem if no size class is specified */
+.readable-text:not([class*="text-"]) {
+  font-size: 1rem;
+}
+
+/* Neutral background for text containers in modal - overrides theme backgrounds */
+.modal-text-container {
+  background: linear-gradient(to bottom, #374151, #1F2937) !important;
+}
+
+/* Neutral background for JournalEntry textarea - overrides theme backgrounds */
+.journal-textarea textarea,
+textarea.journal-textarea {
+  background: linear-gradient(to bottom, #374151, #1F2937) !important;
+  border-color: #1F2937 !important;
+}
+
 /* Allow text selection for links and interactive elements */
 a, button, input, textarea, select {
   -webkit-user-select: auto;
@@ -65,6 +98,47 @@ a, button, input, textarea, select {
     0px -2px 0px rgba(0, 0, 0, 0.9),
     2px 0px 0px rgba(0, 0, 0, 0.9),
     -2px 0px 0px rgba(0, 0, 0, 0.9);
+}
+
+/* Remove text-shadow and disable antialiasing for theme carousel titles */
+.theme-title-no-shadow {
+  text-shadow: none !important;
+  -webkit-font-smoothing: none !important;
+  -moz-osx-font-smoothing: auto !important;
+  text-rendering: auto !important;
+  image-rendering: pixelated !important;
+}
+
+/* Lighter text-shadow for theme carousel descriptions */
+.theme-description-shadow {
+  text-shadow: 
+    1.5px 1.5px 0px rgba(0, 0, 0, 0.8),
+    -1.5px -1.5px 0px rgba(0, 0, 0, 0.8),
+    1.5px -1.5px 0px rgba(0, 0, 0, 0.8),
+    -1.5px 1.5px 0px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Pure dark overlay for Ivory Quill card - doesn't affect underlying colors */
+.ivory-quill-overlay {
+  position: relative;
+}
+
+.ivory-quill-overlay::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+.ivory-quill-overlay > * {
+  position: relative;
+  z-index: 2;
 }
 
 /* Special handling for very light text colors */
@@ -258,6 +332,97 @@ a, button, input, textarea, select {
   letter-spacing: 0.05em;
 }
 
+/* Navbar button enhancements */
+.navbar-button {
+  position: relative;
+  display: inline-block;
+  font-size: 1.125rem; /* text-lg */
+  transition: all 0.3s ease-in-out;
+  padding: 0;
+  margin: 0;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.navbar-button:hover {
+  text-shadow: 
+    0 0 10px rgba(255, 255, 255, 0.8),
+    0 0 20px rgba(255, 255, 255, 0.5),
+    0 0 30px rgba(255, 255, 255, 0.3);
+}
+
+.navbar-button::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.2) 0%,
+    rgba(255, 255, 255, 0.4) 10%,
+    rgba(255, 255, 255, 0.8) 50%,
+    rgba(255, 255, 255, 0.4) 90%,
+    rgba(255, 255, 255, 0.2) 100%
+  );
+  opacity: 1;
+}
+
+/* Mobile adjustments for navbar buttons */
+@media (max-width: 768px) {
+  .navbar-button {
+    font-size: 0.875rem; /* Smaller font on mobile */
+    padding: 0.25rem;
+  }
+  
+  /* Make arrow bigger on mobile */
+  .navbar-button-arrow {
+    font-size: 1.75rem !important;
+  }
+  
+  /* Style for icon buttons on mobile */
+  .navbar-button-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+  }
+  
+  .navbar-button-icon svg {
+    width: 1.5rem;
+    height: 1.5rem;
+    stroke-width: 3;
+    /* Pixelated rendering */
+    image-rendering: crisp-edges;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: pixelated;
+    /* Make strokes more blocky and pixelated */
+    shape-rendering: crispEdges;
+    /* Enhance pixelated effect with filters */
+    filter: contrast(1.3) brightness(1.05);
+    /* Round stroke caps and joins for blockier look */
+    stroke-linecap: square;
+    stroke-linejoin: miter;
+  }
+  
+  .navbar-button::after {
+    display: none; /* Hide underline on mobile emoji buttons */
+  }
+  
+  .navbar-button:hover {
+    text-shadow: 
+      0 0 10px rgba(255, 255, 255, 0.8),
+      0 0 20px rgba(255, 255, 255, 0.5),
+      0 0 30px rgba(255, 255, 255, 0.3);
+  }
+  
+  /* Ensure BACK text button is hidden on mobile */
+  .navbar-button.hidden {
+    display: none !important;
+  }
+}
+
 /* Game-like animations */
 @keyframes pixel-glow {
   0%, 100% { box-shadow: 0 0 5px currentColor; }
@@ -303,8 +468,8 @@ a, button, input, textarea, select {
 }
 
 @keyframes gentle-pulse {
-  0%, 100% { transform: scale(1); opacity: 0.8; }
-  50% { transform: scale(0.98); opacity: 1; }
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(0.98); }
 }
 
 @keyframes energy-wave {

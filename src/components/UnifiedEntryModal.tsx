@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
+import { Download, Copy } from 'lucide-react';
 import Button from './ui/Button';
 import Card from './ui/Card';
 import { JournalEntry, User, Theme } from '@/types';
@@ -341,8 +342,8 @@ export default function UnifiedEntryModal({
                 transition={{ delay: 0.1 }}
               >
                 <h3 className="font-pixel text-lg lg:text-base text-white mb-3">The Inspiration:</h3>
-                <Card theme={activeCharacter?.theme || 'obsidian-veil'} effect="vintage" className={`overflow-y-auto lg:max-h-80`} style={isTreasureTides ? { background: '#0B1533F2' } : {}}>
-                  <p className="text-gray-200 lg:text-sm leading-relaxed">{currentOriginalText}</p>
+                <Card theme={activeCharacter?.theme || 'obsidian-veil'} effect="vintage" className={`overflow-y-auto lg:max-h-80 modal-text-container`} style={{ background: 'linear-gradient(to bottom, #374151, #1F2937)' }}>
+                  <p className="leading-relaxed readable-text">{currentOriginalText}</p>
                 </Card>
               </motion.div>
 
@@ -366,7 +367,7 @@ export default function UnifiedEntryModal({
                     }
                   >
                     <h3 className="font-pixel text-lg lg:text-base text-white mb-3 lg:mb-2">The Painted Scene:</h3>
-                    <Card theme={activeCharacter?.theme || 'obsidian-veil'} effect="glow" className={`lg:flex lg:flex-col lg:max-h-[500px] !p-0`} style={isTreasureTides ? { background: '#0B1533F2' } : {}}>
+                    <Card theme={activeCharacter?.theme || 'obsidian-veil'} effect="glow" className={`lg:flex lg:flex-col lg:max-h-[500px] !p-0 modal-text-container`} style={{ background: 'linear-gradient(to bottom, #374151, #1F2937)' }}>
                       <div className="lg:flex-1 lg:overflow-hidden lg:flex lg:items-center lg:justify-center w-full h-full">
                         <Image
                           src={entry.imageUrl}
@@ -398,7 +399,7 @@ export default function UnifiedEntryModal({
                   }
                 >
                   <h3 className="font-pixel text-lg lg:text-base text-white mb-3 lg:mb-2">The Matching Chapter:</h3>
-                  <Card theme={activeCharacter?.theme || 'obsidian-veil'} effect="glow" className={`lg:flex-1 lg:overflow-y-auto`} style={isTreasureTides ? { background: '#0B1533F2' } : {}}>
+                  <Card theme={activeCharacter?.theme || 'obsidian-veil'} effect="glow" className={`lg:flex-1 lg:overflow-y-auto modal-text-container !py-1`} style={{ background: 'linear-gradient(to bottom, #374151, #1F2937)' }}>
                     {/* For image entries without separate image column, show image first */}
                     {currentOutputType === 'image' && entry?.imageUrl && !entry?.reimaginedText && (
                       <motion.div
@@ -425,7 +426,7 @@ export default function UnifiedEntryModal({
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.3 }}
-                        className="text-white leading-relaxed lg:text-sm lg:pr-2"
+                        className="leading-relaxed lg:pr-2 readable-text"
                       >
                         {currentOutputType === 'image' && entry?.reimaginedText 
                           ? entry.reimaginedText 
@@ -458,9 +459,9 @@ export default function UnifiedEntryModal({
                     }
                   >
                     <h3 className="font-pixel text-lg lg:text-base text-white mb-3 lg:mb-2">
-                      📊 {activeCharacter?.name ? `${activeCharacter.name}${activeCharacter.name.endsWith('s') ? "'" : "'s"} growth:` : 'Character Growth:'}
+                      {activeCharacter?.name ? `${activeCharacter.name}${activeCharacter.name.endsWith('s') ? "'" : "'s"} growth:` : 'Character Growth:'}
                     </h3>
-                    <Card theme={activeCharacter?.theme || 'obsidian-veil'} effect="glow" className={`lg:flex-1 lg:flex lg:flex-col lg:overflow-y-auto`} style={isTreasureTides ? { background: '#0B1533F2' } : {}}>
+                    <Card theme={activeCharacter?.theme || 'obsidian-veil'} effect="glow" className={`lg:flex-1 lg:flex lg:flex-col lg:overflow-y-auto modal-text-container`} style={{ background: 'linear-gradient(to bottom, #374151, #1F2937)' }}>
                       <div className="space-y-3 lg:space-y-2 lg:flex-1 lg:overflow-y-auto lg:pr-2">
                         {Object.entries(JSON.parse(entry.statAnalysis))
                           .filter(([_, change]: [string, any]) => change.change !== 0)
@@ -469,7 +470,7 @@ export default function UnifiedEntryModal({
                             key={statName}
                             className={`p-3 lg:p-2 rounded-lg border-2 ${
                               change.change > 0
-                                ? 'bg-green-600/20 border-green-500/50'
+                                ? 'bg-green-600/35 border-green-500/65'
                                 : change.change < 0
                                   ? 'bg-red-600/20 border-red-500/50'
                                   : 'bg-gray-600/20 border-gray-500/50'
@@ -483,7 +484,7 @@ export default function UnifiedEntryModal({
                                 {change.change > 0 ? '+' : ''}{change.change}
                               </span>
                             </div>
-                            <p className="text-sm text-gray-300 mb-1">{change.reason}</p>
+                            <p className="text-sm text-gray-300 mb-1 readable-text">{change.reason}</p>
                             <div className="flex items-center justify-between">
                               <span className="text-xs text-gray-400">Confidence:</span>
                               <span className="text-xs text-blue-300 font-pixel">
@@ -493,7 +494,7 @@ export default function UnifiedEntryModal({
                           </div>
                         ))}
                         {entry.expGained && (
-                          <div className="mt-4 p-3 bg-blue-600/20 border-2 border-blue-500/50 rounded-lg">
+                          <div className="mt-4 p-3 bg-blue-600/35 border-2 border-blue-500/65 rounded-lg">
                             <div className="flex items-center justify-between">
                               <span className="font-pixel text-lg text-white">Exp. Gained</span>
                               <span className="font-pixel text-xl font-bold text-blue-300">
@@ -532,9 +533,18 @@ export default function UnifiedEntryModal({
                       disabled={isDownloading}
                       variant="primary"
                       theme={resolvedTheme as Theme}
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 navbar-button-icon"
+                      style={{
+                        background: 'linear-gradient(to bottom, #1F2937, #111827)',
+                        borderColor: '#1F2937'
+                      }}
                     >
-                      {isDownloading ? '⏳' : '🖼️'} Download
+                      {isDownloading ? (
+                        <span className="font-pixel">⏳</span>
+                      ) : (
+                        <Download className="w-5 h-5" />
+                      )}
+                      Download Scene
                     </Button>
                   )}
                   {currentOutputType === 'text' && currentContent && !entry?.imageUrl && (
@@ -542,8 +552,13 @@ export default function UnifiedEntryModal({
                       onClick={() => copyToClipboard(currentContent)}
                       variant="primary"
                       theme={resolvedTheme as Theme}
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 navbar-button-icon"
+                      style={{
+                        background: 'linear-gradient(to bottom, #1F2937, #111827)',
+                        borderColor: '#1F2937'
+                      }}
                     >
+                      <Copy className="w-5 h-5" />
                       Copy Chapter
                     </Button>
                   )}
@@ -569,6 +584,10 @@ export default function UnifiedEntryModal({
                     onClick={onClose}
                     variant="secondary"
                     theme={resolvedTheme as Theme}
+                    style={{
+                      background: 'linear-gradient(to bottom, #1F2937, #111827)',
+                      borderColor: '#1F2937'
+                    }}
                   >
                     Close
                   </Button>

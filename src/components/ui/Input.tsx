@@ -51,16 +51,29 @@ export default function Input({
   const getInputStyle = () => {
     if (!colors) return {};
     
-    return {
-      backgroundColor: colors.background,
+    const style: React.CSSProperties & { '--placeholder-color'?: string } = {
       borderColor: colors.border,
       color: colors.text,
       '--placeholder-color': colors.text + '80' // 50% opacity
     };
+    
+    // Only apply background color if journal-textarea class is not present
+    // This allows the CSS class to override the background
+    if (!className?.includes('journal-textarea')) {
+      style.backgroundColor = colors.background;
+    } else {
+      // Explicitly set the neutral background when journal-textarea class is present
+      style.background = 'linear-gradient(to bottom, #374151, #1F2937)';
+      style.borderColor = '#1F2937';
+    }
+    
+    return style;
   };
 
   const baseClasses = 'w-full p-3 border-2 transition-colors min-h-[44px] text-base focus:outline-none';
   const pixelatedClasses = pixelated ? 'pixelated' : 'rounded-lg';
+  // Use readable font for text input areas
+  const readableFontClass = type === 'textarea' ? 'font-sans' : '';
 
   // Character count styling
   const getCharCountColor = () => {
@@ -87,7 +100,7 @@ export default function Input({
             minLength={minLength}
             required={required}
             style={getInputStyle()}
-            className={cn(baseClasses, pixelatedClasses, className)}
+            className={cn(baseClasses, pixelatedClasses, readableFontClass, className)}
           />
         </div>
         {showCharCount && (
@@ -123,7 +136,7 @@ export default function Input({
         minLength={minLength}
         required={required}
         style={getInputStyle()}
-        className={cn(baseClasses, pixelatedClasses, className)}
+        className={cn(baseClasses, pixelatedClasses, readableFontClass, className)}
       />
       {showCharCount && (
         <div className="text-sm">

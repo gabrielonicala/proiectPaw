@@ -361,7 +361,7 @@ export const themes: Record<string, ThemeConfig> = {
       'Scholars who discover that the greatest magic lies in understanding'
     ],
     archetype: {
-      name: 'Arcane Scribe',
+      name: 'Scholar',
       stats: {
         // Original descriptions (commented out for reference):
         // 'Lore': 'Your knowledge of the world and its secrets.',

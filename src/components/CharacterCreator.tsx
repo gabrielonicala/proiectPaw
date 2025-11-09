@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useState, useRef } from 'react';
 import Button from './ui/Button';
 import Card from './ui/Card';
-import MovingGradientBackground from './MovingGradientBackground';
+import { migrateTheme } from '@/lib/theme-migration';
 import { Theme, Character, Avatar } from '@/types';
 import { themes } from '@/themes';
 import AssetAvatarSelector from './AssetAvatarSelector';
@@ -201,7 +201,7 @@ export default function CharacterCreator({ user, onCharacterCreate, onBack, curr
   if (!canCreateCharacter && !isCreatingCharacter) {
     return (
       <div className="min-h-screen p-4">
-        <MovingGradientBackground theme="obsidian-veil" />
+        {/* <MovingGradientBackground theme="obsidian-veil" /> */}
         
         <div className="max-w-4xl mx-auto relative z-10">
           <motion.div
@@ -248,9 +248,89 @@ export default function CharacterCreator({ user, onCharacterCreate, onBack, curr
     );
   }
 
+  // Get the currently viewed theme for background (or selected theme if not in theme step)
+  const currentViewTheme = step === 'theme' 
+    ? (visibleThemes[currentThemeIndex]?.id || selectedTheme)
+    : selectedTheme;
+  
+  // Get theme colors for background
+  const migratedTheme = migrateTheme(currentViewTheme) as Theme;
+  const themeConfig = themes[migratedTheme];
+  const colors = themeConfig?.colors;
+
   return (
-    <div className="min-h-screen p-4">
-      <MovingGradientBackground theme={selectedTheme} />
+    <div 
+      className="min-h-screen p-4 relative overflow-hidden"
+      style={{
+        background: colors ? `linear-gradient(to bottom, ${colors.background}, ${colors.primary}, ${colors.secondary})` : 'linear-gradient(to bottom, #581c87, #1e3a8a, #312e81)'
+      }}
+    >
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute top-1/4 left-1/4 w-32 h-32 opacity-20 pixelated"
+          style={{ backgroundColor: colors?.accent || '#fbbf24' }}
+          animate={{
+            rotate: 360,
+            scale: [1, 1.2, 1],
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
+        <motion.div
+          className="absolute top-3/4 right-1/4 w-24 h-24 opacity-20 pixelated"
+          style={{ backgroundColor: colors?.primary || '#ec4899' }}
+          animate={{
+            rotate: -360,
+            scale: [1, 0.8, 1],
+          }}
+          transition={{
+            duration: 3,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
+        <motion.div
+          className="absolute top-1/2 right-1/3 w-16 h-16 opacity-20 pixelated"
+          style={{ backgroundColor: colors?.secondary || '#10b981' }}
+          animate={{
+            y: [-20, 20, -20],
+            x: [-10, 10, -10],
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+      </div>
+
+      {/* Floating particles */}
+      <div className="absolute inset-0 pointer-events-none">
+        {[...Array(20)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-1 h-1 opacity-30 pixelated"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              backgroundColor: colors?.text || '#ffffff'
+            }}
+            animate={{
+              y: [0, -100, 0],
+              opacity: [0, 1, 0],
+            }}
+            transition={{
+              duration: 3 + Math.random() * 2,
+              repeat: Infinity,
+              delay: Math.random() * 2,
+            }}
+          />
+        ))}
+      </div>
       
       <div className="max-w-6xl mx-auto relative z-10">
         {/* Header */}
@@ -267,43 +347,33 @@ export default function CharacterCreator({ user, onCharacterCreate, onBack, curr
               {step === 'details' && 'CHARACTER DETAILS'}
             </h1>
             <p className="font-pixel text-lg text-yellow-300">
-              {step === 'theme' && 'Select the world for your character'}
+              {step === 'theme' && (
+                <>
+                  <span className="md:hidden">Select your new world</span>
+                  <span className="hidden md:inline">Select the world for your character</span>
+                </>
+              )}
               {step === 'avatar' && 'Choose how your character looks'}
               {step === 'details' && 'Bring your character to life'}
             </p>
           </div>
-          <Button onClick={handleBack} variant="secondary" theme={selectedTheme}>
+          <button 
+            onClick={handleBack} 
+            className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button hidden md:inline-block"
+          >
             BACK
-          </Button>
+          </button>
+          <button 
+            onClick={handleBack} 
+            className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button navbar-button-arrow inline-block md:hidden"
+          >
+            ←
+          </button>
         </motion.div>
 
         {/* Step Content */}
         {step === 'theme' && (
           <div className="relative w-full max-w-6xl mx-auto mb-8 -mt-2">
-            {/* Navigation Arrows - Desktop only */}
-            <button
-              onClick={() => navigateToTheme((currentThemeIndex - 1 + visibleThemes.length) % visibleThemes.length)}
-              className="hidden md:flex absolute -left-3 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 rounded items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-lg"
-              style={{ 
-                backgroundColor: visibleThemes[currentThemeIndex]?.colors.secondary || 'rgba(0,0,0,0.7)', 
-                color: visibleThemes[currentThemeIndex]?.colors.text || 'white',
-                border: `2px solid ${visibleThemes[currentThemeIndex]?.colors.border || 'transparent'}`
-              }}
-            >
-              <span className="text-2xl">←</span>
-            </button>
-            <button
-              onClick={() => navigateToTheme((currentThemeIndex + 1) % visibleThemes.length)}
-              className="hidden md:flex absolute -right-3 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 rounded items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-lg"
-              style={{ 
-                backgroundColor: visibleThemes[currentThemeIndex]?.colors.secondary || 'rgba(0,0,0,0.7)', 
-                color: visibleThemes[currentThemeIndex]?.colors.text || 'white',
-                border: `2px solid ${visibleThemes[currentThemeIndex]?.colors.border || 'transparent'}`
-              }}
-            >
-              <span className="text-2xl">→</span>
-            </button>
-
             {/* Mobile Swipe Hint */}
             <div className="md:hidden text-center mb-2 px-2">
                 <p className="text-sm font-pixel whitespace-nowrap" style={{ 
@@ -313,6 +383,28 @@ export default function CharacterCreator({ user, onCharacterCreate, onBack, curr
                   ← Swipe to explore themes →
                 </p>
             </div>
+
+            {/* Navigation Arrows - Desktop only, positioned relative to fixed-height container */}
+            <button
+              onClick={() => navigateToTheme((currentThemeIndex - 1 + visibleThemes.length) % visibleThemes.length)}
+              className="hidden md:flex absolute -left-3 top-[350px] transform -translate-y-1/2 z-10 w-10 h-10 rounded items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-lg text-white"
+              style={{ 
+                background: 'linear-gradient(to bottom, #1F2937, #111827)',
+                border: '2px solid #1F2937'
+              }}
+            >
+              <span className="text-2xl">←</span>
+            </button>
+            <button
+              onClick={() => navigateToTheme((currentThemeIndex + 1) % visibleThemes.length)}
+              className="hidden md:flex absolute -right-3 top-[350px] transform -translate-y-1/2 z-10 w-10 h-10 rounded items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-lg text-white"
+              style={{ 
+                background: 'linear-gradient(to bottom, #1F2937, #111827)',
+                border: '2px solid #1F2937'
+              }}
+            >
+              <span className="text-2xl">→</span>
+            </button>
 
             {/* Carousel Container */}
             <div 
@@ -339,9 +431,10 @@ export default function CharacterCreator({ user, onCharacterCreate, onBack, curr
                 >
                   <Card
                     theme={visibleThemes[currentThemeIndex]?.id}
-                    className="animate-gentle-pulse h-full"
+                    className="animate-gentle-pulse h-full modal-text-container"
+                    style={{ background: 'linear-gradient(to bottom, #374151, #1F2937)' }}
                   >
-                    <div className="p-6">
+                    <div className="p-4 md:p-6">
                       <div className="flex items-start gap-4 mb-4">
                         <motion.div
                           className="w-16 h-16 pixelated border-2 flex-shrink-0"
@@ -352,37 +445,44 @@ export default function CharacterCreator({ user, onCharacterCreate, onBack, curr
                         />
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <span className="text-2xl">{visibleThemes[currentThemeIndex]?.emoji}</span>
-                            <h3 className="font-pixel text-xl" style={{ color: visibleThemes[currentThemeIndex]?.colors.text }}>
-                              {visibleThemes[currentThemeIndex]?.name}
+                            <h3 
+                              className={`font-pixel ${visibleThemes[currentThemeIndex]?.id === 'starlit-horizon' ? 'text-base md:text-[1.25rem]' : 'text-lg md:text-[1.375rem]'}`}
+                              style={{ color: visibleThemes[currentThemeIndex]?.colors.text }}
+                            >
+                              {visibleThemes[currentThemeIndex]?.name.split(' ').map((word, index, array) => (
+                                <span key={index}>
+                                  {word}
+                                  {index < array.length - 1 && <span className="md:hidden"><br /></span>}
+                                  {index < array.length - 1 && <span className="hidden md:inline"> </span>}
+                                </span>
+                              ))}
                             </h3>
                           </div>
-                          <p className="font-pixel text-sm mb-3" style={{ color: visibleThemes[currentThemeIndex]?.colors.accent }}>
+                          <p className="font-pixel text-sm md:text-[0.9375rem] mb-3" style={{ color: visibleThemes[currentThemeIndex]?.colors.accent }}>
                             {visibleThemes[currentThemeIndex]?.archetype ? `The ${visibleThemes[currentThemeIndex]?.archetype.name}` : visibleThemes[currentThemeIndex]?.description}
                           </p>
                         </div>
                       </div>
-                      <p className="font-pixel text-sm leading-relaxed" style={{ color: visibleThemes[currentThemeIndex]?.colors.text }}>
+                      <p className="readable-text leading-relaxed" style={{ color: '#F0F0F0', fontSize: '1.0625rem' }}>
                         {visibleThemes[currentThemeIndex]?.detailedDescription}
                       </p>
                       <div className="mt-4">
                         {visibleThemes[currentThemeIndex]?.archetype ? (
                           <>
-                            <h4 className="font-pixel text-sm mb-3" style={{ color: visibleThemes[currentThemeIndex]?.colors.accent }}>
+                            <h4 className="font-pixel text-base mb-3" style={{ color: visibleThemes[currentThemeIndex]?.colors.accent, fontSize: '0.9375rem' }}>
                               The {visibleThemes[currentThemeIndex]?.archetype.name}&apos;s traits:
                             </h4>
                             {Object.entries(visibleThemes[currentThemeIndex]?.archetype.stats || {}).map(([statName, statDescription], idx) => (
                               <div key={idx} className="mb-3 last:mb-0">
-                                <div
-                                  className="inline-block px-3 py-2 text-sm font-pixel rounded mb-1"
-                                  style={{ 
-                                    backgroundColor: visibleThemes[currentThemeIndex]?.colors.secondary,
-                                    color: visibleThemes[currentThemeIndex]?.colors.text
-                                  }}
-                                >
-                                  {statName}
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="font-pixel text-base" style={{ color: visibleThemes[currentThemeIndex]?.colors.accent, fontSize: '0.9375rem' }}>
+                                    {idx + 1}.
+                                  </span>
+                                  <span className="font-pixel text-base" style={{ color: visibleThemes[currentThemeIndex]?.colors.text, fontSize: '0.9375rem' }}>
+                                    {statName}
+                                  </span>
                                 </div>
-                                <p className="text-xs font-pixel leading-relaxed" style={{ color: visibleThemes[currentThemeIndex]?.colors.text }}>
+                                <p className="readable-text leading-relaxed" style={{ color: '#F0F0F0', fontSize: '1.0625rem' }}>
                                   {statDescription}
                                 </p>
                               </div>
@@ -393,7 +493,7 @@ export default function CharacterCreator({ user, onCharacterCreate, onBack, curr
                             {visibleThemes[currentThemeIndex]?.effects.slice(0, 3).map((effect, idx) => (
                               <span
                                 key={idx}
-                                className="px-2 py-1 text-xs font-pixel rounded"
+                                className="px-2 py-1 text-sm font-pixel rounded"
                                 style={{ 
                                   backgroundColor: visibleThemes[currentThemeIndex]?.colors.secondary,
                                   color: visibleThemes[currentThemeIndex]?.colors.text

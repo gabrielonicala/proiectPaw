@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { signOut } from 'next-auth/react';
+import { Calendar, User, RefreshCw } from 'lucide-react';
 import Button from './ui/Button';
 import { Character, Theme } from '@/types';
 
@@ -81,18 +82,24 @@ export default function AppNavigation({
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className={`flex ${currentPage === 'journal' ? 'lg:grid lg:grid-cols-3' : ''} justify-between ${currentPage === 'journal' ? 'lg:justify-stretch' : ''} items-center mb-6`}
+      className={`flex ${currentPage === 'journal' ? 'lg:grid lg:grid-cols-3' : ''} justify-between ${currentPage === 'journal' ? 'lg:justify-stretch' : ''} items-center mt-2 mb-6`}
     >
       {/* Left Side */}
       <div className="flex items-center gap-4">
         {currentPage === 'journal' ? (
           <>
-            <Button onClick={onCharacterSwitch} variant="secondary" className="hidden md:flex" theme={theme}>
+            <button 
+              onClick={onCharacterSwitch} 
+              className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button hidden md:flex"
+            >
               SWITCH CHARACTER
-            </Button>
-            <Button onClick={onCharacterSwitch} variant="secondary" className="md:hidden" theme={theme}>
-              🔄
-            </Button>
+            </button>
+            <button 
+              onClick={onCharacterSwitch} 
+              className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button navbar-button-icon md:hidden"
+            >
+              <RefreshCw className="w-5 h-5" />
+            </button>
           </>
         ) : (
           <div>
@@ -107,32 +114,47 @@ export default function AppNavigation({
       </div>
 
       {/* Center - Only for Journal Entry */}
-      {currentPage === 'journal' && activeCharacter && (
-        <div className="text-center hidden lg:block">
-          <p className="font-pixel text-lg text-white">
-            <span className="text-yellow-300">Playing as </span>
-            {activeCharacter.name}
-          </p>
+      {currentPage === 'journal' && (
+        <div className="hidden lg:block">
+          {/* Empty div to maintain grid structure */}
+          {/* {activeCharacter && (
+            <p className="font-pixel text-lg text-white text-center">
+              <span className="text-yellow-300">Playing as </span>
+              {activeCharacter.name}
+            </p>
+          )} */}
         </div>
       )}
 
       {/* Right Side */}
-      <div className="flex gap-2 justify-end">
+      <div className="flex gap-10 justify-end">
         {currentPage === 'journal' ? (
           // Journal Entry: Navigation with responsive text/icons
           <>
-            <Button onClick={onCalendarView} variant="secondary" className="hidden md:flex" theme={theme}>
-              Calendar
-            </Button>
-            <Button onClick={onCalendarView} variant="secondary" className="md:hidden" theme={theme}>
-              📅
-            </Button>
-            <Button onClick={onProfileView} variant="secondary" className="hidden md:flex" theme={theme}>
-              Profile
-            </Button>
-            <Button onClick={onProfileView} variant="secondary" className="md:hidden" theme={theme}>
-              👤
-            </Button>
+            <button 
+              onClick={onCalendarView} 
+              className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button hidden md:flex"
+            >
+              CALENDAR
+            </button>
+            <button 
+              onClick={onCalendarView} 
+              className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button navbar-button-icon md:hidden"
+            >
+              <Calendar className="w-5 h-5" />
+            </button>
+            <button 
+              onClick={onProfileView} 
+              className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button hidden md:flex"
+            >
+              PROFILE
+            </button>
+            <button 
+              onClick={onProfileView} 
+              className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button navbar-button-icon md:hidden"
+            >
+              <User className="w-5 h-5" />
+            </button>
             {/* <Button onClick={onTributeView} variant="secondary" className="hidden md:flex" theme={theme}>
               Tribute
             </Button>
@@ -168,12 +190,18 @@ export default function AppNavigation({
             )} */}
             {onBack && (
               <>
-                <Button onClick={onBack} variant="secondary" className="hidden md:flex" theme={theme}>
+                <button 
+                  onClick={onBack} 
+                  className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button hidden md:inline-block"
+                >
                   BACK
-                </Button>
-                <Button onClick={onBack} variant="secondary" className="md:hidden" theme={theme}>
+                </button>
+                <button 
+                  onClick={onBack} 
+                  className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button navbar-button-arrow inline-block md:hidden"
+                >
                   ←
-                </Button>
+                </button>
               </>
             )}
           </>

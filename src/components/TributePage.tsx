@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 // import { useSession } from 'next-auth/react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -9,9 +9,10 @@ import MovingGradientBackground from '@/components/MovingGradientBackground';
 import AppNavigation from '@/components/AppNavigation';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import AlertModal from '@/components/AlertModal';
-import { User, Character } from '@/types';
+import { User, Character, Theme } from '@/types';
 import { USE_SHARED_LIMITS } from '@/lib/subscription-limits';
 import { migrateTheme } from '@/lib/theme-migration';
+import { themes } from '@/themes';
 // import Footer from './Footer';
 
 interface SubscriptionData {
@@ -158,10 +159,98 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
 
   // Theme is now tied to the active character
 
+  // Get theme colors for background
+  const migratedTheme = migrateTheme(activeCharacter.theme) as Theme;
+  const themeConfig = themes[migratedTheme];
+  const colors = themeConfig?.colors;
+
+  // Memoize particle positions and animation values to prevent reset on re-render
+  const particles = useMemo(() => {
+    return Array.from({ length: 20 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      duration: 3 + Math.random() * 2,
+      delay: Math.random() * 2,
+    }));
+  }, []); // Empty dependency array - only generate once
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div 
+      className="min-h-screen flex flex-col relative overflow-hidden"
+      style={{
+        background: colors ? `linear-gradient(to bottom, ${colors.background}, ${colors.primary}, ${colors.secondary})` : 'linear-gradient(to bottom, #581c87, #1e3a8a, #312e81)'
+      }}
+    >
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute top-1/4 left-1/4 w-32 h-32 opacity-20 pixelated"
+          style={{ backgroundColor: colors?.accent || '#fbbf24' }}
+          animate={{
+            rotate: 360,
+            scale: [1, 1.2, 1],
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
+        <motion.div
+          className="absolute top-3/4 right-1/4 w-24 h-24 opacity-20 pixelated"
+          style={{ backgroundColor: colors?.primary || '#ec4899' }}
+          animate={{
+            rotate: -360,
+            scale: [1, 0.8, 1],
+          }}
+          transition={{
+            duration: 3,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
+        <motion.div
+          className="absolute top-1/2 right-1/3 w-16 h-16 opacity-20 pixelated"
+          style={{ backgroundColor: colors?.secondary || '#10b981' }}
+          animate={{
+            y: [-20, 20, -20],
+            x: [-10, 10, -10],
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+      </div>
+
+      {/* Floating particles */}
+      <div className="absolute inset-0 pointer-events-none">
+        {particles.map((particle) => (
+          <motion.div
+            key={particle.id}
+            className="absolute w-1 h-1 opacity-30 pixelated"
+            style={{
+              left: `${particle.left}%`,
+              top: `${particle.top}%`,
+              backgroundColor: colors?.text || '#ffffff'
+            }}
+            animate={{
+              y: [0, -100, 0],
+              opacity: [0, 1, 0],
+            }}
+            transition={{
+              duration: particle.duration,
+              repeat: Infinity,
+              delay: particle.delay,
+            }}
+          />
+        ))}
+      </div>
+
       <div className="flex-1 p-4">
-      <MovingGradientBackground theme={activeCharacter.theme} />
+      {/* <MovingGradientBackground theme={activeCharacter.theme} /> */}
       
       <div className="relative z-10 max-w-4xl mx-auto">
         {/* Navigation */}
