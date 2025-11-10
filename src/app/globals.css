@@ -23,6 +23,29 @@ body {
   -webkit-touch-callout: none;
 }
 
+@font-face {
+  font-family: 'Karma Future';
+  src: url('/fonts/Karma%20Future.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Karma Suture';
+  src: url('/fonts/Karma%20Suture.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+.theme-description-font {
+  font-family: 'Karma Suture', 'Karma Future', 'Segoe UI', sans-serif;
+  line-height: 1.6;
+  letter-spacing: 0.1em;
+  color: #ffffff;
+}
+
 /* Readable font for text input areas */
 textarea, input[type="text"], input[type="email"] {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
@@ -213,6 +236,11 @@ a, button, input, textarea, select {
   .min-h-screen {
     min-height: 100dvh !important; /* Use dynamic viewport height */
     min-height: 100vh; /* Fallback for browsers that don't support dvh */
+  }
+
+  /* Reduce hero title shine on mobile */
+  .hero-title {
+    text-shadow: 0 0 5px rgba(255,255,255,0.2), 0 0 10px rgba(255,255,255,0.15) !important;
   }
 }
 

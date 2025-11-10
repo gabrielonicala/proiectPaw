@@ -111,7 +111,8 @@ export default function IntroScreen({ onStart, theme = 'velour-nights' }: IntroS
             className="w-48 md:w-64 lg:w-80 h-auto mx-auto pixelated"
             style={{
               filter: 'drop-shadow(0 0 20px rgba(255,255,255,0.5))',
-              imageRendering: 'pixelated'
+              imageRendering: 'pixelated',
+              transform: 'translateX(17%)'
             }}
             loading="eager"
             decoding="sync"

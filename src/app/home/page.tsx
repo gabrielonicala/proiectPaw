@@ -440,11 +440,8 @@ export default function LandingPage() {
 
   return (
     <div className={`min-h-screen bg-black text-white overflow-hidden transition-opacity duration-150 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
-      {/* Mobile background pattern */}
-      <div className="absolute inset-0 md:hidden bg-gradient-to-br from-gray-900 via-black to-gray-800"></div>
-      
       {/* Theme-colored moving squares - Same as auth pages */}
-      <div className="absolute inset-0 hidden md:block">
+      <div className="absolute inset-0 z-0 hidden md:block">
         {/* Velour Nights - Orange */}
         <div 
           className="absolute w-6 h-6 pixelated opacity-60" 
@@ -607,8 +604,8 @@ export default function LandingPage() {
       </div>
 
       {/* Navigation */}
-      <nav className="relative z-10 p-2">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
+      <nav className="relative z-10 p-2 bg-gray-800/50">
+        <div className="max-w-7xl mx-auto flex justify-center items-center">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -618,11 +615,11 @@ export default function LandingPage() {
               src="/logo.png" 
               alt="Quillia" 
               className="h-28 w-auto pixelated"
-              style={{ imageRendering: 'pixelated' }}
+              style={{ imageRendering: 'pixelated', transform: 'translateX(15%)' }}
             />
           </motion.div>
           
-          <motion.div
+          {/* <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
@@ -630,16 +627,16 @@ export default function LandingPage() {
             <button 
               onClick={handleEnterClick}
               className="font-pixel bg-white/20 hover:bg-gradient-to-r hover:from-yellow-400 hover:via-pink-500 hover:to-purple-600 text-white px-6 py-3 rounded-lg hover:scale-105 transition-all duration-300 font-bold" 
-              style={{ fontSize: '1.375rem' }}
+              style={{ fontSize: '1.275rem' }}
             >
               Enter
             </button>
-          </motion.div>
+          </motion.div> */}
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="relative z-10 py-20 px-6">
+      <section className="relative z-10 py-20 px-6 bg-gray-800/50">
         <div className="max-w-7xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -647,13 +644,13 @@ export default function LandingPage() {
             transition={{ duration: 1 }}
           >
             <motion.h1 
-              className="font-pixel mb-6 font-bold"
-              style={{ fontSize: 'clamp(2rem, 6vw, 2.75rem)' }}
+              className="font-pixel -mt-8 mb-6 font-bold hero-title"
+              style={{ fontSize: 'clamp(1.75rem, 5.5vw, 2.5rem)' }}
               animate={{
                 textShadow: [
-                  "0 0 20px rgba(255,255,255,0.5), 0 0 40px rgba(255,255,255,0.3)",
-                  "0 0 30px rgba(255,255,255,0.7), 0 0 60px rgba(255,255,255,0.5)",
-                  "0 0 20px rgba(255,255,255,0.5), 0 0 40px rgba(255,255,255,0.3)"
+                  "0 0 10px rgba(255,255,255,0.3), 0 0 20px rgba(255,255,255,0.2)",
+                  "0 0 15px rgba(255,255,255,0.4), 0 0 30px rgba(255,255,255,0.3)",
+                  "0 0 10px rgba(255,255,255,0.3), 0 0 20px rgba(255,255,255,0.2)"
                 ]
               }}
               transition={{
@@ -670,12 +667,12 @@ export default function LandingPage() {
             </motion.h1>
 
             <motion.p 
-              className="font-pixel text-xl md:text-2xl mb-8 text-gray-300 max-w-3xl mx-auto"
+              className="font-pixel text-lg md:text-xl mb-8 text-gray-300 max-w-3xl mx-auto"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.3 }}
             >
-              Transform your daily experiences into epic adventures with Quillia. Choose your theme, create your character and write your own story!
+              Transform your daily experiences into epic adventures with Quillia.<br />Choose your theme, create your character and write your own story!
             </motion.p>
 
             <motion.div
@@ -687,21 +684,29 @@ export default function LandingPage() {
               <button 
                 ref={startButtonRef}
                 onClick={handleEnterClick}
-                className="font-pixel bg-white text-black hover:text-white hover:bg-gradient-to-r hover:from-yellow-400 hover:via-pink-500 hover:to-purple-600 px-8 py-4 rounded-lg border-2 border-black shadow-lg hover:shadow-gray-400/25 hover:scale-105 transition-all duration-300 text-xl font-bold"
-                style={{ textShadow: 'none' }}
+                className="font-pixel bg-white text-black hover:text-white hover:bg-gradient-to-r hover:from-yellow-400 hover:via-pink-500 hover:to-purple-600 px-8 py-4 rounded-lg border-2 border-black shadow-lg hover:shadow-gray-400/25 hover:scale-105 transition-all duration-300 font-bold"
+                style={{ textShadow: 'none', fontSize: '1rem' }}
               >
                 Start Your Adventure
               </button>
               <button 
                 ref={learnMoreButtonRef}
                 onClick={() => smoothScrollTo('how-it-works')}
-                className="font-pixel bg-black text-white hover:bg-gray-900 px-8 py-4 rounded-lg border-2 border-gray-700 shadow-lg hover:shadow-gray-600/25 transition-all duration-300 text-lg font-bold transform hover:scale-105 active:scale-95"
+                className="font-pixel bg-black text-white hover:bg-gray-900 px-8 py-4 rounded-lg border-2 border-gray-700 shadow-lg hover:shadow-gray-600/25 transition-all duration-300 font-bold transform hover:scale-105 active:scale-95"
+                style={{ fontSize: '1rem' }}
               >
                 Learn More
               </button>
             </motion.div>
           </motion.div>
         </div>
+        {/* Fade overlay at bottom */}
+        <div 
+          className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
+          style={{
+            background: 'linear-gradient(to bottom, transparent, rgba(0, 0, 0, 1))'
+          }}
+        />
       </section>
 
       {/* How it Works Section */}
@@ -732,16 +737,17 @@ export default function LandingPage() {
             >
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
               <div className="order-1 lg:order-1">
-              <div className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-lg p-8 hover:border-white/40 transition-all duration-300">
+              <div className="bg-gray-800/50 backdrop-blur-sm border border-white/20 rounded-lg p-8 hover:border-white/40 transition-all duration-300">
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
                   <span className="font-pixel text-xl text-white font-bold">1</span>
                 </div>
                     <h3 className="font-pixel text-white" style={{ fontSize: 'clamp(0.875rem, 2vw, 1.25rem)' }}>
                   Choose Your Theme
                 </h3>
                   </div>
-                  <p className="text-gray-300 font-pixel leading-relaxed text-lg">
+                  <hr className="border-white/40 -mt-2 mb-4 border" style={{ boxShadow: '1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000' }} />
+                  <p className="theme-description-font leading-relaxed text-lg">
                     Select from 8 unique fantasy themes that match your adventure style. Become a samurai, detective, pirate, or explore other magical worlds. Each theme transforms your journaling experience with unique visuals, sounds, and atmosphere.
                   </p>
                 </div>
@@ -783,15 +789,12 @@ export default function LandingPage() {
               viewport={{ once: true }}
             className="mb-20"
           >
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-              <div className="order-2 lg:order-1">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-center">
+              <div className="order-2 xl:order-1">
                 <div className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-lg p-6 hover:border-white/40 transition-all duration-300">
-                  <h2 className="font-pixel text-xl mb-4 text-white">
-                    Build Your Avatar
-                  </h2>
-                  <div className="flex flex-col lg:flex-row gap-6">
+                  <div className="flex flex-col xl:flex-row gap-6">
                     {/* Avatar Preview */}
-                    <div className="flex-shrink-0 w-full lg:w-48 flex flex-col items-center">
+                    <div className="flex-shrink-0 w-full xl:w-48 flex flex-col items-center">
                       <h3 className="font-pixel text-base mb-4" style={{ color: themes['blazeheart-saga'].colors.text }}>
                         Preview
                       </h3>
@@ -868,15 +871,15 @@ export default function LandingPage() {
                       {showcaseActiveCategory === 'head' && (
                         <>
                           <h4 className="font-pixel text-sm mb-2" style={{ color: themes['blazeheart-saga'].colors.accent }}>
-                            Head Pieces ({headPieces.length})
+                            {/* Head Pieces  */}
                           </h4>
-                          <div className="grid grid-cols-6 gap-1">
+                          <div className="grid grid-cols-6 md:grid-cols-12 xl:grid-cols-6 gap-1">
                             {headPieces.slice(0, 12).map((piece, idx) => {
                               const isSelected = piece.id === showcaseSelectedHead.id;
                               return (
                                 <div
                                   key={piece.id}
-                                  className={`w-full aspect-square pixelated border-2 transition-all hover:scale-105 cursor-pointer p-1 ${
+                                  className={`w-full aspect-square pixelated border-2 transition-all hover:scale-105 cursor-pointer p-1 md:p-0.5 xl:p-1 ${
                                     isSelected ? 'ring-2 ring-orange-500' : 'border-white/20'
                                   }`}
                                   style={{ 
@@ -889,7 +892,7 @@ export default function LandingPage() {
                                     alt={piece.name}
                                     width={32}
                                     height={32}
-                                    className="w-full h-full object-contain pixelated"
+                                    className="w-full h-full object-contain pixelated md:scale-75 xl:scale-100"
                                     style={{ imageRendering: 'pixelated' }}
                                   />
                                 </div>
@@ -901,15 +904,15 @@ export default function LandingPage() {
                       {showcaseActiveCategory === 'torso' && (
                         <>
                           <h4 className="font-pixel text-sm mb-2" style={{ color: themes['blazeheart-saga'].colors.accent }}>
-                            Torso Pieces ({torsoPieces.length})
+                            {/* Torso Pieces  */}
                           </h4>
-                          <div className="grid grid-cols-6 gap-1">
+                          <div className="grid grid-cols-6 md:grid-cols-12 xl:grid-cols-6 gap-1">
                             {torsoPieces.slice(0, 12).map((piece, idx) => {
                               const isSelected = piece.id === showcaseSelectedTorso.id;
                               return (
                                 <div
                                   key={piece.id}
-                                  className={`w-full aspect-square pixelated border-2 transition-all hover:scale-105 cursor-pointer p-1 ${
+                                  className={`w-full aspect-square pixelated border-2 transition-all hover:scale-105 cursor-pointer p-1 md:p-0.5 xl:p-1 ${
                                     isSelected ? 'ring-2 ring-orange-500' : 'border-white/20'
                                   }`}
                                   style={{ 
@@ -922,7 +925,7 @@ export default function LandingPage() {
                                     alt={piece.name}
                                     width={32}
                                     height={32}
-                                    className="w-full h-full object-contain pixelated"
+                                    className="w-full h-full object-contain pixelated md:scale-75 xl:scale-100"
                                     style={{ imageRendering: 'pixelated' }}
                                   />
                                 </div>
@@ -934,15 +937,15 @@ export default function LandingPage() {
                       {showcaseActiveCategory === 'legs' && (
                         <>
                           <h4 className="font-pixel text-sm mb-2" style={{ color: themes['blazeheart-saga'].colors.accent }}>
-                            Legs Pieces ({legsPieces.length})
+                            {/* Leg Pieces  */}
                           </h4>
-                          <div className="grid grid-cols-6 gap-1">
+                          <div className="grid grid-cols-6 md:grid-cols-12 xl:grid-cols-6 gap-1">
                             {legsPieces.slice(0, 12).map((piece, idx) => {
                               const isSelected = piece.id === showcaseSelectedLegs.id;
                               return (
                                 <div
                                   key={piece.id}
-                                  className={`w-full aspect-square pixelated border-2 transition-all hover:scale-105 cursor-pointer p-1 ${
+                                  className={`w-full aspect-square pixelated border-2 transition-all hover:scale-105 cursor-pointer p-1 md:p-0.5 xl:p-1 ${
                                     isSelected ? 'ring-2 ring-orange-500' : 'border-white/20'
                                   }`}
                                   style={{ 
@@ -955,7 +958,7 @@ export default function LandingPage() {
                                     alt={piece.name}
                                     width={32}
                                     height={32}
-                                    className="w-full h-full object-contain pixelated"
+                                    className="w-full h-full object-contain pixelated md:scale-75 xl:scale-100"
                                     style={{ imageRendering: 'pixelated' }}
                                   />
                                 </div>
@@ -968,17 +971,18 @@ export default function LandingPage() {
                   </div>
                 </div>
               </div>
-              <div className="order-1 lg:order-2">
-              <div className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-lg p-8 hover:border-white/40 transition-all duration-300">
+              <div className="order-1 xl:order-2">
+              <div className="bg-gray-800/50 backdrop-blur-sm border border-white/20 rounded-lg p-8 hover:border-white/40 transition-all duration-300">
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
                   <span className="font-pixel text-xl text-white font-bold">2</span>
                 </div>
                     <h3 className="font-pixel text-white" style={{ fontSize: 'clamp(0.875rem, 2vw, 1.25rem)' }}>
                   Create Your Character
                 </h3>
                   </div>
-                  <p className="text-gray-300 font-pixel leading-relaxed text-lg">
+                  <hr className="border-white/40 -mt-2 mb-4 border" style={{ boxShadow: '1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000' }} />
+                  <p className="theme-description-font leading-relaxed text-lg">
                     Build your unique persona using our layered avatar builder. Mix and match various pieces to create the perfect main character of your story. Customize head, top, and bottom layers to bring your fantasy persona to life.
                 </p>
                 </div>
@@ -996,16 +1000,17 @@ export default function LandingPage() {
             >
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
               <div className="order-1 lg:order-1">
-              <div className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-lg p-8 hover:border-white/40 transition-all duration-300">
+              <div className="bg-gray-800/50 backdrop-blur-sm border border-white/20 rounded-lg p-8 hover:border-white/40 transition-all duration-300">
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-teal-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-teal-500 rounded-full flex items-center justify-center flex-shrink-0">
                   <span className="font-pixel text-xl text-white font-bold">3</span>
                 </div>
                     <h3 className="font-pixel text-white" style={{ fontSize: 'clamp(0.875rem, 2vw, 1.25rem)' }}>
                   Write Your Adventure
                 </h3>
                   </div>
-                  <p className="text-gray-300 font-pixel leading-relaxed text-lg">
+                  <hr className="border-white/40 -mt-2 mb-4 border" style={{ boxShadow: '1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000' }} />
+                  <p className="theme-description-font leading-relaxed text-lg">
                   Start journaling your daily experiences and watch as your ordinary moments transform into thrilling quests and magical stories. With each moment you capture, shape the way your character evolves, according to the paths you dare to take.
                   </p>
                 </div>
@@ -1108,7 +1113,7 @@ export default function LandingPage() {
                 ref={showcaseImageRef}
                 className="lg:flex lg:flex-col h-auto"
               >
-                <h3 className="font-pixel text-lg text-white mb-3">The Painted Scene:</h3>
+                <h3 className="font-pixel text-white mb-3" style={{ fontSize: '0.9rem' }}>The Painted Scene:</h3>
                 <div className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-lg lg:flex lg:flex-col lg:max-h-[500px] hover:border-white/40 transition-all duration-300 modal-text-container" style={{ background: 'linear-gradient(to bottom, #374151, #1F2937)' }}>
                   <div className="lg:flex-1 lg:overflow-hidden lg:flex lg:items-center lg:justify-center w-full h-full p-0">
                     <Image
@@ -1143,7 +1148,7 @@ export default function LandingPage() {
                     : {}
                 }
               >
-                <h3 className="font-pixel text-lg text-white mb-3">The Matching Chapter:</h3>
+                <h3 className="font-pixel text-white mb-3" style={{ fontSize: '0.9rem' }}>The Matching Chapter:</h3>
                 <div className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-lg lg:flex-1 lg:flex lg:flex-col lg:overflow-y-auto p-4 hover:border-white/40 transition-all duration-300 modal-text-container" style={{ background: 'linear-gradient(to bottom, #374151, #1F2937)' }}>
                   <div className="readable-text leading-relaxed flex-1 overflow-y-auto pr-2" style={{ color: '#F0F0F0' }}>
                     {showcaseData.chapter}
@@ -1161,8 +1166,8 @@ export default function LandingPage() {
                     : {}
                 }
               >
-                <h3 className="font-pixel text-lg text-white mb-3">
-                  📊 {showcaseData.characterName}{showcaseData.characterName.endsWith('s') ? "'" : "'s"} growth:
+                <h3 className="font-pixel text-white mb-3" style={{ fontSize: '0.9rem' }}>
+                  {showcaseData.characterName}{showcaseData.characterName.endsWith('s') ? "'" : "'s"} growth:
                 </h3>
                 <div className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-lg lg:flex-1 lg:flex lg:flex-col lg:overflow-y-auto p-4 hover:border-white/40 transition-all duration-300 modal-text-container" style={{ background: 'linear-gradient(to bottom, #374151, #1F2937)' }}>
                   <div className="space-y-3 flex-1 overflow-y-auto pr-2">
@@ -1218,7 +1223,7 @@ export default function LandingPage() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="relative z-10 py-20 px-6">
+      <section id="features" className="relative -mt-12 z-10 py-20 px-6">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -1243,11 +1248,14 @@ export default function LandingPage() {
                 // whileInView={{ opacity: 1, y: 0 }}
                 // transition={{ duration: 0.6, delay: index * 0.1 }}
                 // viewport={{ once: true }}
-                className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-lg p-6 hover:border-white/40 transition-all duration-300"
+                className="bg-gray-800/50 backdrop-blur-sm border border-white/20 rounded-lg p-6 hover:border-white/40 transition-all duration-300"
               >
-                <div className="text-4xl mb-4">{feature.icon}</div>
-                <h3 className="font-pixel text-xl mb-3">{feature.title}</h3>
-                <p className="text-gray-300 font-pixel">{feature.description}</p>
+                <h3 className="font-pixel mb-3 flex items-center justify-start gap-2" style={{ fontSize: '0.88rem' }}>
+                  <span className="text-2xl">{feature.icon}</span>
+                  {feature.title}
+                </h3>
+                <hr className="border-white/40 mb-4 border" style={{ boxShadow: '1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000' }} />
+                <p className="theme-description-font text-gray-300 leading-relaxed">{feature.description}</p>
               </motion.div>
             ))}
           </div>
@@ -1255,7 +1263,7 @@ export default function LandingPage() {
       </section>
 
       {/* Theme Showcase */}
-      <section className="relative z-10 py-20 px-6">
+      <section className="relative z-10 -mt-12 py-20 px-6">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -1318,7 +1326,7 @@ export default function LandingPage() {
                         {theme.name}
                       </h3>
                         <hr className="border-white/60 mb-4 border" style={{ boxShadow: '1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000' }} />
-                      <p className="text-gray-300 readable-text text-lg leading-relaxed theme-description-shadow" style={{ color: '#F0F0F0' }}>
+                      <p className="theme-description-font text-lg leading-relaxed">
                         {theme.description}
                       </p>
                     </div>
@@ -1352,7 +1360,7 @@ export default function LandingPage() {
                         {theme.name}
                       </h3>
                         <hr className="border-white/60 mb-4 border" style={{ boxShadow: '1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000' }} />
-                      <p className="text-gray-300 readable-text text-lg leading-relaxed theme-description-shadow" style={{ color: '#F0F0F0' }}>
+                      <p className="theme-description-font text-lg leading-relaxed">
                         {theme.description}
                       </p>
                     </div>
@@ -1382,7 +1390,7 @@ export default function LandingPage() {
       </section>
 
       {/* FAQ Section */}
-      <section className="relative z-10 py-20 px-6">
+      <section className="relative -mt-12 z-10 py-20 px-6">
         <div className="max-w-4xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -1406,13 +1414,13 @@ export default function LandingPage() {
               // whileInView={{ opacity: 1, y: 0 }}
               // transition={{ duration: 0.6, delay: 0.1 }}
               // viewport={{ once: true }}
-              className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-lg hover:border-white/40 transition-all duration-300"
+              className="bg-gray-800/50 backdrop-blur-sm border border-white/20 rounded-lg hover:border-white/40 transition-all duration-300"
             >
               <button
                 onClick={() => toggleFAQ(0)}
                 className="w-full p-6 text-left flex items-center justify-between hover:bg-white/5 transition-colors duration-200"
               >
-                <h3 className="font-pixel text-xl text-white">
+                <h3 className="font-pixel text-white" style={{ fontSize: '1.1rem' }}>
                   What is Quillia?
                 </h3>
                 <ChevronDown 
@@ -1431,7 +1439,7 @@ export default function LandingPage() {
                 className="overflow-hidden"
               >
                 <div className="px-6 pb-6">
-                  <p className="readable-text leading-relaxed" style={{ color: '#F0F0F0' }}>
+                  <p className="theme-description-font leading-relaxed">
                     Quillia is a journaling app that transforms your daily experiences into epic adventures. 
                     Choose from multiple themes, create unique characters, and write your story in a magical, 
                     immersive environment that makes every day feel like a quest.
@@ -1446,13 +1454,13 @@ export default function LandingPage() {
               // whileInView={{ opacity: 1, y: 0 }}
               // transition={{ duration: 0.6, delay: 0.2 }}
               // viewport={{ once: true }}
-              className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-lg hover:border-white/40 transition-all duration-300"
+              className="bg-gray-800/50 backdrop-blur-sm border border-white/20 rounded-lg hover:border-white/40 transition-all duration-300"
             >
               <button
                 onClick={() => toggleFAQ(1)}
                 className="w-full p-6 text-left flex items-center justify-between hover:bg-white/5 transition-colors duration-200"
               >
-                <h3 className="font-pixel text-xl text-white">
+                <h3 className="font-pixel text-white" style={{ fontSize: '1.1rem' }}>
                   How many themes are available?
                 </h3>
                 <ChevronDown 
@@ -1471,7 +1479,7 @@ export default function LandingPage() {
                 className="overflow-hidden"
               >
                 <div className="px-6 pb-6">
-                  <p className="readable-text leading-relaxed" style={{ color: '#F0F0F0' }}>
+                  <p className="theme-description-font leading-relaxed">
                     Quillia offers 8 unique themes that let you become anything from a noble samurai to a mysterious detective or daring pirate sailing the seven seas, and even more. Each theme provides a completely different visual experience and atmosphere for your adventures.
                   </p>
                 </div>
@@ -1484,13 +1492,13 @@ export default function LandingPage() {
               // whileInView={{ opacity: 1, y: 0 }}
               // transition={{ duration: 0.6, delay: 0.3 }}
               // viewport={{ once: true }}
-              className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-lg hover:border-white/40 transition-all duration-300"
+              className="bg-gray-800/50 backdrop-blur-sm border border-white/20 rounded-lg hover:border-white/40 transition-all duration-300"
             >
               <button
                 onClick={() => toggleFAQ(2)}
                 className="w-full p-6 text-left flex items-center justify-between hover:bg-white/5 transition-colors duration-200"
               >
-                <h3 className="font-pixel text-xl text-white">
+                <h3 className="font-pixel text-white" style={{ fontSize: '1.1rem' }}>
                   Can I create custom characters?
                 </h3>
                 <ChevronDown 
@@ -1509,7 +1517,7 @@ export default function LandingPage() {
                 className="overflow-hidden"
               >
                 <div className="px-6 pb-6">
-                  <p className="readable-text leading-relaxed" style={{ color: '#F0F0F0' }}>
+                  <p className="theme-description-font leading-relaxed">
                     Absolutely! Our layered avatar builder lets you create unique characters by mixing and matching 
                     various pieces. You can create characters that perfectly represent your fantasy persona.
                   </p>
@@ -1523,13 +1531,13 @@ export default function LandingPage() {
               // whileInView={{ opacity: 1, y: 0 }}
               // transition={{ duration: 0.6, delay: 0.4 }}
               // viewport={{ once: true }}
-              className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-lg hover:border-white/40 transition-all duration-300"
+              className="bg-gray-800/50 backdrop-blur-sm border border-white/20 rounded-lg hover:border-white/40 transition-all duration-300"
             >
               <button
                 onClick={() => toggleFAQ(3)}
                 className="w-full p-6 text-left flex items-center justify-between hover:bg-white/5 transition-colors duration-200"
               >
-                <h3 className="font-pixel text-xl text-white">
+                <h3 className="font-pixel text-white" style={{ fontSize: '1.1rem' }}>
                   Is my data private and secure?
                 </h3>
                 <ChevronDown 
@@ -1548,7 +1556,7 @@ export default function LandingPage() {
                 className="overflow-hidden"
               >
                 <div className="px-6 pb-6">
-                  <p className="readable-text leading-relaxed" style={{ color: '#F0F0F0' }}>
+                  <p className="theme-description-font leading-relaxed">
                     Yes! We take your privacy seriously. All your journal entries and character data are encrypted 
                     and stored securely. You have full control over your data and can export or delete it at any time.
                   </p>
@@ -1562,13 +1570,13 @@ export default function LandingPage() {
               // whileInView={{ opacity: 1, y: 0 }}
               // transition={{ duration: 0.6, delay: 0.5 }}
               // viewport={{ once: true }}
-              className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-lg hover:border-white/40 transition-all duration-300"
+              className="bg-gray-800/50 backdrop-blur-sm border border-white/20 rounded-lg hover:border-white/40 transition-all duration-300"
             >
               <button
                 onClick={() => toggleFAQ(4)}
                 className="w-full p-6 text-left flex items-center justify-between hover:bg-white/5 transition-colors duration-200"
               >
-                <h3 className="font-pixel text-xl text-white">
+                <h3 className="font-pixel text-white" style={{ fontSize: '1.1rem' }}>
                   How do I get started?
                 </h3>
                 <ChevronDown 
@@ -1587,7 +1595,7 @@ export default function LandingPage() {
                 className="overflow-hidden"
               >
                 <div className="px-6 pb-6">
-                  <p className="readable-text leading-relaxed" style={{ color: '#F0F0F0' }}>
+                  <p className="theme-description-font leading-relaxed">
                     Getting started is easy! Simply sign up for an account, choose your favorite theme, create your 
                     character, and start writing. Each step flows smoothly into the next, ensuring you have the perfect setup for the beginning of your journey.
                   </p>
@@ -1599,14 +1607,14 @@ export default function LandingPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="relative z-10 py-20 px-6">
+      <section className="relative z-10 -mt-20 py-20 px-6">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
-            className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-2xl p-12"
+            className="bg-gray-800/50 backdrop-blur-sm border border-white/20 rounded-2xl p-12"
           >
             <h2 className="font-pixel mb-6" style={{ fontSize: 'clamp(2rem, 6vw, 2.75rem)' }}>
               Ready to Begin Your Journey?
@@ -1617,8 +1625,8 @@ export default function LandingPage() {
             <div className="flex justify-center">
               <button 
                 onClick={handleEnterClick}
-                className="font-pixel bg-white text-black hover:text-white hover:bg-gradient-to-r hover:from-yellow-400 hover:via-pink-500 hover:to-purple-600 px-8 py-4 rounded-lg border-2 border-black shadow-lg hover:shadow-gray-400/25 hover:scale-105 transition-all duration-300 text-lg font-bold"
-                style={{ textShadow: 'none' }}
+                className="font-pixel bg-white text-black hover:text-white hover:bg-gradient-to-r hover:from-yellow-400 hover:via-pink-500 hover:to-purple-600 px-8 py-4 rounded-lg border-2 border-black shadow-lg hover:shadow-gray-400/25 hover:scale-105 transition-all duration-300 font-bold"
+                style={{ textShadow: 'none', fontSize: '1rem' }}
               >
                 Start Your Adventure
               </button>
