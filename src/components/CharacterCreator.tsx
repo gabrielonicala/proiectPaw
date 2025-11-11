@@ -463,7 +463,7 @@ export default function CharacterCreator({ user, onCharacterCreate, onBack, curr
                           </p>
                         </div>
                       </div>
-                      <p className="readable-text leading-relaxed" style={{ color: '#F0F0F0', fontSize: '1.0625rem' }}>
+                      <p className="theme-description-font leading-relaxed" style={{ color: '#F0F0F0', fontSize: '1.0625rem', letterSpacing: '0.15em' }}>
                         {visibleThemes[currentThemeIndex]?.detailedDescription}
                       </p>
                       <div className="mt-4">
@@ -482,7 +482,7 @@ export default function CharacterCreator({ user, onCharacterCreate, onBack, curr
                                     {statName}
                                   </span>
                                 </div>
-                                <p className="readable-text leading-relaxed" style={{ color: '#F0F0F0', fontSize: '1.0625rem' }}>
+                                <p className="theme-description-font leading-relaxed" style={{ color: '#F0F0F0', fontSize: '0.95rem', letterSpacing: '0.20em' }}>
                                   {statDescription}
                                 </p>
                               </div>

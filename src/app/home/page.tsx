@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -43,10 +43,39 @@ export default function LandingPage() {
 
   // Character builder showcase state
   const [showcaseActiveCategory, setShowcaseActiveCategory] = useState<'head' | 'torso' | 'legs'>('head');
-  // Using exact pieces from the reference screenshot
+  // Using exact pieces from the reference screenshot (original/default pieces)
   const showcaseSelectedHead = headPieces.find(p => p.id === 'female-head-17') || headPieces[0];
   const showcaseSelectedTorso = torsoPieces.find(p => p.id === 'male-torso-5') || torsoPieces[0];
   const showcaseSelectedLegs = legsPieces.find(p => p.id === 'female-legs-4') || legsPieces[0];
+  
+  // Temporary preview pieces (for hover customization)
+  const [tempPreviewHead, setTempPreviewHead] = useState<AvatarPiece | null>(null);
+  const [tempPreviewTorso, setTempPreviewTorso] = useState<AvatarPiece | null>(null);
+  const [tempPreviewLegs, setTempPreviewLegs] = useState<AvatarPiece | null>(null);
+  const [isHoveringShowcase, setIsHoveringShowcase] = useState(false);
+  const [displayPreviewHead, setDisplayPreviewHead] = useState<AvatarPiece>(showcaseSelectedHead);
+  const [displayPreviewTorso, setDisplayPreviewTorso] = useState<AvatarPiece>(showcaseSelectedTorso);
+  const [displayPreviewLegs, setDisplayPreviewLegs] = useState<AvatarPiece>(showcaseSelectedLegs);
+  
+  // Update display pieces when hovering state or temp pieces change
+  useEffect(() => {
+    if (isHoveringShowcase) {
+      // When hovering, instantly update to temp pieces if available, otherwise original (no animation)
+      setDisplayPreviewHead(tempPreviewHead || showcaseSelectedHead);
+      setDisplayPreviewTorso(tempPreviewTorso || showcaseSelectedTorso);
+      setDisplayPreviewLegs(tempPreviewLegs || showcaseSelectedLegs);
+    } else {
+      // When not hovering, fade back to original (this will trigger AnimatePresence)
+      setDisplayPreviewHead(showcaseSelectedHead);
+      setDisplayPreviewTorso(showcaseSelectedTorso);
+      setDisplayPreviewLegs(showcaseSelectedLegs);
+    }
+  }, [isHoveringShowcase, tempPreviewHead, tempPreviewTorso, tempPreviewLegs]);
+  
+  // Get the current preview pieces for display (these will trigger AnimatePresence transitions)
+  const currentPreviewHead = displayPreviewHead;
+  const currentPreviewTorso = displayPreviewTorso;
+  const currentPreviewLegs = displayPreviewLegs;
 
   // Showcase data - example of what users can create
   const showcaseData = {
@@ -753,7 +782,17 @@ export default function LandingPage() {
                 </div>
               </div>
               <div className="order-2 lg:order-2">
-                <div className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-lg p-6 hover:border-white/40 transition-all duration-300">
+                <div 
+                  className="backdrop-blur-sm border-2 border-white/20 rounded-lg p-6 hover:border-white/40 transition-all duration-300"
+                  style={{
+                    backgroundImage: `
+                      linear-gradient(60deg, #000000, #8B0000, #FFFFFF, #FFD700, #2F4F4F),
+                      linear-gradient(120deg, #FFD700, #000000, #8B0000, #FFFFFF, #2F4F4F)
+                    `,
+                    backgroundSize: '350% 350%',
+                    backgroundPosition: '10% 70%'
+                  }}
+                >
                   <div className="flex items-center gap-4 mb-4">
                     <div
                       className="w-16 h-16 pixelated border-2 flex-shrink-0"
@@ -764,16 +803,16 @@ export default function LandingPage() {
                     />
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-pixel text-xl" style={{ color: themes['blazeheart-saga'].colors.text }}>
+                        <h3 className="font-pixel mt-4" style={{ color: themes['blazeheart-saga'].colors.text, fontSize: '1.10rem' }}>
                           {themes['blazeheart-saga'].name}
                         </h3>
                       </div>
-                      <p className="font-pixel text-sm mb-3" style={{ color: themes['blazeheart-saga'].colors.accent }}>
+                      <p className="font-pixel mb-3" style={{ color: themes['blazeheart-saga'].colors.accent, fontSize: '0.9rem' }}>
                         The {themes['blazeheart-saga'].archetype?.name}
                       </p>
                     </div>
                   </div>
-                  <p className="readable-text leading-relaxed mb-4" style={{ color: '#F0F0F0' }}>
+                  <p className="theme-description-font leading-relaxed mb-4" style={{ color: '#F0F0F0' }}>
                     {themes['blazeheart-saga'].detailedDescription}
                   </p>
                 </div>
@@ -791,7 +830,22 @@ export default function LandingPage() {
           >
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-center">
               <div className="order-2 xl:order-1">
-                <div className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-lg p-6 hover:border-white/40 transition-all duration-300">
+                <div 
+                  className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-lg p-6 hover:border-white/40 transition-all duration-300"
+                  onMouseEnter={() => {
+                    setIsHoveringShowcase(true);
+                  }}
+                  onMouseLeave={() => {
+                    // Immediately set hovering to false to trigger fade back to default
+                    setIsHoveringShowcase(false);
+                    // Clear temp previews after fade completes
+                    setTimeout(() => {
+                      setTempPreviewHead(null);
+                      setTempPreviewTorso(null);
+                      setTempPreviewLegs(null);
+                    }, 300); // Match the fade duration
+                  }}
+                >
                   <div className="flex flex-col xl:flex-row gap-6">
                     {/* Avatar Preview */}
                     <div className="flex-shrink-0 w-full xl:w-48 flex flex-col items-center">
@@ -805,39 +859,50 @@ export default function LandingPage() {
                         }}
                       >
                         <div className="relative w-24 h-36 flex flex-col justify-end">
-                          {/* Head Layer */}
-                          <div className="flex-shrink-0 h-14 mb-0.5">
-                            <Image
-                              src={getCachedImageUrl(showcaseSelectedHead.imagePath)}
-                              alt={showcaseSelectedHead.name}
-                              width={80}
-                              height={80}
-                              className="w-full h-full object-contain pixelated"
-                              style={{ imageRendering: 'pixelated' }}
-                            />
-                          </div>
-                          {/* Torso Layer */}
-                          <div className="flex-shrink-0 h-14 mb-0.5">
-                            <Image
-                              src={getCachedImageUrl(showcaseSelectedTorso.imagePath)}
-                              alt={showcaseSelectedTorso.name}
-                              width={80}
-                              height={80}
-                              className="w-full h-full object-contain pixelated"
-                              style={{ imageRendering: 'pixelated' }}
-                            />
-                          </div>
-                          {/* Legs Layer */}
-                          <div className="flex-shrink-0 h-12">
-                            <Image
-                              src={getCachedImageUrl(showcaseSelectedLegs.imagePath)}
-                              alt={showcaseSelectedLegs.name}
-                              width={80}
-                              height={80}
-                              className="w-full h-full object-contain pixelated"
-                              style={{ imageRendering: 'pixelated' }}
-                            />
-                          </div>
+                          <AnimatePresence mode="wait">
+                            <motion.div
+                              key={isHoveringShowcase ? 'custom' : 'default'}
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.3, ease: 'easeInOut' }}
+                              className="absolute inset-0 flex flex-col justify-end"
+                            >
+                              {/* Head Layer */}
+                              <div className="flex-shrink-0 h-14 mb-0.5">
+                                <Image
+                                  src={getCachedImageUrl(currentPreviewHead.imagePath)}
+                                  alt={currentPreviewHead.name}
+                                  width={80}
+                                  height={80}
+                                  className="w-full h-full object-contain pixelated"
+                                  style={{ imageRendering: 'pixelated' }}
+                                />
+                              </div>
+                              {/* Torso Layer */}
+                              <div className="flex-shrink-0 h-14 mb-0.5">
+                                <Image
+                                  src={getCachedImageUrl(currentPreviewTorso.imagePath)}
+                                  alt={currentPreviewTorso.name}
+                                  width={80}
+                                  height={80}
+                                  className="w-full h-full object-contain pixelated"
+                                  style={{ imageRendering: 'pixelated' }}
+                                />
+                              </div>
+                              {/* Legs Layer */}
+                              <div className="flex-shrink-0 h-12">
+                                <Image
+                                  src={getCachedImageUrl(currentPreviewLegs.imagePath)}
+                                  alt={currentPreviewLegs.name}
+                                  width={80}
+                                  height={80}
+                                  className="w-full h-full object-contain pixelated"
+                                  style={{ imageRendering: 'pixelated' }}
+                                />
+                              </div>
+                            </motion.div>
+                          </AnimatePresence>
                         </div>
                       </div>
                     </div>
@@ -875,10 +940,11 @@ export default function LandingPage() {
                           </h4>
                           <div className="grid grid-cols-6 md:grid-cols-12 xl:grid-cols-6 gap-1">
                             {headPieces.slice(0, 12).map((piece, idx) => {
-                              const isSelected = piece.id === showcaseSelectedHead.id;
+                              const isSelected = piece.id === currentPreviewHead.id;
                               return (
                                 <div
                                   key={piece.id}
+                                  onClick={() => setTempPreviewHead(piece)}
                                   className={`w-full aspect-square pixelated border-2 transition-all hover:scale-105 cursor-pointer p-1 md:p-0.5 xl:p-1 ${
                                     isSelected ? 'ring-2 ring-orange-500' : 'border-white/20'
                                   }`}
@@ -908,10 +974,11 @@ export default function LandingPage() {
                           </h4>
                           <div className="grid grid-cols-6 md:grid-cols-12 xl:grid-cols-6 gap-1">
                             {torsoPieces.slice(0, 12).map((piece, idx) => {
-                              const isSelected = piece.id === showcaseSelectedTorso.id;
+                              const isSelected = piece.id === currentPreviewTorso.id;
                               return (
                                 <div
                                   key={piece.id}
+                                  onClick={() => setTempPreviewTorso(piece)}
                                   className={`w-full aspect-square pixelated border-2 transition-all hover:scale-105 cursor-pointer p-1 md:p-0.5 xl:p-1 ${
                                     isSelected ? 'ring-2 ring-orange-500' : 'border-white/20'
                                   }`}
@@ -941,10 +1008,11 @@ export default function LandingPage() {
                           </h4>
                           <div className="grid grid-cols-6 md:grid-cols-12 xl:grid-cols-6 gap-1">
                             {legsPieces.slice(0, 12).map((piece, idx) => {
-                              const isSelected = piece.id === showcaseSelectedLegs.id;
+                              const isSelected = piece.id === currentPreviewLegs.id;
                               return (
                                 <div
                                   key={piece.id}
+                                  onClick={() => setTempPreviewLegs(piece)}
                                   className={`w-full aspect-square pixelated border-2 transition-all hover:scale-105 cursor-pointer p-1 md:p-0.5 xl:p-1 ${
                                     isSelected ? 'ring-2 ring-orange-500' : 'border-white/20'
                                   }`}
