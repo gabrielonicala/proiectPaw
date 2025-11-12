@@ -399,7 +399,7 @@ export default function UnifiedEntryModal({
                   }
                 >
                   <h3 className="font-pixel text-lg lg:text-base text-white mb-3 lg:mb-2">The Matching Chapter:</h3>
-                  <Card theme={activeCharacter?.theme || 'obsidian-veil'} effect="glow" className={`lg:flex-1 lg:overflow-y-auto modal-text-container !py-1`} style={{ background: 'linear-gradient(to bottom, #374151, #1F2937)' }}>
+                  <Card theme={activeCharacter?.theme || 'obsidian-veil'} effect="glow" className={`lg:flex-1 lg:flex lg:flex-col lg:overflow-y-auto modal-text-container p-4`} style={{ background: 'linear-gradient(to bottom, #374151, #1F2937)' }}>
                     {/* For image entries without separate image column, show image first */}
                     {currentOutputType === 'image' && entry?.imageUrl && !entry?.reimaginedText && (
                       <motion.div
@@ -422,16 +422,17 @@ export default function UnifiedEntryModal({
                       </motion.div>
                     )}
                     {(currentOutputType === 'text' || (currentOutputType === 'image' && entry?.reimaginedText)) && (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.3 }}
-                        className="leading-relaxed lg:pr-2 readable-text"
-                      >
-                        {currentOutputType === 'image' && entry?.reimaginedText 
-                          ? entry.reimaginedText 
-                          : currentContent}
-                      </motion.div>
+                      <div className="readable-text leading-relaxed flex-1 overflow-y-auto pr-2" style={{ color: '#F0F0F0' }}>
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 0.3 }}
+                        >
+                          {currentOutputType === 'image' && entry?.reimaginedText 
+                            ? entry.reimaginedText 
+                            : currentContent}
+                        </motion.div>
+                      </div>
                     )}
                     {currentOutputType === 'coming-soon' && (
                       <div className="text-center py-8">

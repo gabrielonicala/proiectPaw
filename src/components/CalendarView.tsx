@@ -29,7 +29,16 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
   const [calendarHeight, setCalendarHeight] = useState<number>(0);
   
   const calendarRef = useRef<HTMLDivElement>(null);
-  const { entries, isLoading: entriesLoading } = useEntries();
+  // HYBRID APPROACH: Lazy-load entries when entering calendar view
+  const { entries, isLoading: entriesLoading, refetch: loadEntries, hasLoaded } = useEntries();
+
+  // HYBRID APPROACH: Load entries when component mounts (lazy loading)
+  useEffect(() => {
+    if (!hasLoaded) {
+      console.log('CalendarView: Loading entries on mount');
+      loadEntries();
+    }
+  }, [hasLoaded, loadEntries]);
 
   useEffect(() => {
     // Automatically select today's date when entering calendar view

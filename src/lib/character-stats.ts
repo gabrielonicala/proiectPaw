@@ -236,7 +236,7 @@ function extractFavoriteTopics(entries: JournalEntry[]): string[] {
     .map(([word]) => word);
 }
 
-function generateAchievements(
+export function generateAchievements(
   character: Character, 
   entries: JournalEntry[], 
   stats: {

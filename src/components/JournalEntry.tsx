@@ -123,7 +123,7 @@ export default function JournalEntry({
       if (isGenerating && !generationStartTime) {
         setGenerationStartTime(Date.now());
         setProgress(0);
-        setCurrentStage(selectedOutput === 'text' ? 'Reflecting on your experience...' : 'Preparing your scene...');
+        setCurrentStage('Reflecting on your experience...');
       }
     } else {
       onGeneratingEnd();
@@ -148,7 +148,7 @@ export default function JournalEntry({
 
       // Update stage based on progress
       if (newProgress < 30) {
-        setCurrentStage(selectedOutput === 'text' ? 'Reflecting on your experience...' : 'Preparing your scene...');
+        setCurrentStage('Reflecting on your experience...');
       } else if (newProgress < 70) {
         setCurrentStage(selectedOutput === 'text' ? 'Writing your chapter...' : 'Painting your scene...');
       } else {

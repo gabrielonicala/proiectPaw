@@ -50,6 +50,7 @@ model Character {
   experience       Int               @default(0)
   level            Int               @default(1)
   stats            String?
+  usageStats       String?
   user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   memory           CharacterMemory?
   entries          JournalEntry[]

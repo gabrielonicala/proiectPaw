@@ -5,29 +5,39 @@ import { useState, useEffect } from 'react';
 import Button from './ui/Button';
 import { Theme } from '@/types';
 import { themes } from '@/themes';
-import { useEntries } from '@/hooks/useEntries';
+// HYBRID APPROACH: Removed preemptive entry loading from IntroScreen
+// Entries will now be lazy-loaded when needed (e.g., when entering CalendarView)
+// import { useEntries } from '@/hooks/useEntries';
 
 interface IntroScreenProps {
   onStart: () => void;
   theme?: Theme;
+  isLoading?: boolean; // HYBRID APPROACH: Wait for actual loading to complete
 }
 
-export default function IntroScreen({ onStart, theme = 'velour-nights' }: IntroScreenProps) {
+export default function IntroScreen({ onStart, theme = 'velour-nights', isLoading = true }: IntroScreenProps) {
   const themeConfig = themes[theme];
   const colors = themeConfig?.colors;
   const [showPressToStart, setShowPressToStart] = useState(false);
-  const { entries, isLoading } = useEntries();
+  // HYBRID APPROACH: No longer loading entries here
+  // const { entries, isLoading } = useEntries();
 
-  // Check if user is new based on their entry count
-  const isFirstTimeUser = entries.length === 0;
+  // HYBRID APPROACH: Can't determine if user is new without loading entries
+  // Default to "Continue" since we don't load entries on intro screen anymore
+  const isFirstTimeUser = false;
 
   useEffect(() => {
-    // Only show the button after entries have been loaded from the backend
+    // HYBRID APPROACH: Only show button when loading is complete
+    // Wait for the parent component to finish loading user data
     if (!isLoading) {
+      // Small delay for smooth animation after loading completes
       const timer = setTimeout(() => {
         setShowPressToStart(true);
-      }, 1000); // Reduced delay since we're already waiting for backend
+      }, 300);
       return () => clearTimeout(timer);
+    } else {
+      // Hide button while loading
+      setShowPressToStart(false);
     }
   }, [isLoading]);
 
@@ -181,7 +191,7 @@ export default function IntroScreen({ onStart, theme = 'velour-nights' }: IntroS
         )}
 
         {/* Loading dots */}
-        {(!showPressToStart || isLoading) && (
+        {!showPressToStart && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

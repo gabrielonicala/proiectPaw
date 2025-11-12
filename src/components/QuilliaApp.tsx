@@ -349,11 +349,12 @@ export default function QuilliaApp() {
       })
       .catch(error => {
         console.error('Error updating avatar:', error);
-        // Queue the change for offline sync
-        queueOfflineChange('avatar_change', {
-          characterId: activeCharacter.id,
-          avatar: avatar
-        });
+        // HYBRID APPROACH: Avatar changes are no longer synced offline
+        // Only entry changes are synced offline now
+        // queueOfflineChange('avatar_change', {
+        //   characterId: activeCharacter.id,
+        //   avatar: avatar
+        // });
       });
     }
   };
@@ -389,7 +390,7 @@ export default function QuilliaApp() {
 
   // Show intro screen while loading user data
   if (isLoading) {
-    return <IntroScreen onStart={() => {}} theme={loadingTheme} />;
+    return <IntroScreen onStart={() => {}} theme={loadingTheme} isLoading={true} />;
   }
 
   if (!session) {
@@ -429,7 +430,7 @@ export default function QuilliaApp() {
             exit={{ opacity: 0, scale: 1.05 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
-            <IntroScreen key="intro-component" onStart={handleStart} theme={currentTheme} />
+            <IntroScreen key="intro-component" onStart={handleStart} theme={currentTheme} isLoading={false} />
           </motion.div>
         )}
 

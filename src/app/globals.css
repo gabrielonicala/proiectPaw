@@ -47,13 +47,24 @@ body {
 }
 
 /* Readable font for text input areas */
-textarea, input[type="text"], input[type="email"] {
+/* HYBRID APPROACH: Removed font override for text/email inputs to match password field font */
+/* All input placeholders now use the same monospace font as password fields */
+textarea {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   font-size: 1.0625rem;
   line-height: 1.6;
   letter-spacing: 0.01em;
   color: #FFFFFF !important;
 }
+
+/* HYBRID APPROACH: Commented out to allow all inputs to use the same font as password fields */
+/* input[type="text"], input[type="email"] {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  letter-spacing: 0.01em;
+  color: #FFFFFF !important;
+} */
 
 /* Readable font for modal content */
 .readable-text {

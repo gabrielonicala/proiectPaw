@@ -3,6 +3,7 @@ import { db } from "./db";
 import { validateUserSession } from "./auth";
 import { evaluateStatChanges, applyStatChanges } from "./stat-evaluation";
 import { encryptText, decryptText } from "./encryption";
+import { updateUsageStatsOnEntryCreate } from "./usage-stats";
 
 // Database functions for journal entries
 export async function saveEntryToDatabase(entry: Omit<JournalEntry, 'id' | 'createdAt' | 'updatedAt'> & { userId: string }): Promise<JournalEntry> {
@@ -31,6 +32,18 @@ export async function saveEntryToDatabase(entry: Omit<JournalEntry, 'id' | 'crea
       pastContext: entry.pastContext ? JSON.stringify(entry.pastContext) : undefined,
     },
   });
+
+  // Update usage stats incrementally
+  try {
+    await updateUsageStatsOnEntryCreate(entry.characterId, {
+      outputType: entry.outputType,
+      reimaginedText: encryptedReimaginedText, // Pass encrypted text, will decrypt in function if needed
+      createdAt: dbEntry.createdAt
+    });
+  } catch (error) {
+    console.error('Error updating usage stats:', error);
+    // Don't fail the entry creation if usage stats update fails
+  }
 
   // Evaluate stat changes for text entries and image entries that have reimaginedText (generated chapter)
   if ((entry.outputType === 'text' || entry.outputType === 'image') && entry.reimaginedText) {

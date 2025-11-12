@@ -13,10 +13,9 @@ import { User, Character, Avatar, Theme } from '@/types';
 import { themes } from '@/themes';
 import { migrateTheme } from '@/lib/theme-migration';
 import { saveUser, saveUserPreferences } from '@/lib/client-utils';
-import { useEntries } from '@/hooks/useEntries';
 import LayeredAvatarBuilder from './LayeredAvatarBuilder';
 import { LayeredAvatar } from '@/lib/layered-avatars';
-import { calculateCharacterStats } from '@/lib/character-stats';
+import { CharacterStats } from '@/lib/character-stats';
 import { getCachedImageUrl } from '@/lib/asset-cache';
 // import Footer from './Footer';
 
@@ -59,18 +58,48 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
   const [showLayeredAvatarBuilder, setShowLayeredAvatarBuilder] = useState(false);
   const [selectedCharacterId, setSelectedCharacterId] = useState(activeCharacter.id);
   const [openTooltip, setOpenTooltip] = useState<string | null>(null);
+  const [characterStats, setCharacterStats] = useState<CharacterStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
   
-  const { entries, isLoading: entriesLoading } = useEntries();
-  
-  // Calculate character stats
-  const characterStats = useMemo(() => {
-    return calculateCharacterStats(activeCharacter, entries, 
-      user.subscriptionPlan && user.subscriptionStatus ? {
-        plan: user.subscriptionPlan,
-        status: user.subscriptionStatus
-      } : undefined
-    );
-  }, [activeCharacter, entries, user.subscriptionPlan, user.subscriptionStatus]);
+  // HYBRID APPROACH: Fetch stats from API instead of calculating client-side
+  useEffect(() => {
+    const fetchStats = async () => {
+      setStatsLoading(true);
+      try {
+        const response = await fetch(`/api/characters/${activeCharacter.id}/stats`);
+        if (response.ok) {
+          const data = await response.json();
+          setCharacterStats(data.stats);
+        } else {
+          console.error('Failed to fetch character stats');
+          // Fallback to empty stats
+          setCharacterStats(null);
+        }
+      } catch (error) {
+        console.error('Error fetching character stats:', error);
+        setCharacterStats(null);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, [activeCharacter.id]);
+
+  // HYBRID APPROACH: Memoize parsed stats to ensure they update when activeCharacter changes
+  // This fixes the issue where stats show default values after character switch
+  const parsedStats = useMemo(() => {
+    if (!activeCharacter?.stats) return null;
+    // Stats should already be parsed from JSON on the server, but ensure it's an object
+    if (typeof activeCharacter.stats === 'string') {
+      try {
+        return JSON.parse(activeCharacter.stats);
+      } catch {
+        return null;
+      }
+    }
+    return activeCharacter.stats;
+  }, [activeCharacter?.id, activeCharacter?.stats]); // Use both id and stats to detect changes
 
   useEffect(() => {
     // Measure stats height and update achievements column height
@@ -303,7 +332,7 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
         />
 
         {/* Loading Overlay */}
-        {entriesLoading && (
+        {statsLoading && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -535,19 +564,25 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
                   })()}
                 </div>
               ) : (
-              <div className="flex gap-6 text-center mt-4">
-                <div>
-                  <div className="font-pixel text-2xl text-yellow-300">{characterStats.totalAdventures}</div>
-                  <div className="font-pixel text-xs text-gray-300">Adventures</div>
-                </div>
-                <div>
-                  <div className="font-pixel text-2xl text-yellow-300">{characterStats.currentStreak}</div>
-                  <div className="font-pixel text-xs text-gray-300">Day Streak</div>
-                </div>
-                <div>
-                  <div className="font-pixel text-2xl text-yellow-300">{characterStats.characterAge}</div>
-                  <div className="font-pixel text-xs text-gray-300">Days Old</div>
-                </div>
+                <div className="flex gap-6 text-center mt-4">
+                  <div>
+                    <div className="font-pixel text-2xl text-yellow-300">
+                      {statsLoading ? '...' : characterStats?.totalAdventures ?? 0}
+                    </div>
+                    <div className="font-pixel text-xs text-gray-300">Adventures</div>
+                  </div>
+                  <div>
+                    <div className="font-pixel text-2xl text-yellow-300">
+                      {statsLoading ? '...' : characterStats?.currentStreak ?? 0}
+                    </div>
+                    <div className="font-pixel text-xs text-gray-300">Day Streak</div>
+                  </div>
+                  <div>
+                    <div className="font-pixel text-2xl text-yellow-300">
+                      {statsLoading ? '...' : characterStats?.characterAge ?? 0}
+                    </div>
+                    <div className="font-pixel text-xs text-gray-300">Days Old</div>
+                  </div>
                 </div>
               )}
               </div>
@@ -573,14 +608,15 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
                    {themes[activeCharacter.theme]?.detailedDescription || 'No theme description available.'}
                  </p>
                ) : themes[activeCharacter.theme]?.archetype ? (
-                 <div>
+                 <div key={`stats-${activeCharacter.id}`}>
                    <h4 className="font-pixel text-sm mb-3 text-center text-white">
                      {activeCharacter.name}&apos;s stats:
                    </h4>
                   {Object.keys(themes[activeCharacter.theme]?.archetype?.stats || {}).map((statName, idx) => {
-                    const statValue = (activeCharacter as any).stats?.[statName]?.value || 10; // Default to 10 if no value
+                    // HYBRID APPROACH: Use memoized parsedStats to ensure values update on character switch
+                    const statValue = parsedStats?.[statName]?.value || 10; // Default to 10 if no value
                      return (
-                        <div key={idx} className="mb-2 last:mb-0">
+                        <div key={`${activeCharacter.id}-${statName}-${idx}`} className="mb-2 last:mb-0">
                           <div className="flex justify-between items-center">
                             <div className="relative flex items-center gap-1 sm:gap-1">
                               <span 
@@ -646,19 +682,27 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="font-pixel text-sm text-gray-300">Total Adventures:</span>
-                  <span className="font-pixel text-yellow-300">{characterStats.totalAdventures}</span>
+                  <span className="font-pixel text-yellow-300">
+                    {statsLoading ? '...' : characterStats?.totalAdventures ?? 0}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-pixel text-sm text-gray-300">This Week:</span>
-                  <span className="font-pixel text-yellow-300">{characterStats.adventuresThisWeek}</span>
+                  <span className="font-pixel text-yellow-300">
+                    {statsLoading ? '...' : characterStats?.adventuresThisWeek ?? 0}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-pixel text-sm text-gray-300">This Month:</span>
-                  <span className="font-pixel text-yellow-300">{characterStats.adventuresThisMonth}</span>
+                  <span className="font-pixel text-yellow-300">
+                    {statsLoading ? '...' : characterStats?.adventuresThisMonth ?? 0}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-pixel text-sm text-gray-300">Avg/Week:</span>
-                  <span className="font-pixel text-yellow-300">{characterStats.averageAdventuresPerWeek.toFixed(1)}</span>
+                  <span className="font-pixel text-yellow-300">
+                    {statsLoading ? '...' : characterStats ? characterStats.averageAdventuresPerWeek.toFixed(1) : '0.0'}
+                  </span>
                 </div>
               </div>
             </Card>
@@ -675,19 +719,27 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="font-pixel text-sm text-gray-300">Chapters:</span>
-                  <span className="font-pixel text-yellow-300">{characterStats.storiesCreated}</span>
+                  <span className="font-pixel text-yellow-300">
+                    {statsLoading ? '...' : characterStats?.storiesCreated ?? 0}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-pixel text-sm text-gray-300">Scenes:</span>
-                  <span className="font-pixel text-yellow-300">{characterStats.scenesGenerated}</span>
+                  <span className="font-pixel text-yellow-300">
+                    {statsLoading ? '...' : characterStats?.scenesGenerated ?? 0}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-pixel text-sm text-gray-300">Words Written:</span>
-                  <span className="font-pixel text-yellow-300">{characterStats.totalWordsWritten.toLocaleString()}</span>
+                  <span className="font-pixel text-yellow-300">
+                    {statsLoading ? '...' : characterStats ? characterStats.totalWordsWritten.toLocaleString() : '0'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-pixel text-sm text-gray-300">Avg Chapter Length:</span>
-                  <span className="font-pixel text-yellow-300">{characterStats.averageStoryLength.toFixed(0)} words</span>
+                  <span className="font-pixel text-yellow-300">
+                    {statsLoading ? '...' : characterStats ? `${characterStats.averageStoryLength.toFixed(0)} words` : '0 words'}
+                  </span>
                 </div>
               </div>
             </Card>
@@ -704,19 +756,27 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="font-pixel text-sm text-gray-300">Current Streak:</span>
-                  <span className="font-pixel text-yellow-300">{characterStats.currentStreak} days</span>
+                  <span className="font-pixel text-yellow-300">
+                    {statsLoading ? '...' : characterStats ? `${characterStats.currentStreak} days` : '0 days'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-pixel text-sm text-gray-300">Longest Streak:</span>
-                  <span className="font-pixel text-yellow-300">{characterStats.longestStreak} days</span>
+                  <span className="font-pixel text-yellow-300">
+                    {statsLoading ? '...' : characterStats ? `${characterStats.longestStreak} days` : '0 days'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-pixel text-sm text-gray-300">Most Active Day:</span>
-                  <span className="font-pixel text-yellow-300">{characterStats.mostActiveDay}</span>
+                  <span className="font-pixel text-yellow-300">
+                    {statsLoading ? '...' : characterStats?.mostActiveDay ?? 'Monday'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-pixel text-sm text-gray-300">Peak Hour:</span>
-                  <span className="font-pixel text-yellow-300">{characterStats.mostActiveHour}:00</span>
+                  <span className="font-pixel text-yellow-300">
+                    {statsLoading ? '...' : characterStats ? `${characterStats.mostActiveHour}:00` : '12:00'}
+                  </span>
                 </div>
               </div>
             </Card>
@@ -740,7 +800,21 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
             {/* <div className="flex flex-col gap-4 flex-1 overflow-y-auto min-h-0"> */}
             <div className="flex-1 overflow-y-auto min-h-0">
               <div className="space-y-4">
-              {characterStats.achievements.map((achievement) => (
+              {statsLoading ? (
+                // Show placeholder achievement cards while loading
+                Array.from({ length: 3 }).map((_, idx) => (
+                  <div
+                    key={`loading-${idx}`}
+                    className="p-4 rounded-lg border-2 border-gray-600 bg-gray-800/50 opacity-50 text-center"
+                  >
+                    <div className="text-3xl mb-2 grayscale opacity-50">🏆</div>
+                    <h4 className="font-pixel text-sm mb-1 text-gray-500">...</h4>
+                    <p className="font-pixel text-xs text-gray-600">...</p>
+                    <div className="mt-2 text-xs font-pixel text-gray-600">...</div>
+                  </div>
+                ))
+              ) : characterStats?.achievements ? (
+                characterStats.achievements.map((achievement) => (
                 <motion.div
                   key={achievement.id}
                   initial={{ opacity: 0, scale: 0.8 }}
@@ -790,7 +864,10 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
                     <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-purple-400/10 to-pink-400/10 animate-pulse pointer-events-none"></div>
                   )}
                 </motion.div>
-              ))}
+                ))
+              ) : (
+                <div className="font-pixel text-sm text-gray-400 text-center">No achievements available</div>
+              )}
               </div>
             </div>
               </Card>

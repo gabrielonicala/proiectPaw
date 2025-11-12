@@ -1,17 +1,28 @@
 'use client';
 
 /**
- * Offline sync system for queuing changes made while offline
- * and syncing them when connection is restored
+ * HYBRID APPROACH: Simplified offline sync system
+ * Only syncs entry changes (create, update, delete)
+ * Avatar and character changes are no longer synced offline
  */
 
+// HYBRID APPROACH: Simplified to only handle entry changes
 interface PendingChange {
   id: string;
-  type: 'avatar_change' | 'character_update' | 'entry_create' | 'entry_update' | 'entry_delete';
+  type: 'entry_create' | 'entry_update' | 'entry_delete';
   data: any;
   timestamp: number;
   retryCount: number;
 }
+
+// HYBRID APPROACH: Commented out avatar and character change types
+// interface PendingChange {
+//   id: string;
+//   type: 'avatar_change' | 'character_update' | 'entry_create' | 'entry_update' | 'entry_delete';
+//   data: any;
+//   timestamp: number;
+//   retryCount: number;
+// }
 
 const PENDING_CHANGES_KEY = 'quillia-pending-changes';
 const MAX_RETRY_COUNT = 3;
@@ -134,7 +145,31 @@ export async function syncPendingChanges(): Promise<void> {
 
 /**
  * Sync a single change
+ * HYBRID APPROACH: Only handles entry changes
  */
+async function syncChange(change: PendingChange): Promise<boolean> {
+  try {
+    switch (change.type) {
+      // HYBRID APPROACH: Only entry changes are synced
+      case 'entry_create':
+        return await syncEntryCreate(change.data);
+      case 'entry_update':
+        return await syncEntryUpdate(change.data);
+      case 'entry_delete':
+        return await syncEntryDelete(change.data);
+      default:
+        console.warn(`Unknown change type: ${change.type}`);
+        return false;
+    }
+  } catch (error) {
+    console.error(`Error syncing change ${change.type}:`, error);
+    return false;
+  }
+}
+
+// HYBRID APPROACH: Commented out avatar and character sync functions
+// These are no longer used in the simplified offline sync approach
+/*
 async function syncChange(change: PendingChange): Promise<boolean> {
   try {
     switch (change.type) {
@@ -157,10 +192,12 @@ async function syncChange(change: PendingChange): Promise<boolean> {
     return false;
   }
 }
+*/
 
-/**
- * Sync avatar change
- */
+// HYBRID APPROACH: Commented out avatar and character sync functions
+// These are no longer synced offline - only entry changes are synced
+/*
+// Sync avatar change
 async function syncAvatarChange(data: { characterId: string; avatar: any }): Promise<boolean> {
   try {
     const response = await fetch(`/api/characters/${data.characterId}`, {
@@ -176,9 +213,7 @@ async function syncAvatarChange(data: { characterId: string; avatar: any }): Pro
   }
 }
 
-/**
- * Sync character update
- */
+// Sync character update
 async function syncCharacterUpdate(data: { characterId: string; updates: any }): Promise<boolean> {
   try {
     const response = await fetch(`/api/characters/${data.characterId}`, {
@@ -193,6 +228,7 @@ async function syncCharacterUpdate(data: { characterId: string; updates: any }):
     return false;
   }
 }
+*/
 
 /**
  * Sync entry creation
