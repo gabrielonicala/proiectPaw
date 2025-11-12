@@ -349,12 +349,11 @@ export default function QuilliaApp() {
       })
       .catch(error => {
         console.error('Error updating avatar:', error);
-        // HYBRID APPROACH: Avatar changes are no longer synced offline
-        // Only entry changes are synced offline now
-        // queueOfflineChange('avatar_change', {
-        //   characterId: activeCharacter.id,
-        //   avatar: avatar
-        // });
+        // Queue for offline sync if the request failed
+        queueOfflineChange('avatar_change', {
+          characterId: activeCharacter.id,
+          avatar: avatar
+        });
       });
     }
   };

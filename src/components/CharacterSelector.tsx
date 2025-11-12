@@ -148,12 +148,11 @@ export default function CharacterSelector({
       setEditingCharacter(null);
     } catch (error) {
       console.error('Error updating character avatar:', error);
-      // HYBRID APPROACH: Character updates are no longer synced offline
-      // Only entry changes are synced offline now
-      // queueOfflineChange('character_update', {
-      //   characterId: editingCharacter.id,
-      //   updates: { avatar: updatedCharacter.avatar }
-      // });
+      // Queue for offline sync if the request failed
+      queueOfflineChange('character_update', {
+        characterId: editingCharacter.id,
+        updates: { avatar: updatedCharacter.avatar }
+      });
       
       // Still update locally and close the builder
       onCharacterUpdate(updatedCharacter);
@@ -199,12 +198,11 @@ export default function CharacterSelector({
       setTempName('');
     } catch (error) {
       console.error('Error updating character name:', error);
-      // HYBRID APPROACH: Character updates are no longer synced offline
-      // Only entry changes are synced offline now
-      // queueOfflineChange('character_update', {
-      //   characterId: characterId,
-      //   updates: { name: tempName.trim() }
-      // });
+      // Queue for offline sync if the request failed
+      queueOfflineChange('character_update', {
+        characterId: characterId,
+        updates: { name: tempName.trim() }
+      });
       
       // Still update locally and close the editor
       onCharacterUpdate(updatedCharacter);
