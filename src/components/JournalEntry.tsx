@@ -240,7 +240,6 @@ export default function JournalEntry({
     const maxLength = selectedOutput === 'image' ? 300 : 500;
     
     if (entryText.length < minLength) {
-      alert(`Please provide at least ${minLength} characters for a better ${selectedOutput === 'image' ? 'scene' : 'chapter'}.`);
       return;
     }
     
@@ -721,7 +720,7 @@ export default function JournalEntry({
                         {usageLoading ? (
                           <span>REFRESH IN <span className="loading-dots">•••</span></span>
                         ) : usageData ? (
-                          <QuotaCountdown theme={migrateTheme(activeCharacter.theme)} />
+                          <QuotaCountdown theme={migrateTheme(activeCharacter.theme)} nextResetAt={usageData.nextResetAt} />
                         ) : (
                           <span>REFRESH IN <span className="loading-dots">•••</span></span>
                         )}
@@ -794,9 +793,9 @@ Hint: Rich details weave the most captivating tales.`}
                 <Button
                   onClick={handleGenerate}
                   disabled={
+                    entryText.length < 80 ||
                     !entryText.trim() || 
                     isGenerating || 
-                    entryText.length < 80 ||
                     (usageData ? (
                       (selectedOutput === 'text' && usageData.usage.chapters.remaining <= 0) ||
                       (selectedOutput === 'image' && usageData.usage.scenes.remaining <= 0)
@@ -806,11 +805,21 @@ Hint: Rich details weave the most captivating tales.`}
                   size="lg"
                     theme={migrateTheme(activeCharacter.theme) as Theme}
                     className="w-full text-base py-3 relative overflow-hidden border-2 border-black"
-                    style={{ textShadow: '1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000' }}
+                    style={{ 
+                      textShadow: '1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000',
+                      ...(entryText.length < 80 ? {
+                        background: 'linear-gradient(to bottom, #ef4444, #dc2626)',
+                        borderColor: '#dc2626',
+                        color: '#ffffff',
+                      } : {})
+                    }}
                 >
                     <span className="relative z-10 flex items-center justify-center">
                       <motion.span 
-                        key={`${selectedOutput}-${isGenerating ? 'generating' : 'normal'}`}
+                        key={`${selectedOutput}-${isGenerating ? 'generating' : entryText.length < 80 ? 'minimum' : (usageData && (
+                          (selectedOutput === 'text' && usageData.usage.chapters.remaining <= 0) ||
+                          (selectedOutput === 'image' && usageData.usage.scenes.remaining <= 0)
+                        )) ? 'limit' : 'normal'}`}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.3, ease: "easeInOut" }}
@@ -818,6 +827,8 @@ Hint: Rich details weave the most captivating tales.`}
                       >
                         {isGenerating 
                           ? (selectedOutput === 'text' ? 'WRITING...' : 'PAINTING...')
+                          : entryText.length < 80
+                          ? 'MINIMUM 80 CHARACTERS'
                           : (usageData && (
                               (selectedOutput === 'text' && usageData.usage.chapters.remaining <= 0) ||
                               (selectedOutput === 'image' && usageData.usage.scenes.remaining <= 0)
@@ -827,7 +838,10 @@ Hint: Rich details weave the most captivating tales.`}
                         }
                       </motion.span>
                     </span>
-                    {!isGenerating && (
+                    {!isGenerating && entryText.length >= 80 && !(usageData && (
+                      (selectedOutput === 'text' && usageData.usage.chapters.remaining <= 0) ||
+                      (selectedOutput === 'image' && usageData.usage.scenes.remaining <= 0)
+                    )) && (
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 animate-pulse"></div>
                     )}
                 </Button>
@@ -908,6 +922,7 @@ Hint: Rich details weave the most captivating tales.`}
         )}
       </div>
       </div>
+      
       {/* <Footer /> */}
     </div>
   );

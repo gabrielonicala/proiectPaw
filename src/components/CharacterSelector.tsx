@@ -695,11 +695,11 @@ export default function CharacterSelector({
             className="p-6 rounded-lg pixelated border-2 max-w-md w-full"
             style={{
               backgroundColor: themes[activeCharacter?.theme || 'obsidian-veil'].colors.background,
-              borderColor: themes[activeCharacter?.theme || 'obsidian-veil'].colors.accent
+              borderColor: '#ef4444' // red-500 for danger
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="font-pixel text-lg mb-4 text-center" style={{ color: themes[activeCharacter?.theme || 'obsidian-veil'].colors.accent }}>
+            <h3 className="font-pixel text-lg mb-4 text-center text-red-400">
               ⚠️ DELETE CHARACTER
             </h3>
             
@@ -712,17 +712,33 @@ export default function CharacterSelector({
                  onClick={() => setShowDeleteConfirm(null)}
                  variant="secondary"
                  className="flex-1"
-                 theme={activeCharacter?.theme || 'obsidian-veil'}
+                 theme="obsidian-veil"
+                 disabled={isDeleting === showDeleteConfirm}
+                 style={{
+                   background: 'linear-gradient(to bottom, #6B7280, #4B5563)',
+                   borderColor: '#6B7280',
+                   color: '#FFFFFF',
+                   boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                   textShadow: '1px 1px 0px rgba(0, 0, 0, 0.8), -1px -1px 0px rgba(0, 0, 0, 0.8), 1px -1px 0px rgba(0, 0, 0, 0.8), -1px 1px 0px rgba(0, 0, 0, 0.8), 0px 1px 0px rgba(0, 0, 0, 0.8), 0px -1px 0px rgba(0, 0, 0, 0.8), 1px 0px 0px rgba(0, 0, 0, 0.8), -1px 0px 0px rgba(0, 0, 0, 0.8)'
+                 }}
                >
                  CANCEL
                </Button>
                <Button
                  onClick={() => handleDeleteCharacter(showDeleteConfirm)}
-                 variant="primary"
+                 variant="destructive"
                  className="flex-1"
-                 theme={activeCharacter?.theme || 'obsidian-veil'}
+                 theme="obsidian-veil"
+                 disabled={isDeleting === showDeleteConfirm}
+                 style={{
+                   background: 'linear-gradient(to bottom, #ef4444, #dc2626)',
+                   borderColor: '#dc2626',
+                   color: '#FFFFFF',
+                   boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                   textShadow: '1px 1px 0px rgba(0, 0, 0, 0.8), -1px -1px 0px rgba(0, 0, 0, 0.8), 1px -1px 0px rgba(0, 0, 0, 0.8), -1px 1px 0px rgba(0, 0, 0, 0.8), 0px 1px 0px rgba(0, 0, 0, 0.8), 0px -1px 0px rgba(0, 0, 0, 0.8), 1px 0px 0px rgba(0, 0, 0, 0.8), -1px 0px 0px rgba(0, 0, 0, 0.8)'
+                 }}
                >
-                 DELETE
+                 {isDeleting === showDeleteConfirm ? 'DELETING...' : 'DELETE'}
                </Button>
              </div>
           </motion.div>

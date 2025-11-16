@@ -120,15 +120,44 @@ export async function saveEntryToDatabase(entry: Omit<JournalEntry, 'id' | 'crea
   };
 }
 
-export async function loadEntriesFromDatabase(userId: string): Promise<JournalEntry[]> {
+interface LoadEntriesFilters {
+  startDate?: Date;
+  endDate?: Date;
+  characterId?: string;
+}
+
+export async function loadEntriesFromDatabase(
+  userId: string,
+  filters?: LoadEntriesFilters
+): Promise<JournalEntry[]> {
   // Validate that the user still exists in the database
   const userExists = await validateUserSession(userId);
   if (!userExists) {
     throw new Error('USER_ACCOUNT_DELETED');
   }
 
+  // Build where clause with optional filters
+  const where: any = { userId };
+  
+  if (filters?.characterId) {
+    where.characterId = filters.characterId;
+  }
+  
+  if (filters?.startDate || filters?.endDate) {
+    where.createdAt = {};
+    if (filters.startDate) {
+      where.createdAt.gte = filters.startDate;
+    }
+    if (filters.endDate) {
+      // Set endDate to end of day (23:59:59.999)
+      const endOfDay = new Date(filters.endDate);
+      endOfDay.setHours(23, 59, 59, 999);
+      where.createdAt.lte = endOfDay;
+    }
+  }
+
   const dbEntries = await db.journalEntry.findMany({
-    where: { userId },
+    where,
     orderBy: { createdAt: 'desc' },
   });
 

@@ -27,10 +27,12 @@ model User {
   subscriptionStatus      String?        @default("inactive")
   subscriptionId          String?        @unique
   subscriptionEndsAt      DateTime?
+  timezone                String?        @default("UTC")
   accounts                Account[]
   characters              Character[]
   entries                 JournalEntry[]
   sessions                Session[]
+  dailyUsage              DailyUsage[]
   activeCharacter         Character?     @relation("ActiveCharacter", fields: [activeCharacterId], references: [id])
 }
 
@@ -133,4 +135,18 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model DailyUsage {
+  id        String   @id @default(cuid())
+  userId    String
+  date      DateTime @db.Date
+  chapters  Int      @default(0)
+  scenes    Int      @default(0)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, date])
+  @@index([userId, date])
 }

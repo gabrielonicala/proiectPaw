@@ -4,19 +4,29 @@ import { useState, useEffect } from 'react';
 
 interface QuotaCountdownProps {
   theme?: string;
+  nextResetAt?: string; // ISO string from server
 }
 
-export default function QuotaCountdown({ theme = 'obsidian-veil' }: QuotaCountdownProps) {
-  const [timeUntilReset, setTimeUntilReset] = useState<string>('');
+export default function QuotaCountdown({ theme = 'obsidian-veil', nextResetAt }: QuotaCountdownProps) {
+  const [timeUntilReset, setTimeUntilReset] = useState<string>('...');
 
   useEffect(() => {
+    if (!nextResetAt) {
+      setTimeUntilReset('...');
+      return;
+    }
+
     const updateCountdown = () => {
       const now = new Date();
-      const tomorrow = new Date(now);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(0, 0, 0, 0);
+      const resetTime = new Date(nextResetAt);
       
-      const timeDiff = tomorrow.getTime() - now.getTime();
+      const timeDiff = resetTime.getTime() - now.getTime();
+      
+      if (timeDiff <= 0) {
+        // Reset time has passed, show 00:00:00 and refresh will happen on next API call
+        setTimeUntilReset('00:00:00');
+        return;
+      }
       
       const hours = Math.floor(timeDiff / (1000 * 60 * 60));
       const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
@@ -32,7 +42,7 @@ export default function QuotaCountdown({ theme = 'obsidian-veil' }: QuotaCountdo
     const interval = setInterval(updateCountdown, 1000);
     
     return () => clearInterval(interval);
-  }, []);
+  }, [nextResetAt]);
 
   return (
     <div className="pixelated rounded p-2 min-w-[100px]">

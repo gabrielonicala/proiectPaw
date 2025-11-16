@@ -255,6 +255,33 @@ a, button, input, textarea, select {
   }
 }
 
+/* Very small screens (iPhone SE, Galaxy Z Fold, etc.) */
+@media (max-width: 380px) {
+  /* Smaller dropdowns and buttons for very small screens */
+  select {
+    font-size: 0.875rem !important;
+    padding: 0.5rem 0.75rem !important;
+  }
+  
+  /* Reduce button sizes */
+  button {
+    min-width: 36px !important;
+    min-height: 36px !important;
+    padding: 0.375rem !important;
+  }
+  
+  /* Tighter spacing */
+  .gap-2 {
+    gap: 0.375rem !important;
+  }
+  
+  /* Reduce padding in containers */
+  .px-2 {
+    padding-left: 0.25rem !important;
+    padding-right: 0.25rem !important;
+  }
+}
+
 /* Pixelated/RPG styling */
 .pixelated {
   image-rendering: pixelated;

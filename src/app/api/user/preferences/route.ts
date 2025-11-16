@@ -52,6 +52,7 @@ export async function GET() {
         name: true,
         username: true,
         email: true,
+        timezone: true,
         activeCharacterId: true,
         characterSlots: true,
         subscriptionPlan: true,
@@ -150,6 +151,7 @@ export async function GET() {
       subscriptionStatus: (user.subscriptionStatus as 'active' | 'canceled' | 'past_due' | 'inactive') || undefined,
       subscriptionId: user.subscriptionId || undefined,
       subscriptionEndsAt: user.subscriptionEndsAt || undefined,
+      timezone: user.timezone || undefined,
       createdAt: user.createdAt,
       characters: charactersWithParsedAvatars,
       activeCharacter: activeCharacterWithParsedAvatar || undefined

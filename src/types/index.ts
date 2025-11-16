@@ -12,6 +12,8 @@ export interface User {
   subscriptionId?: string;
   subscriptionPlan?: 'free' | 'tribute';
   subscriptionEndsAt?: Date;
+  // Timezone (set once on signup, locked forever)
+  timezone?: string;
   // Relations
   characters?: Character[];
   activeCharacter?: Character;

@@ -294,16 +294,30 @@ export default function LayeredAvatarBuilder({ onSave, onCancel, currentAvatar, 
           <Button
             onClick={onCancel}
             variant="secondary"
-            theme={theme}
+            theme="obsidian-veil"
             className="px-3 py-2 text-sm"
+            style={{
+              background: 'linear-gradient(to bottom, #6B7280, #4B5563)',
+              borderColor: '#6B7280',
+              color: '#FFFFFF',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+              textShadow: '1px 1px 0px rgba(0, 0, 0, 0.8), -1px -1px 0px rgba(0, 0, 0, 0.8), 1px -1px 0px rgba(0, 0, 0, 0.8), -1px 1px 0px rgba(0, 0, 0, 0.8), 0px 1px 0px rgba(0, 0, 0, 0.8), 0px -1px 0px rgba(0, 0, 0, 0.8), 1px 0px 0px rgba(0, 0, 0, 0.8), -1px 0px 0px rgba(0, 0, 0, 0.8)'
+            }}
           >
             Cancel
           </Button>
           <Button
             onClick={handleSave}
             variant="primary"
-            theme={theme}
+            theme="obsidian-veil"
             className="px-3 py-2 text-sm"
+            style={{
+              background: 'linear-gradient(to bottom, #6B7280, #4B5563)',
+              borderColor: '#6B7280',
+              color: '#FFFFFF',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+              textShadow: '1px 1px 0px rgba(0, 0, 0, 0.8), -1px -1px 0px rgba(0, 0, 0, 0.8), 1px -1px 0px rgba(0, 0, 0, 0.8), -1px 1px 0px rgba(0, 0, 0, 0.8), 0px 1px 0px rgba(0, 0, 0, 0.8), 0px -1px 0px rgba(0, 0, 0, 0.8), 1px 0px 0px rgba(0, 0, 0, 0.8), -1px 0px 0px rgba(0, 0, 0, 0.8)'
+            }}
           >
             Save Avatar
           </Button>

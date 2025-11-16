@@ -20,7 +20,7 @@ import Button from './ui/Button';
 import { User, Character, Theme, Avatar } from '@/types';
 import { fetchWithAutoLogout, shouldAutoLogout } from '@/lib/auto-logout';
 import { queueOfflineChange } from '@/lib/offline-sync';
-import { loadUserPreferences, loadUser } from '@/lib/client-utils';
+import { loadUserPreferences, loadUser, saveUser } from '@/lib/client-utils';
 
 type AppState = 'intro' | 'character-select' | 'character-create' | 'journal' | 'calendar' | 'profile' | 'tribute';
 
@@ -96,6 +96,29 @@ export default function QuilliaApp() {
               setCurrentTheme(dbUser.activeCharacter.theme);
             }
             
+            // Check if timezone needs to be set (for Google OAuth users)
+            // Only update if timezone is UTC or null/undefined (one-time update)
+            if ((!dbUser.timezone || dbUser.timezone === 'UTC') && typeof window !== 'undefined') {
+              try {
+                const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                if (detectedTimezone && detectedTimezone !== 'UTC') {
+                  // Silently update timezone in background (don't block UI)
+                  fetch('/api/user/timezone', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ timezone: detectedTimezone })
+                  }).catch(err => {
+                    console.log('Timezone update failed (non-critical):', err);
+                  });
+                  
+                  // Update local user object with new timezone
+                  dbUser.timezone = detectedTimezone;
+                }
+              } catch (error) {
+                console.log('Error detecting timezone (non-critical):', error);
+              }
+            }
+
             // Use startTransition to batch state updates and prevent multiple re-renders
             startTransition(() => {
               setUser(dbUser);
@@ -387,6 +410,32 @@ export default function QuilliaApp() {
     setCurrentTheme(theme);
   };
 
+  const handleUsernameChange = async (newUsername: string) => {
+    if (user) {
+      // Update local state immediately for instant UI feedback
+      const updatedUser = { ...user, username: newUsername };
+      setUser(updatedUser);
+      
+      // Also update localStorage immediately
+      const localUser = loadUser();
+      if (localUser) {
+        const updatedLocalUser = { ...localUser, username: newUsername };
+        saveUser(updatedLocalUser);
+      }
+      
+      // Reload user data from API to ensure consistency with database
+      try {
+        const dbUser = await loadUserPreferences();
+        if (dbUser) {
+          setUser(dbUser);
+        }
+      } catch (error) {
+        console.error('Error reloading user data after username change:', error);
+        // If API fails, at least we have the updated local state
+      }
+    }
+  };
+
   // Show intro screen while loading user data
   if (isLoading) {
     return <IntroScreen onStart={() => {}} theme={loadingTheme} isLoading={true} />;
@@ -529,6 +578,7 @@ export default function QuilliaApp() {
               activeCharacter={activeCharacter}
               onBack={handleProfileBack}
               onAvatarChange={handleAvatarChange}
+              onUsernameChange={handleUsernameChange}
               onCharacterSwitch={handleCharacterSwitch}
               onNavigateToCharacterSelect={() => handlePageTransition('character-select')}
             />

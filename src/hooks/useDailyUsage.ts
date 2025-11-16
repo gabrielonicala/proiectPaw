@@ -22,6 +22,7 @@ interface UsageLimits {
 interface DailyUsageData {
   usage: DailyUsage;
   limits: UsageLimits;
+  nextResetAt?: string; // ISO string for countdown timer
 }
 
 export function useDailyUsage(characterId?: string) {

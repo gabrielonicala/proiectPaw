@@ -8,7 +8,7 @@ import { env } from '@/lib/env';
 export async function POST(request: NextRequest) {
   try {
 
-    const { username, email, password } = await request.json();
+    const { username, email, password, timezone } = await request.json();
 
     // Validate input
     if (!username || !email || !password) {
@@ -71,6 +71,12 @@ export async function POST(request: NextRequest) {
     const verificationToken = crypto.randomBytes(32).toString('hex');
     const verificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
+    // Validate timezone (must be valid IANA timezone string, default to UTC)
+    // Only accept timezone on signup - it will be locked after that
+    const validTimezone = timezone && typeof timezone === 'string' && timezone.length > 0
+      ? timezone
+      : 'UTC';
+
     // Create user with premium plan for testing
     const user = await db.user.create({
       data: {
@@ -79,6 +85,7 @@ export async function POST(request: NextRequest) {
         password: hashedPassword,
         verificationToken,
         verificationTokenExpiry,
+        timezone: validTimezone, // Set once on signup, locked forever
         // Auto-assign premium plan for testing
         subscriptionPlan: 'tribute',
         subscriptionStatus: 'active',

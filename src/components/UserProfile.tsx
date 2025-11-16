@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { HiInformationCircle } from "react-icons/hi";
-import { RefreshCw, Pencil } from 'lucide-react';
+import { RefreshCw, Pencil, MoreVertical } from 'lucide-react';
 import Button from './ui/Button';
 import Card from './ui/Card';
 import Input from './ui/Input';
@@ -55,11 +55,19 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
   const [newUsername, setNewUsername] = useState(user.username || '');
   const [usernameError, setUsernameError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Update local state when user prop changes (e.g., after username change)
+  useEffect(() => {
+    setNewUsername(user.username || '');
+  }, [user.username]);
   const [showLayeredAvatarBuilder, setShowLayeredAvatarBuilder] = useState(false);
   const [selectedCharacterId, setSelectedCharacterId] = useState(activeCharacter.id);
   const [openTooltip, setOpenTooltip] = useState<string | null>(null);
   const [characterStats, setCharacterStats] = useState<CharacterStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
+  const [showDeleteAccountConfirm, setShowDeleteAccountConfirm] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   
   // HYBRID APPROACH: Fetch stats from API instead of calculating client-side
   useEffect(() => {
@@ -388,7 +396,50 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
           transition={{ duration: 0.5, delay: 0.2 }}
           className="mb-2"
         >
-          <Card theme={activeCharacter.theme} effect="glow" className="p-2 flex flex-col">
+          <Card theme={activeCharacter.theme} effect="glow" className="p-2 flex flex-col relative">
+            {/* Three dots menu button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowDropdown(!showDropdown);
+              }}
+              className="absolute top-2 right-2 text-gray-400 hover:text-white transition-colors navbar-button-icon bg-transparent border-none z-10"
+              title="More options"
+              style={{
+                background: 'transparent',
+                border: 'none'
+              }}
+            >
+              <MoreVertical className="w-5 h-5" />
+            </button>
+
+            {/* Dropdown menu */}
+            {showDropdown && (
+              <>
+                {/* Backdrop to close dropdown when clicking outside */}
+                <div
+                  className="fixed inset-0 z-20"
+                  onClick={() => setShowDropdown(false)}
+                />
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                  className="absolute top-10 right-2 z-30 bg-gray-800 border-2 border-gray-600 pixelated rounded shadow-lg min-w-[180px]"
+                >
+                  <button
+                    onClick={() => {
+                      setShowDropdown(false);
+                      setShowDeleteAccountConfirm(true);
+                    }}
+                    className="w-full text-left px-4 py-3 font-pixel text-sm text-red-400 hover:bg-red-900/20 transition-colors"
+                  >
+                    Delete Account
+                  </button>
+                </motion.div>
+              </>
+            )}
+
             <div className="flex flex-col items-center gap-0 flex-1">
               {/* Character Avatar */}
                 <motion.div
@@ -798,7 +849,8 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
             <h3 className="font-pixel text-xl text-white mb-6">🏆 Achievements</h3>
             <hr className="border-gray-600 -mt-1 mb-4" />
             {/* <div className="flex flex-col gap-4 flex-1 overflow-y-auto min-h-0"> */}
-            <div className="flex-1 overflow-y-auto min-h-0">
+            {/* <div className="flex-1 overflow-y-auto min-h-0 overflow-x-hidden"> */}
+            <div className="flex-1 overflow-y-auto min-h-0 overflow-x-hidden">
               <div className="space-y-4">
               {statsLoading ? (
                 // Show placeholder achievement cards while loading
@@ -873,6 +925,43 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
               </Card>
             </div>
           </motion.div>
+
+          {/* Danger Zone Section - Spans all 3 columns */}
+          {/* <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="lg:col-span-3 mt-4"
+          >
+            <Card 
+              theme={activeCharacter.theme} 
+              effect="glow" 
+              className="p-4 border-2"
+              style={{
+                borderColor: '#ef4444', // red-500
+                backgroundColor: 'rgba(239, 68, 68, 0.05)' // red-500 with low opacity
+              }}
+            >
+              <div className="text-center">
+                <h3 className="font-pixel text-xl text-red-400 mb-2">⚠️ DANGER ZONE</h3>
+                <p className="font-pixel text-sm text-gray-300 mb-4">
+                  Irreversible and destructive actions. Please proceed with caution.
+                </p>
+                <Button
+                  onClick={() => setShowDeleteAccountConfirm(true)}
+                  variant="primary"
+                  className="w-full md:w-auto"
+                  theme={activeCharacter.theme}
+                  style={{
+                    backgroundColor: '#ef4444',
+                    borderColor: '#dc2626',
+                  }}
+                >
+                  DELETE ACCOUNT
+                </Button>
+              </div>
+            </Card>
+          </motion.div> */}
         </div>
       </div>
 
@@ -883,6 +972,107 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
           onCancel={() => setShowLayeredAvatarBuilder(false)}
           currentAvatar={activeCharacter.avatar?.options?.layeredAvatar}
         />
+      )}
+
+      {/* Delete Account Confirmation Modal */}
+      {showDeleteAccountConfirm && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4"
+          onClick={() => !isDeletingAccount && setShowDeleteAccountConfirm(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            className="p-6 rounded-lg pixelated border-2 max-w-md w-full"
+            style={{
+              backgroundColor: themes[activeCharacter.theme].colors.background,
+              borderColor: '#ef4444' // red-500
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-pixel text-lg mb-4 text-center text-red-400">
+              ⚠️ DELETE ACCOUNT
+            </h3>
+            
+            <p className="font-pixel mb-4 text-center" style={{ color: themes[activeCharacter.theme].colors.text }}>
+              Are you absolutely sure you want to delete your account?
+            </p>
+            
+            <div className="bg-red-900/20 border border-red-500/50 rounded p-3 mb-4">
+              <p className="font-pixel text-xs text-red-300 mb-2">
+                This action will permanently delete:
+              </p>
+              <ul className="font-pixel text-xs text-red-200 list-disc list-inside space-y-1">
+                <li>Your account and all user data</li>
+                <li>All your characters</li>
+                <li>All your journal entries</li>
+                <li>All your achievements and progress</li>
+                <li>Your subscription (if active)</li>
+              </ul>
+              <p className="font-pixel text-xs text-red-400 mt-2 font-bold">
+                THIS ACTION CANNOT BE UNDONE.
+              </p>
+            </div>
+            
+            <div className="flex gap-3">
+              <Button
+                onClick={() => setShowDeleteAccountConfirm(false)}
+                variant="secondary"
+                className="flex-1"
+                theme="obsidian-veil"
+                disabled={isDeletingAccount}
+                style={{
+                  background: 'linear-gradient(to bottom, #6B7280, #4B5563)',
+                  borderColor: '#6B7280',
+                  color: '#FFFFFF',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                  textShadow: '1px 1px 0px rgba(0, 0, 0, 0.8), -1px -1px 0px rgba(0, 0, 0, 0.8), 1px -1px 0px rgba(0, 0, 0, 0.8), -1px 1px 0px rgba(0, 0, 0, 0.8), 0px 1px 0px rgba(0, 0, 0, 0.8), 0px -1px 0px rgba(0, 0, 0, 0.8), 1px 0px 0px rgba(0, 0, 0, 0.8), -1px 0px 0px rgba(0, 0, 0, 0.8)'
+                }}
+              >
+                CANCEL
+              </Button>
+              <Button
+                onClick={async () => {
+                  setIsDeletingAccount(true);
+                  try {
+                    const response = await fetch('/api/user/delete-account', {
+                      method: 'DELETE',
+                    });
+
+                    if (!response.ok) {
+                      const error = await response.json();
+                      throw new Error(error.error || 'Failed to delete account');
+                    }
+
+                    // Account deleted successfully, redirect to home
+                    window.location.href = '/home';
+                  } catch (error) {
+                    console.error('Error deleting account:', error);
+                    alert(error instanceof Error ? error.message : 'Failed to delete account. Please try again.');
+                    setIsDeletingAccount(false);
+                  }
+                }}
+                variant="destructive"
+                className="flex-1"
+                theme="obsidian-veil"
+                disabled={isDeletingAccount}
+                style={{
+                  background: 'linear-gradient(to bottom, #ef4444, #dc2626)',
+                  borderColor: '#dc2626',
+                  color: '#FFFFFF',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                  textShadow: '1px 1px 0px rgba(0, 0, 0, 0.8), -1px -1px 0px rgba(0, 0, 0, 0.8), 1px -1px 0px rgba(0, 0, 0, 0.8), -1px 1px 0px rgba(0, 0, 0, 0.8), 0px 1px 0px rgba(0, 0, 0, 0.8), 0px -1px 0px rgba(0, 0, 0, 0.8), 1px 0px 0px rgba(0, 0, 0, 0.8), -1px 0px 0px rgba(0, 0, 0, 0.8)'
+                }}
+              >
+                {isDeletingAccount ? 'DELETING...' : 'DELETE ACCOUNT'}
+              </Button>
+            </div>
+          </motion.div>
+        </motion.div>
       )}
       </div>
       {/* <Footer /> */}

@@ -13,6 +13,7 @@ export const env = {
   // Email - require in production
   RESEND_API_KEY: process.env.RESEND_API_KEY,
   RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL || 'Quillia <noreply@resend.dev>',
+  CONTACT_EMAIL: process.env.CONTACT_EMAIL,
   
   // AI Services - optional but recommended
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,

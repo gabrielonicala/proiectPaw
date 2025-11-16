@@ -741,7 +741,14 @@ export default function CharacterCreator({ user, onCharacterCreate, onBack, curr
                   disabled={!characterName.trim() || isLoading || (pronouns === 'custom' && (!customSubjectPronoun.trim() || !customObjectPronoun.trim()))}
                   variant="primary"
                   className="w-full py-3"
-                  theme={selectedTheme}
+                  theme="obsidian-veil"
+                  style={{
+                    background: 'linear-gradient(to bottom, #6B7280, #4B5563)',
+                    borderColor: '#6B7280',
+                    color: '#FFFFFF',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                    textShadow: '1px 1px 0px rgba(0, 0, 0, 0.8), -1px -1px 0px rgba(0, 0, 0, 0.8), 1px -1px 0px rgba(0, 0, 0, 0.8), -1px 1px 0px rgba(0, 0, 0, 0.8), 0px 1px 0px rgba(0, 0, 0, 0.8), 0px -1px 0px rgba(0, 0, 0, 0.8), 1px 0px 0px rgba(0, 0, 0, 0.8), -1px 0px 0px rgba(0, 0, 0, 0.8)'
+                  }}
                 >
                   {isLoading ? 'CREATING...' : 'CREATE CHARACTER'}
                 </Button>

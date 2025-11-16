@@ -64,6 +64,7 @@ export default function SignUpPage() {
           username,
           email,
           password,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, // Detect and send timezone
         }),
       });
 

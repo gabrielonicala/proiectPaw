@@ -2,8 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { getSubscriptionLimits, USE_SHARED_LIMITS } from '@/lib/subscription-limits';
+import { getSubscriptionLimits } from '@/lib/subscription-limits';
 import { validateUserSession } from '@/lib/auth';
+import { getDailyUsageWithLimits, cleanupOldDailyUsage } from '@/lib/daily-usage';
+
+// Simple in-memory cache to track last cleanup time (prevents running cleanup on every request)
+let lastCleanupTime: number = 0;
+const CLEANUP_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,70 +30,58 @@ export async function GET(request: NextRequest) {
       }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
-    const characterId = searchParams.get('characterId');
+    // Get user with timezone
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      select: {
+        timezone: true,
+        subscriptionPlan: true,
+      }
+    });
 
-    // Get subscription limits
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    const userTimezone = user.timezone || 'UTC';
+    const subscriptionPlan = user.subscriptionPlan || 'free';
+
+    // Run cleanup periodically (once per day) to prevent table growth
+    // This runs in the background and doesn't block the response
+    const now = Date.now();
+    if (now - lastCleanupTime > CLEANUP_INTERVAL) {
+      lastCleanupTime = now;
+      // Run cleanup asynchronously (don't await - let it run in background)
+      cleanupOldDailyUsage(30).catch(err => {
+        console.error('Error during automatic daily usage cleanup:', err);
+      });
+    }
+
+    // Get daily usage from DailyUsage table (not counting entries)
+    const usageData = await getDailyUsageWithLimits(userId, userTimezone, subscriptionPlan);
+
+    // Get subscription limits for plan info
     const subscriptionLimits = await getSubscriptionLimits(userId);
-
-    // Get today's date range
-    const today = new Date();
-    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
-
-    // Count today's entries by type
-    // For tribute users: per-character if USE_SHARED_LIMITS is false, shared if true
-    // For free users: always shared across all characters
-    const whereClause = subscriptionLimits.isActive && characterId && !USE_SHARED_LIMITS
-      ? {
-          userId,
-          characterId, // Per character for tribute users (when not using shared limits)
-          createdAt: {
-            gte: startOfDay,
-            lt: endOfDay,
-          },
-        }
-      : {
-          userId,
-          createdAt: {
-            gte: startOfDay,
-            lt: endOfDay,
-          },
-        };
-
-    const [chapterCount, sceneCount] = await Promise.all([
-      db.journalEntry.count({
-        where: {
-          ...whereClause,
-          outputType: 'text',
-        },
-      }),
-      db.journalEntry.count({
-        where: {
-          ...whereClause,
-          outputType: 'image',
-        },
-      }),
-    ]);
 
     return NextResponse.json({
       usage: {
         chapters: {
-          used: chapterCount,
-          limit: subscriptionLimits.limits.dailyChapters,
-          remaining: Math.max(0, subscriptionLimits.limits.dailyChapters - chapterCount),
+          used: usageData.chapters,
+          limit: usageData.chaptersLimit,
+          remaining: Math.max(0, usageData.chaptersLimit - usageData.chapters),
         },
         scenes: {
-          used: sceneCount,
-          limit: subscriptionLimits.limits.dailyScenes,
-          remaining: Math.max(0, subscriptionLimits.limits.dailyScenes - sceneCount),
+          used: usageData.scenes,
+          limit: usageData.scenesLimit,
+          remaining: Math.max(0, usageData.scenesLimit - usageData.scenes),
         },
       },
       limits: {
         plan: subscriptionLimits.plan,
-        dailyChapters: subscriptionLimits.limits.dailyChapters,
-        dailyScenes: subscriptionLimits.limits.dailyScenes,
+        dailyChapters: usageData.chaptersLimit,
+        dailyScenes: usageData.scenesLimit,
       },
+      nextResetAt: usageData.nextResetAt, // For countdown timer
     });
 
   } catch (error) {

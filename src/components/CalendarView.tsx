@@ -10,10 +10,14 @@ import UnifiedEntryModal from './UnifiedEntryModal';
 import MovingGradientBackground from './MovingGradientBackground';
 import AppNavigation from './AppNavigation';
 import { JournalEntry, User, Character, Theme } from '@/types';
-import { useEntries } from '@/hooks/useEntries';
 import { themes } from '@/themes';
 import { migrateTheme } from '@/lib/theme-migration';
+import { fetchWithAutoLogout } from '@/lib/auto-logout';
 // import Footer from './Footer';
+
+// Module-level cache that persists across component mounts/unmounts
+// Cache key format: "YYYY-MM-characterId"
+const calendarEntriesCache = new Map<string, JournalEntry[]>();
 
 interface CalendarViewProps {
   user: User;
@@ -29,16 +33,60 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
   const [calendarHeight, setCalendarHeight] = useState<number>(0);
   
   const calendarRef = useRef<HTMLDivElement>(null);
-  // HYBRID APPROACH: Lazy-load entries when entering calendar view
-  const { entries, isLoading: entriesLoading, refetch: loadEntries, hasLoaded } = useEntries();
-
-  // HYBRID APPROACH: Load entries when component mounts (lazy loading)
+  
+  const [cachedEntries, setCachedEntries] = useState<JournalEntry[]>([]);
+  const [isLoadingEntries, setIsLoadingEntries] = useState(false);
+  
+  // Calculate date range for visible month only (no buffer)
+  const monthStart = startOfMonth(currentDate);
+  const monthEnd = endOfMonth(currentDate);
+  
+  // Create cache key from month/year/character (e.g., "2025-11-char123")
+  const cacheKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${activeCharacter.id}`;
+  
+  // Check cache and load entries if needed
   useEffect(() => {
-    if (!hasLoaded) {
-      console.log('CalendarView: Loading entries on mount');
-      loadEntries();
+    const cached = calendarEntriesCache.get(cacheKey);
+    
+    if (cached) {
+      // Use cached entries immediately
+      setCachedEntries(cached);
+      setIsLoadingEntries(false);
+    } else {
+      // Fetch from API
+      setIsLoadingEntries(true);
+      
+      const params = new URLSearchParams({
+        startDate: monthStart.toISOString(),
+        endDate: monthEnd.toISOString(),
+      });
+      
+      if (activeCharacter.id) {
+        params.append('characterId', activeCharacter.id);
+      }
+      
+      fetchWithAutoLogout(`/api/entries?${params.toString()}`)
+        .then(async (response) => {
+          if (!response.ok) {
+            throw new Error('Failed to load entries');
+          }
+          const data = await response.json();
+          
+          // Cache the entries in module-level cache (persists across component mounts)
+          calendarEntriesCache.set(cacheKey, data.entries);
+          setCachedEntries(data.entries);
+          setIsLoadingEntries(false);
+        })
+        .catch((err) => {
+          console.error('Error loading entries:', err);
+          setCachedEntries([]);
+          setIsLoadingEntries(false);
+        });
     }
-  }, [hasLoaded, loadEntries]);
+  }, [cacheKey, monthStart, monthEnd, activeCharacter.id]);
+  
+  const entries = cachedEntries;
+  const entriesLoading = isLoadingEntries;
 
   useEffect(() => {
     // Automatically select today's date when entering calendar view
@@ -88,8 +136,7 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
     };
   }, []);
 
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(currentDate);
+  // Reuse monthStart and monthEnd from above
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
   
   // Get the day of the week for the first day of the month (0 = Sunday, 1 = Monday, etc.)
@@ -97,6 +144,7 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
   const firstDayOfWeek = (monthStart.getDay() + 6) % 7;
 
   const getEntriesForDate = (date: Date) => {
+    // Entries are already filtered by characterId from the API, but keep this as a safety check
     return entries.filter(entry => 
       isSameDay(new Date(entry.createdAt), date) && 
       entry.characterId === activeCharacter.id
@@ -107,45 +155,79 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
     return selectedDate ? getEntriesForDate(selectedDate) : [];
   };
 
+  // Get theme colors for background (defined early for use in dropdowns)
+  const migratedTheme = migrateTheme(activeCharacter.theme) as Theme;
+
   // Get user's account creation month and current month for navigation limits
   const userCreatedDate = new Date(user.createdAt);
   const userCreatedMonth = new Date(userCreatedDate.getFullYear(), userCreatedDate.getMonth(), 1);
   const currentMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  const currentYear = new Date().getFullYear();
+  const userCreatedYear = userCreatedDate.getFullYear();
 
-  const navigateMonth = (direction: 'prev' | 'next') => {
-    setCurrentDate(prev => {
-      const newDate = new Date(prev);
-      if (direction === 'prev') {
-        newDate.setMonth(newDate.getMonth() - 1);
-      } else {
-        newDate.setMonth(newDate.getMonth() + 1);
-      }
-      
-      const newMonth = new Date(newDate.getFullYear(), newDate.getMonth(), 1);
-      
-      // Don't allow going before user creation month
-      if (newMonth < userCreatedMonth) {
-        return prev;
-      }
-      
-      // Don't allow going beyond current month
-      if (newMonth > currentMonth) {
-        return prev;
-      }
-      
-      return newDate;
-    });
+  // Generate available years (from user creation year to current year)
+  const availableYears = Array.from({ length: currentYear - userCreatedYear + 1 }, (_, i) => userCreatedYear + i);
+
+  // Generate month names
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  // Get available months for a given year
+  const getAvailableMonths = (year: number) => {
+    const months = [];
+    const startMonth = year === userCreatedYear ? userCreatedDate.getMonth() : 0;
+    const endMonth = year === currentYear ? new Date().getMonth() : 11;
+    
+    for (let i = startMonth; i <= endMonth; i++) {
+      months.push({ value: i, label: monthNames[i] });
+    }
+    return months;
   };
 
-  // Check if navigation buttons should be disabled
-  const canGoPrev = () => {
-    const prevMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
-    return prevMonth >= userCreatedMonth;
+  // Handle month change
+  const handleMonthChange = (newMonth: number) => {
+    const newDate = new Date(currentDate);
+    newDate.setMonth(newMonth);
+    
+    const newMonthDate = new Date(newDate.getFullYear(), newDate.getMonth(), 1);
+    
+    // Validate: don't allow going before user creation month or beyond current month
+    if (newMonthDate >= userCreatedMonth && newMonthDate <= currentMonth) {
+      setCurrentDate(newDate);
+    }
   };
 
-  const canGoNext = () => {
-    const nextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
-    return nextMonth <= currentMonth;
+  // Handle year change
+  const handleYearChange = (newYear: number) => {
+    const newDate = new Date(currentDate);
+    newDate.setFullYear(newYear);
+    
+    const newMonthDate = new Date(newDate.getFullYear(), newDate.getMonth(), 1);
+    
+    // If the selected month is not available in the new year, set to first/last available month
+    const availableMonths = getAvailableMonths(newYear);
+    if (availableMonths.length > 0) {
+      const currentMonthIndex = newDate.getMonth();
+      const isMonthAvailable = availableMonths.some(m => m.value === currentMonthIndex);
+      
+      if (!isMonthAvailable) {
+        // Set to the first available month if current month is before, or last if after
+        if (currentMonthIndex < availableMonths[0].value) {
+          newDate.setMonth(availableMonths[0].value);
+        } else {
+          newDate.setMonth(availableMonths[availableMonths.length - 1].value);
+        }
+      }
+    }
+    
+    const finalMonthDate = new Date(newDate.getFullYear(), newDate.getMonth(), 1);
+    
+    // Validate: don't allow going before user creation month or beyond current month
+    if (finalMonthDate >= userCreatedMonth && finalMonthDate <= currentMonth) {
+      setCurrentDate(newDate);
+    }
   };
 
   const handleEntryClick = (entry: JournalEntry) => {
@@ -154,7 +236,6 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
   };
 
   // Get theme colors for background
-  const migratedTheme = migrateTheme(activeCharacter.theme) as Theme;
   const themeConfig = themes[migratedTheme];
   const colors = themeConfig?.colors;
 
@@ -285,51 +366,132 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
           >
             <div ref={calendarRef} className="lg:h-full">
               <Card theme={activeCharacter.theme} className="flex flex-col h-full">
-              {/* Month Navigation */}
+              {/* Month Navigation with Dropdowns and Arrows */}
               <div className="flex justify-between items-center mb-6">
-                <Button
-                  onClick={() => navigateMonth('prev')}
-                  variant="secondary"
-                  size="sm"
-                  className="hidden md:flex text-2xl"
-                  disabled={!canGoPrev()}
-                  theme={activeCharacter.theme}
+                <button
+                  onClick={() => {
+                    const newDate = new Date(currentDate);
+                    newDate.setMonth(newDate.getMonth() - 1);
+                    const newMonthDate = new Date(newDate.getFullYear(), newDate.getMonth(), 1);
+                    if (newMonthDate >= userCreatedMonth && newMonthDate <= currentMonth) {
+                      setCurrentDate(newDate);
+                    }
+                  }}
+                  className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button navbar-button-arrow hidden md:flex flex-shrink-0"
+                  style={{ marginTop: '-1rem', fontSize: '2rem', marginLeft: '1rem' }}
+                  disabled={(() => {
+                    const prevMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+                    return prevMonth < userCreatedMonth;
+                  })()}
                 >
                   ←
-                </Button>
-                <Button
-                  onClick={() => navigateMonth('prev')}
-                  variant="secondary"
-                  size="sm"
-                  className="md:hidden"
-                  disabled={!canGoPrev()}
-                  theme={activeCharacter.theme}
+                </button>
+                <button
+                  onClick={() => {
+                    const newDate = new Date(currentDate);
+                    newDate.setMonth(newDate.getMonth() - 1);
+                    const newMonthDate = new Date(newDate.getFullYear(), newDate.getMonth(), 1);
+                    if (newMonthDate >= userCreatedMonth && newMonthDate <= currentMonth) {
+                      setCurrentDate(newDate);
+                    }
+                  }}
+                  className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button navbar-button-arrow md:hidden flex-shrink-0"
+                  style={{ marginTop: '-1rem' }}
+                  disabled={(() => {
+                    const prevMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+                    return prevMonth < userCreatedMonth;
+                  })()}
                 >
                   ←
-                </Button>
-                <h2 className="font-pixel text-xl text-white text-center flex-1">
-                  {format(currentDate, 'MMMM yyyy')}
-                </h2>
-                <Button
-                  onClick={() => navigateMonth('next')}
-                  variant="secondary"
-                  size="sm"
-                  className="hidden md:flex text-2xl"
-                  disabled={!canGoNext()}
-                  theme={activeCharacter.theme}
+                </button>
+                <div className="flex justify-center items-center gap-0 flex-1 px-1 sm:px-2 md:px-0 min-w-0">
+                  <select
+                    value={currentDate.getMonth()}
+                    onChange={(e) => handleMonthChange(parseInt(e.target.value))}
+                    className="font-pixel text-sm sm:text-lg text-white bg-gray-800 border-2 rounded-l px-2 sm:px-4 py-1.5 sm:py-2 pixelated cursor-pointer transition-colors flex-shrink calendar-dropdown-left"
+                    style={{
+                      backgroundColor: themes[migratedTheme].colors.background,
+                      borderColor: '#000000',
+                      borderRightColor: '#000000',
+                      color: '#FFFFFF',
+                      WebkitTextFillColor: '#FFFFFF',
+                    }}
+                  >
+                    {getAvailableMonths(currentDate.getFullYear()).map((month) => (
+                      <option
+                        key={month.value}
+                        value={month.value}
+                        style={{
+                          backgroundColor: '#1F2937',
+                          color: '#FFFFFF',
+                        }}
+                      >
+                        {month.label}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={currentDate.getFullYear()}
+                    onChange={(e) => handleYearChange(parseInt(e.target.value))}
+                    className="font-pixel text-sm sm:text-lg text-white bg-gray-800 border-2 rounded-r px-2 sm:px-4 py-1.5 sm:py-2 pixelated cursor-pointer transition-colors flex-shrink calendar-dropdown-right"
+                    style={{
+                      backgroundColor: themes[migratedTheme].colors.background,
+                      borderColor: '#000000',
+                      borderLeftColor: '#000000',
+                      color: '#FFFFFF',
+                      WebkitTextFillColor: '#FFFFFF',
+                    }}
+                  >
+                    {availableYears.map((year) => (
+                      <option
+                        key={year}
+                        value={year}
+                        style={{
+                          backgroundColor: '#1F2937',
+                          color: '#FFFFFF',
+                        }}
+                      >
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  onClick={() => {
+                    const newDate = new Date(currentDate);
+                    newDate.setMonth(newDate.getMonth() + 1);
+                    const newMonthDate = new Date(newDate.getFullYear(), newDate.getMonth(), 1);
+                    if (newMonthDate >= userCreatedMonth && newMonthDate <= currentMonth) {
+                      setCurrentDate(newDate);
+                    }
+                  }}
+                  className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button navbar-button-arrow hidden md:flex flex-shrink-0"
+                  style={{ marginTop: '-1rem', fontSize: '2rem', marginRight: '1rem' }}
+                  disabled={(() => {
+                    const nextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+                    return nextMonth > currentMonth;
+                  })()}
                 >
                   →
-                </Button>
-                <Button
-                  onClick={() => navigateMonth('next')}
-                  variant="secondary"
-                  size="sm"
-                  className="md:hidden"
-                  disabled={!canGoNext()}
-                  theme={activeCharacter.theme}
+                </button>
+                <button
+                  onClick={() => {
+                    const newDate = new Date(currentDate);
+                    newDate.setMonth(newDate.getMonth() + 1);
+                    const newMonthDate = new Date(newDate.getFullYear(), newDate.getMonth(), 1);
+                    if (newMonthDate >= userCreatedMonth && newMonthDate <= currentMonth) {
+                      setCurrentDate(newDate);
+                    }
+                  }}
+                  className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button navbar-button-arrow md:hidden flex-shrink-0"
+                  style={{ marginTop: '-1rem' }}
+                  disabled={(() => {
+                    const nextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+                    return nextMonth > currentMonth;
+                  })()}
                 >
                   →
-                </Button>
+                </button>
               </div>
 
               {/* Calendar Grid */}
@@ -575,6 +737,77 @@ export default function CalendarView({ user, activeCharacter, onBack }: Calendar
       )}
       </div>
       {/* <Footer /> */}
+      
+      {/* Ensure dropdown selected option has light text on mobile and remove focus outline */}
+      <style dangerouslySetInnerHTML={{__html: `
+        select option:checked {
+          color: #FFFFFF !important;
+          background-color: #1F2937 !important;
+        }
+        select option {
+          color: #FFFFFF !important;
+          background-color: #1F2937 !important;
+        }
+        select:focus {
+          outline: none !important;
+          border-color: #000000 !important;
+        }
+        select:active {
+          outline: none !important;
+          border-color: #000000 !important;
+        }
+        .navbar-button-arrow::after {
+          display: none !important;
+        }
+        /* Force black borders on all dropdowns */
+        select {
+          border-color: #000000 !important;
+        }
+        /* Specifically target the connection borders */
+        .calendar-dropdown-left {
+          border-right-color: #000000 !important;
+          border-right-width: 2px !important;
+        }
+        .calendar-dropdown-right {
+          border-left-color: #000000 !important;
+          border-left-width: 2px !important;
+        }
+        /* Ensure all border sides are black */
+        .calendar-dropdown-left,
+        .calendar-dropdown-right {
+          border-top-color: #000000 !important;
+          border-bottom-color: #000000 !important;
+        }
+        /* Mobile-specific: Force light text for selected option */
+        @media (max-width: 768px) {
+          select {
+            color: #FFFFFF !important;
+            -webkit-text-fill-color: #FFFFFF !important;
+          }
+          select option {
+            color: #FFFFFF !important;
+            background-color: #1F2937 !important;
+            -webkit-text-fill-color: #FFFFFF !important;
+          }
+          select option:checked {
+            color: #FFFFFF !important;
+            background-color: #1F2937 !important;
+            -webkit-text-fill-color: #FFFFFF !important;
+          }
+          select option:selected {
+            color: #FFFFFF !important;
+            background-color: #1F2937 !important;
+            -webkit-text-fill-color: #FFFFFF !important;
+          }
+          /* Webkit-specific for mobile Safari */
+          select::-webkit-select {
+            color: #FFFFFF !important;
+          }
+          select::-webkit-select-value {
+            color: #FFFFFF !important;
+          }
+        }
+      `}} />
     </div>
   );
 }
