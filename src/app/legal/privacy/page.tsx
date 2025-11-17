@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-// import Footer from '@/components/Footer';
+// import IubendaPrivacyPolicy from '@/components/IubendaPrivacyPolicy'; // Temporarily commented for Footer-only deployment
+import Footer from '@/components/Footer';
 
 export default function PrivacyPage() {
   return (
@@ -193,8 +194,16 @@ export default function PrivacyPage() {
           </div>
 
           <div className="prose prose-invert max-w-none">
-            <section className="mb-8 p-6 bg-gray-800/30 rounded-lg border-l-4 border-orange-400">
-              <h2 className="text-xl font-semibold mb-4 text-orange-400 font-serif">1. Introduction and Data Controller</h2>
+            {/* iubenda Privacy Policy Embed - Temporarily commented for Footer-only deployment */}
+            {/* {process.env.NEXT_PUBLIC_IUBENDA_PRIVACY_POLICY_ID ? (
+              <div className="mb-8 p-6 bg-gray-800/30 rounded-lg border-l-4 border-orange-400">
+                <IubendaPrivacyPolicy policyId={process.env.NEXT_PUBLIC_IUBENDA_PRIVACY_POLICY_ID} />
+              </div>
+            ) : ( */}
+              <>
+                {/* Original content */}
+                <section className="mb-8 p-6 bg-gray-800/30 rounded-lg border-l-4 border-orange-400">
+                  <h2 className="text-xl font-semibold mb-4 text-orange-400 font-serif">1. Introduction and Data Controller</h2>
               <p className="mb-4 text-gray-300 font-serif leading-relaxed">
                 <strong>Data Controller:</strong> Quillia is the data controller responsible for processing your personal data in accordance with applicable data protection laws, including the General Data Protection Regulation (GDPR).
               </p>
@@ -419,6 +428,8 @@ export default function PrivacyPage() {
                 If you&apos;re not satisfied with our response, you can contact your local data protection authority. For EU users, this is typically your country&apos;s data protection authority.
               </p>
             </section>
+              </>
+            {/* )} */}
           </div>
 
           <div className="mt-8 text-center">
@@ -432,7 +443,7 @@ export default function PrivacyPage() {
         </div>
       </div>
       </div>
-      {/* <Footer /> */}
+      <Footer />
     </div>
   );
 }

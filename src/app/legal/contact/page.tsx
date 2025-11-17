@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
-// import Footer from '@/components/Footer';
+import Footer from '@/components/Footer';
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -355,7 +355,7 @@ export default function ContactPage() {
         </div>
       </Card>
       </div>
-      {/* <Footer /> */}
+      <Footer />
     </div>
   );
 }

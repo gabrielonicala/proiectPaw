@@ -1704,7 +1704,7 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      {/* <Footer /> */}
+      <Footer />
       
       {/* CSS Animations for floating squares and carousel */}
         <style jsx>{`

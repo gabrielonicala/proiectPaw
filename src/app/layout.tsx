@@ -6,6 +6,7 @@ import SessionProvider from "@/components/SessionProvider";
 import AssetPreloader from "@/components/AssetPreloader";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
 import ConditionalAnalytics from "@/components/ConditionalAnalytics";
+// import IubendaScriptLoader from "@/components/IubendaScriptLoader"; // Temporarily commented for Footer-only deployment
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -48,6 +49,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        {/* <IubendaScriptLoader /> */}
         <SessionProvider>
           <AssetPreloader>
             {children}

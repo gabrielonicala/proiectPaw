@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-// import Footer from '@/components/Footer';
+// import IubendaTerms from '@/components/IubendaTerms'; // Temporarily commented for Footer-only deployment
+import Footer from '@/components/Footer';
 
 export default function TermsPage() {
   return (
@@ -193,8 +194,16 @@ export default function TermsPage() {
           </div>
 
           <div className="prose prose-invert max-w-none">
-            <section className="mb-8 p-6 bg-gray-800/30 rounded-lg border-l-4 border-orange-400">
-              <h2 className="text-xl font-semibold mb-4 text-orange-400 font-serif">1. Acceptance of Terms and Binding Agreement</h2>
+            {/* iubenda Terms & Conditions Embed - Temporarily commented for Footer-only deployment */}
+            {/* {process.env.NEXT_PUBLIC_IUBENDA_TERMS_ID ? (
+              <div className="mb-8 p-6 bg-gray-800/30 rounded-lg border-l-4 border-orange-400">
+                <IubendaTerms termsId={process.env.NEXT_PUBLIC_IUBENDA_TERMS_ID} />
+              </div>
+            ) : ( */}
+              <>
+                {/* Original content */}
+                <section className="mb-8 p-6 bg-gray-800/30 rounded-lg border-l-4 border-orange-400">
+                  <h2 className="text-xl font-semibold mb-4 text-orange-400 font-serif">1. Acceptance of Terms and Binding Agreement</h2>
               <p className="mb-4 text-gray-300 font-serif leading-relaxed">
                 These Terms of Service (&quot;Terms&quot;) constitute a legally binding agreement between you (&quot;User&quot;, &quot;you&quot;, or &quot;your&quot;) and Quillia (&quot;Company&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) regarding your use of the Quillia fantasy journal application and related services (&quot;Service&quot;). By accessing, downloading, installing, or using the Service, you acknowledge that you have read, understood, and agree to be bound by these Terms and our Privacy Policy.
               </p>
@@ -396,6 +405,8 @@ export default function TermsPage() {
                 These Terms of Service are effective as of January 22, 2025.
               </p>
             </section>
+              </>
+            {/* )} */}
           </div>
 
           <div className="mt-8 text-center">
@@ -409,7 +420,7 @@ export default function TermsPage() {
         </div>
       </div>
       </div>
-      {/* <Footer /> */}
+      <Footer />
     </div>
   );
 }
