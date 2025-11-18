@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -17,6 +17,12 @@ export default function ContactPage() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    // Fade in effect when page loads
+    setIsVisible(true);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,7 +56,7 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-black relative overflow-hidden">
+    <div className={`min-h-screen flex flex-col bg-black relative overflow-hidden transition-opacity duration-150 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
       <div className="flex-1 flex items-center justify-center p-4">
       {/* Mobile background pattern */}
       <div className="absolute inset-0 md:hidden bg-gradient-to-br from-gray-900 via-black to-gray-800"></div>
@@ -330,7 +336,7 @@ export default function ContactPage() {
                 onChange={(e) => handleInputChange('message', e.target.value)}
                 placeholder="Tell us more about your inquiry..."
                 rows={6}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-white font-pixel focus:outline-none focus:ring-2 focus:ring-orange-500 resize-vertical"
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-white font-sans focus:outline-none focus:ring-2 focus:ring-orange-500 resize-vertical"
                 required
               />
             </div>
@@ -338,20 +344,18 @@ export default function ContactPage() {
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full"
+              className="w-full relative"
             >
-              {isLoading ? 'Sending...' : 'Send Message'}
+              {isLoading ? (
+                <div className="flex items-center justify-center gap-3">
+                  <div className="w-5 h-5 border-4 border-yellow-400 border-t-transparent pixelated animate-spin"></div>
+                  <span>Sending...</span>
+                </div>
+              ) : (
+                'Send Message'
+              )}
             </Button>
           </form>
-
-          <div className="mt-6 text-center">
-            <Link 
-              href="/" 
-              className="text-orange-400 hover:text-orange-300 text-sm font-pixel"
-            >
-              ← Back to Quillia
-            </Link>
-          </div>
         </div>
       </Card>
       </div>

@@ -1,10 +1,206 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect } from 'react';
 // import IubendaPrivacyPolicy from '@/components/IubendaPrivacyPolicy'; // Temporarily commented for Footer-only deployment
 import Footer from '@/components/Footer';
+// import IubendaPrivacyPolicyContent from '@/components/IubendaPrivacyPolicyContent'; // Commented out - using embed instead
 
 export default function PrivacyPage() {
+  useEffect(() => {
+    // Embed approach - inject iubenda script and cleanup unwanted elements
+    
+    // Load iubenda script
+    const loadIubendaScript = () => {
+      // Check if script is already loaded
+      if (document.querySelector('script[src="https://cdn.iubenda.com/iubenda.js"]')) {
+        return;
+      }
+      
+      const script = document.createElement('script');
+      script.src = 'https://cdn.iubenda.com/iubenda.js';
+      script.async = true;
+      const firstScript = document.getElementsByTagName('script')[0];
+      if (firstScript && firstScript.parentNode) {
+        firstScript.parentNode.insertBefore(script, firstScript);
+      } else {
+        document.head.appendChild(script);
+      }
+    };
+    
+    // Load script immediately if DOM is ready, otherwise wait for load
+    if (document.readyState === 'complete') {
+      loadIubendaScript();
+    } else {
+      window.addEventListener('load', loadIubendaScript);
+      // Also try after a short delay as fallback
+      setTimeout(loadIubendaScript, 100);
+    }
+    
+    // Inject styles to hide unwanted elements
+    const styleId = 'iubenda-privacy-policy-styles';
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = `
+        /* Hide any remaining iubenda footer elements */
+        #iubenda-privacy-policy footer,
+        #iubenda-privacy-policy .iubenda-footer,
+        #iubenda-privacy-policy [class*="footer"],
+        #iubenda-privacy-policy [id*="footer"],
+        #iubenda-privacy-policy .downloadable-documents,
+        #iubenda-privacy-policy [class*="downloadable"],
+        #iubenda-privacy-policy address,
+        #iubenda-privacy-policy [class*="iubenda-attribution"],
+        #iubenda-privacy-policy [id*="iubenda-attribution"] {
+          display: none !important;
+        }
+        
+        /* Style the main content */
+        #iubenda-privacy-policy .iubenda-embed,
+        #iubenda-privacy-policy {
+          color: #d1d5db;
+          font-family: 'Georgia', 'Times New Roman', serif;
+        }
+        #iubenda-privacy-policy .iubenda-embed h1,
+        #iubenda-privacy-policy .iubenda-embed h2,
+        #iubenda-privacy-policy .iubenda-embed h3,
+        #iubenda-privacy-policy h1,
+        #iubenda-privacy-policy h2,
+        #iubenda-privacy-policy h3 {
+          color: #f97316;
+          margin-top: 1.5em;
+          margin-bottom: 0.75em;
+        }
+        #iubenda-privacy-policy .iubenda-embed p,
+        #iubenda-privacy-policy p {
+          margin-bottom: 1em;
+          line-height: 1.7;
+        }
+        #iubenda-privacy-policy .iubenda-embed ul,
+        #iubenda-privacy-policy .iubenda-embed ol,
+        #iubenda-privacy-policy ul,
+        #iubenda-privacy-policy ol {
+          margin-bottom: 1em;
+          padding-left: 1.5em;
+        }
+        #iubenda-privacy-policy .iubenda-embed li,
+        #iubenda-privacy-policy li {
+          margin-bottom: 0.5em;
+        }
+        #iubenda-privacy-policy .iubenda-embed a,
+        #iubenda-privacy-policy a {
+          color: #f97316;
+          text-decoration: underline;
+        }
+        #iubenda-privacy-policy .iubenda-embed a:hover,
+        #iubenda-privacy-policy a:hover {
+          color: #fb923c;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    
+    // Use MutationObserver to catch and remove unwanted elements as they're added
+    const observer = new MutationObserver((mutations) => {
+      const container = document.getElementById('iubenda-privacy-policy');
+      if (!container) return;
+      
+      // Find and remove welcome/update elements
+      const allElements = container.querySelectorAll('*');
+      allElements.forEach(el => {
+        const text = el.textContent || '';
+        if ((text.includes('Welcome to the privacy policy') ||
+             text.includes('Latest update:') ||
+             text.includes('Download PDF')) &&
+            !text.includes('Table of') &&
+            !text.includes('Summary')) {
+          el.remove();
+        }
+      });
+      
+      // Also hide using CSS as backup
+      allElements.forEach(el => {
+        const text = el.textContent || '';
+        if (text.includes('Welcome to the privacy policy') ||
+            text.includes('Latest update:') ||
+            text.includes('Download PDF')) {
+          (el as HTMLElement).style.display = 'none';
+        }
+      });
+    });
+    
+    // Start observing
+    const container = document.getElementById('iubenda-privacy-policy');
+    if (container) {
+      observer.observe(container, {
+        childList: true,
+        subtree: true,
+        characterData: true
+      });
+    }
+    
+    // Also run cleanup immediately after a delay
+    setTimeout(() => {
+      const container = document.getElementById('iubenda-privacy-policy');
+      if (container) {
+        container.querySelectorAll('*').forEach(el => {
+          const text = el.textContent || '';
+          if ((text.includes('Welcome to the privacy policy') ||
+               text.includes('Latest update:') ||
+               text.includes('Download PDF')) &&
+              !text.includes('Table of') &&
+              !text.includes('Summary')) {
+            el.remove();
+            (el as HTMLElement).style.display = 'none';
+          }
+        });
+      }
+    }, 100);
+    
+    setTimeout(() => {
+      const container = document.getElementById('iubenda-privacy-policy');
+      if (container) {
+        container.querySelectorAll('*').forEach(el => {
+          const text = el.textContent || '';
+          if ((text.includes('Welcome to the privacy policy') ||
+               text.includes('Latest update:') ||
+               text.includes('Download PDF')) &&
+              !text.includes('Table of') &&
+              !text.includes('Summary')) {
+            el.remove();
+            (el as HTMLElement).style.display = 'none';
+          }
+        });
+      }
+    }, 500);
+    
+    setTimeout(() => {
+      const container = document.getElementById('iubenda-privacy-policy');
+      if (container) {
+        container.querySelectorAll('*').forEach(el => {
+          const text = el.textContent || '';
+          if ((text.includes('Welcome to the privacy policy') ||
+               text.includes('Latest update:') ||
+               text.includes('Download PDF')) &&
+              !text.includes('Table of') &&
+              !text.includes('Summary')) {
+            el.remove();
+            (el as HTMLElement).style.display = 'none';
+          }
+        });
+      }
+    }, 1000);
+
+    return () => {
+      // Cleanup: remove style on unmount
+      const styleElement = document.getElementById(styleId);
+      if (styleElement) {
+        styleElement.remove();
+      }
+    };
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col bg-black relative overflow-hidden">
       <div className="flex-1 flex items-center justify-center p-4">
@@ -186,7 +382,7 @@ export default function PrivacyPage() {
         }
       `}</style>
 
-      <div className="w-full max-w-4xl relative z-10 bg-gray-900/95 border border-gray-700 rounded-lg shadow-2xl">
+      <div className="w-full max-w-6xl relative z-10 bg-gray-900/95 border border-gray-700 rounded-lg shadow-2xl">
         <div className="p-6 md:p-8">
           <div className="text-center mb-8">
             <h1 className="text-3xl md:text-4xl font-bold mb-4 text-white font-pixel">Privacy Policy</h1>
@@ -194,14 +390,26 @@ export default function PrivacyPage() {
           </div>
 
           <div className="prose prose-invert max-w-none">
-            {/* iubenda Privacy Policy Embed - Temporarily commented for Footer-only deployment */}
-            {/* {process.env.NEXT_PUBLIC_IUBENDA_PRIVACY_POLICY_ID ? (
-              <div className="mb-8 p-6 bg-gray-800/30 rounded-lg border-l-4 border-orange-400">
-                <IubendaPrivacyPolicy policyId={process.env.NEXT_PUBLIC_IUBENDA_PRIVACY_POLICY_ID} />
-              </div>
-            ) : ( */}
-              <>
-                {/* Original content */}
+            {/* iubenda Privacy Policy - Embed approach */}
+            <div 
+              id="iubenda-privacy-policy" 
+              className="mb-8 p-6 bg-gray-800/30 rounded-lg border-l-4 border-orange-400 min-h-[600px]"
+            >
+              {/* iubenda Privacy Policy Embed */}
+              <a 
+                href="https://www.iubenda.com/privacy-policy/70554621" 
+                className="iubenda-black iubenda-noiframe iubenda-embed iubenda-noiframe iub-body-embed" 
+                title="Privacy Policy"
+              >
+                Privacy Policy
+              </a>
+              
+              {/* Commented out: Static HTML approach */}
+              {/* <IubendaPrivacyPolicyContent /> */}
+            </div>
+
+            {/* Original content - Commented out to test iubenda embed */}
+            {/* <>
                 <section className="mb-8 p-6 bg-gray-800/30 rounded-lg border-l-4 border-orange-400">
                   <h2 className="text-xl font-semibold mb-4 text-orange-400 font-serif">1. Introduction and Data Controller</h2>
               <p className="mb-4 text-gray-300 font-serif leading-relaxed">
@@ -428,8 +636,7 @@ export default function PrivacyPage() {
                 If you&apos;re not satisfied with our response, you can contact your local data protection authority. For EU users, this is typically your country&apos;s data protection authority.
               </p>
             </section>
-              </>
-            {/* )} */}
+              </> */}
           </div>
 
           <div className="mt-8 text-center">

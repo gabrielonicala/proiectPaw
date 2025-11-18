@@ -344,9 +344,16 @@ export default function SignUpPage() {
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full"
+              className="w-full relative"
             >
-              {isLoading ? 'Creating Account...' : 'Create Account'}
+              {isLoading ? (
+                <div className="flex items-center justify-center gap-3">
+                  <div className="w-5 h-5 border-4 border-yellow-400 border-t-transparent pixelated animate-spin"></div>
+                  <span>Creating Account...</span>
+                </div>
+              ) : (
+                'Create Account'
+              )}
             </Button>
           </form>
 
@@ -388,6 +395,19 @@ export default function SignUpPage() {
                 Hope you enjoy Quillia!
               </p>
             </div>
+          </div>
+
+          {/* Back to Quillia Button */}
+          <div className="mt-6 text-center">
+            <a 
+              href="/home" 
+              className="inline-flex items-center gap-1.5 bg-transparent hover:bg-gray-800/50 text-white text-sm font-pixel px-4 py-2 rounded transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Return home
+            </a>
           </div>
 
         </div>

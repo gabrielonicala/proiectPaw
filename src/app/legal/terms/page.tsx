@@ -1,10 +1,332 @@
 'use client';
 
 import Link from 'next/link';
+import Script from 'next/script';
+import { useEffect, useState } from 'react';
 // import IubendaTerms from '@/components/IubendaTerms'; // Temporarily commented for Footer-only deployment
 import Footer from '@/components/Footer';
 
 export default function TermsPage() {
+  const [termsContent, setTermsContent] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showFallback, setShowFallback] = useState(false);
+
+  useEffect(() => {
+    // Fetch the terms content via our server-side API route (bypasses CORS)
+    const fetchTerms = async () => {
+      try {
+        const response = await fetch('/api/iubenda/terms');
+        
+        if (response.ok) {
+          let html = await response.text();
+          
+          // Client-side cleanup - more aggressive approach
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          
+          // Walk through all text nodes and find ones with unwanted content
+          const walker = doc.createTreeWalker(
+            doc.body,
+            NodeFilter.SHOW_TEXT,
+            null
+          );
+          
+          const nodesToRemove: Node[] = [];
+          let node: Node | null;
+          
+          while (node = walker.nextNode()) {
+            const text = node.textContent || '';
+            if (text.includes('Welcome to the') ||
+                text.includes('Latest update:') ||
+                text.includes('Download PDF')) {
+              // Find the closest block-level parent to remove
+              let parent = node.parentElement;
+              while (parent && parent !== doc.body) {
+                // Check if this parent also contains "Table of" or "Summary"
+                const parentText = parent.textContent || '';
+                if (parentText.includes('Table of') || parentText.includes('Summary')) {
+                  // Don't remove - it contains the content we want to keep
+                  break;
+                }
+                // If it's a block element or contains only the unwanted text, mark for removal
+                const tagName = parent.tagName.toLowerCase();
+                if (['p', 'div', 'section', 'h1', 'h2', 'h3', 'span'].includes(tagName)) {
+                  // Check if this element only has the unwanted text
+                  const siblings = Array.from(parent.parentElement?.children || []);
+                  const index = siblings.indexOf(parent);
+                  // Remove if it's before any "Table of" content
+                  const hasTableOfLater = siblings.slice(index + 1).some(sib => 
+                    (sib.textContent || '').includes('Table of') || 
+                    (sib.textContent || '').includes('Summary')
+                  );
+                  if (!hasTableOfLater && !parentText.includes('Table of') && !parentText.includes('Summary')) {
+                    nodesToRemove.push(parent);
+                    break;
+                  }
+                }
+                parent = parent.parentElement;
+              }
+            }
+          }
+          
+          // Remove the marked nodes
+          nodesToRemove.forEach(node => {
+            if (node.parentNode) {
+              node.parentNode.removeChild(node);
+            }
+          });
+          
+          // Also remove by direct text matching (fallback)
+          Array.from(doc.querySelectorAll('p, div, span, h1, h2, h3')).forEach(el => {
+            const text = el.textContent || '';
+            if ((text.includes('Welcome to the') ||
+                 text.includes('Latest update:') ||
+                 text.includes('Download PDF')) &&
+                !text.includes('Table of') &&
+                !text.includes('Summary')) {
+              el.remove();
+            }
+          });
+          
+          // Final fallback: find first element with "Table of" and remove all previous siblings
+          const bodyChildren = Array.from(doc.body.children);
+          let tableOfIndex = -1;
+          for (let i = 0; i < bodyChildren.length; i++) {
+            const text = bodyChildren[i].textContent || '';
+            if (text.includes('Table of') || text.includes('Summary')) {
+              tableOfIndex = i;
+              break;
+            }
+          }
+          
+          if (tableOfIndex > 0) {
+            // Remove all elements before "Table of"
+            for (let i = 0; i < tableOfIndex; i++) {
+              bodyChildren[i].remove();
+            }
+          }
+          
+          html = doc.body.innerHTML;
+          setTermsContent(html);
+        } else {
+          // Fallback: try the embed method
+          console.log('Direct fetch failed, using embed method');
+        }
+      } catch (error) {
+        console.error('Error fetching terms:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTerms();
+
+    // Check if embed content actually loaded (for embed method fallback)
+    const checkEmbedContent = () => {
+      const container = document.getElementById('iubenda-terms');
+      if (container) {
+        const embedLink = container.querySelector('a.iub-body-embed');
+        if (embedLink) {
+          // Check if iubenda has replaced the link with actual content
+          const hasContent = container.innerHTML.trim().length > 200 && 
+                           !container.innerHTML.includes('Terms and Conditions</a>');
+          if (!hasContent && !termsContent) {
+            // Embed hasn't loaded, show fallback after timeout
+            setTimeout(() => {
+              if (!termsContent && !container.querySelector('.iubenda-embed-content')) {
+                setShowFallback(true);
+                setIsLoading(false);
+              }
+            }, 5000);
+          }
+        }
+      }
+    };
+    
+    // Check periodically if embed loaded
+    const embedCheckInterval = setInterval(checkEmbedContent, 1000);
+    
+    // Also set a timeout to show fallback if content doesn't load
+    const fallbackTimeout = setTimeout(() => {
+      if (!termsContent) {
+        const container = document.getElementById('iubenda-terms');
+        if (container) {
+          const embedLink = container.querySelector('a.iub-body-embed');
+          if (embedLink && embedLink.textContent === 'Terms and Conditions') {
+            // Embed hasn't loaded, show fallback
+            setShowFallback(true);
+            setIsLoading(false);
+          }
+        }
+      }
+    }, 8000); // 8 second timeout
+
+    // Inject styles to hide unwanted elements - AGGRESSIVE CSS APPROACH
+    const styleId = 'iubenda-terms-styles';
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = `
+        /* Hide any remaining iubenda footer elements */
+        #iubenda-terms footer,
+        #iubenda-terms .iubenda-footer,
+        #iubenda-terms [class*="footer"],
+        #iubenda-terms [id*="footer"],
+        #iubenda-terms .downloadable-documents,
+        #iubenda-terms [class*="downloadable"],
+        #iubenda-terms address,
+        #iubenda-terms [class*="iubenda-attribution"],
+        #iubenda-terms [id*="iubenda-attribution"] {
+          display: none !important;
+        }
+        
+        /* Style the main content */
+        #iubenda-terms .iubenda-embed,
+        #iubenda-terms {
+          color: #d1d5db;
+          font-family: 'Georgia', 'Times New Roman', serif;
+        }
+        #iubenda-terms .iubenda-embed h1,
+        #iubenda-terms .iubenda-embed h2,
+        #iubenda-terms .iubenda-embed h3,
+        #iubenda-terms h1,
+        #iubenda-terms h2,
+        #iubenda-terms h3 {
+          color: #f97316;
+          margin-top: 1.5em;
+          margin-bottom: 0.75em;
+        }
+        #iubenda-terms .iubenda-embed p,
+        #iubenda-terms p {
+          margin-bottom: 1em;
+          line-height: 1.7;
+        }
+        #iubenda-terms .iubenda-embed ul,
+        #iubenda-terms .iubenda-embed ol,
+        #iubenda-terms ul,
+        #iubenda-terms ol {
+          margin-bottom: 1em;
+          padding-left: 1.5em;
+        }
+        #iubenda-terms .iubenda-embed li,
+        #iubenda-terms li {
+          margin-bottom: 0.5em;
+        }
+        #iubenda-terms .iubenda-embed a,
+        #iubenda-terms a {
+          color: #f97316;
+          text-decoration: underline;
+        }
+        #iubenda-terms .iubenda-embed a:hover,
+        #iubenda-terms a:hover {
+          color: #fb923c;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    
+    // Use MutationObserver to catch and remove unwanted elements as they're added
+    const observer = new MutationObserver((mutations) => {
+      const container = document.getElementById('iubenda-terms');
+      if (!container) return;
+      
+      // Find and remove welcome/update elements
+      const allElements = container.querySelectorAll('*');
+      allElements.forEach(el => {
+        const text = el.textContent || '';
+        if ((text.includes('Welcome to the') ||
+             text.includes('Latest update:') ||
+             text.includes('Download PDF')) &&
+            !text.includes('Table of') &&
+            !text.includes('Summary')) {
+          el.remove();
+        }
+      });
+      
+      // Also hide using CSS as backup
+      allElements.forEach(el => {
+        const text = el.textContent || '';
+        if (text.includes('Welcome to the') ||
+            text.includes('Latest update:') ||
+            text.includes('Download PDF')) {
+          (el as HTMLElement).style.display = 'none';
+        }
+      });
+    });
+    
+    // Start observing
+    const container = document.getElementById('iubenda-terms');
+    if (container) {
+      observer.observe(container, {
+        childList: true,
+        subtree: true,
+        characterData: true
+      });
+    }
+    
+    // Also run cleanup immediately after a delay
+    setTimeout(() => {
+      const container = document.getElementById('iubenda-terms');
+      if (container) {
+        container.querySelectorAll('*').forEach(el => {
+          const text = el.textContent || '';
+          if ((text.includes('Welcome to the') ||
+               text.includes('Latest update:') ||
+               text.includes('Download PDF')) &&
+              !text.includes('Table of') &&
+              !text.includes('Summary')) {
+            el.remove();
+            (el as HTMLElement).style.display = 'none';
+          }
+        });
+      }
+    }, 100);
+    
+    setTimeout(() => {
+      const container = document.getElementById('iubenda-terms');
+      if (container) {
+        container.querySelectorAll('*').forEach(el => {
+          const text = el.textContent || '';
+          if ((text.includes('Welcome to the') ||
+               text.includes('Latest update:') ||
+               text.includes('Download PDF')) &&
+              !text.includes('Table of') &&
+              !text.includes('Summary')) {
+            el.remove();
+            (el as HTMLElement).style.display = 'none';
+          }
+        });
+      }
+    }, 500);
+    
+    setTimeout(() => {
+      const container = document.getElementById('iubenda-terms');
+      if (container) {
+        container.querySelectorAll('*').forEach(el => {
+          const text = el.textContent || '';
+          if ((text.includes('Welcome to the') ||
+               text.includes('Latest update:') ||
+               text.includes('Download PDF')) &&
+              !text.includes('Table of') &&
+              !text.includes('Summary')) {
+            el.remove();
+            (el as HTMLElement).style.display = 'none';
+          }
+        });
+      }
+    }, 1000);
+
+    return () => {
+      // Cleanup: remove style on unmount
+      const styleElement = document.getElementById(styleId);
+      if (styleElement) {
+        styleElement.remove();
+      }
+      clearTimeout(fallbackTimeout);
+      clearInterval(embedCheckInterval);
+    };
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col bg-black relative overflow-hidden">
       <div className="flex-1 flex items-center justify-center p-4">
@@ -186,7 +508,7 @@ export default function TermsPage() {
         }
       `}</style>
 
-      <div className="w-full max-w-4xl relative z-10 bg-gray-900/95 border border-gray-700 rounded-lg shadow-2xl">
+      <div className="w-full max-w-6xl relative z-10 bg-gray-900/95 border border-gray-700 rounded-lg shadow-2xl">
         <div className="p-6 md:p-8">
           <div className="text-center mb-8">
             <h1 className="text-3xl md:text-4xl font-bold mb-4 text-white font-pixel">Terms of Service</h1>
@@ -194,16 +516,84 @@ export default function TermsPage() {
           </div>
 
           <div className="prose prose-invert max-w-none">
-            {/* iubenda Terms & Conditions Embed - Temporarily commented for Footer-only deployment */}
-            {/* {process.env.NEXT_PUBLIC_IUBENDA_TERMS_ID ? (
-              <div className="mb-8 p-6 bg-gray-800/30 rounded-lg border-l-4 border-orange-400">
-                <IubendaTerms termsId={process.env.NEXT_PUBLIC_IUBENDA_TERMS_ID} />
-              </div>
-            ) : ( */}
-              <>
-                {/* Original content */}
-                <section className="mb-8 p-6 bg-gray-800/30 rounded-lg border-l-4 border-orange-400">
-                  <h2 className="text-xl font-semibold mb-4 text-orange-400 font-serif">1. Acceptance of Terms and Binding Agreement</h2>
+            {/* iubenda Terms & Conditions Embed - Try direct fetch first, fallback to embed */}
+            <div 
+              id="iubenda-terms" 
+              className="mb-8 p-6 bg-gray-800/30 rounded-lg border-l-4 border-orange-400 min-h-[600px]"
+            >
+              {termsContent ? (
+                <div 
+                  className="text-gray-300 font-serif leading-relaxed iubenda-embed"
+                  dangerouslySetInnerHTML={{ __html: termsContent }}
+                />
+              ) : showFallback ? (
+                // Show original content as fallback if embed doesn't load
+                <div className="text-gray-300 font-serif leading-relaxed">
+                  <p className="mb-4 text-orange-400 text-sm">
+                    Note: Unable to load iubenda content. Showing original terms.
+                  </p>
+                  {/* Original content sections will be uncommented below */}
+                  <section className="mb-8 p-6 bg-gray-800/30 rounded-lg border-l-4 border-orange-400">
+                    <h2 className="text-xl font-semibold mb-4 text-orange-400 font-serif">1. Acceptance of Terms and Binding Agreement</h2>
+                    <p className="mb-4 text-gray-300 font-serif leading-relaxed">
+                      These Terms of Service (&quot;Terms&quot;) constitute a legally binding agreement between you (&quot;User&quot;, &quot;you&quot;, or &quot;your&quot;) and Quillia (&quot;Company&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) regarding your use of the Quillia fantasy journal application and related services (&quot;Service&quot;). By accessing, downloading, installing, or using the Service, you acknowledge that you have read, understood, and agree to be bound by these Terms and our Privacy Policy.
+                    </p>
+                    <p className="mb-4 text-gray-300 font-serif leading-relaxed">
+                      If you do not agree to these Terms, you may not use the Service. We reserve the right to modify these Terms at any time, and your continued use of the Service after such modifications constitutes acceptance of the updated Terms.
+                    </p>
+                  </section>
+                  <p className="text-gray-400 text-sm mt-4">
+                    For the complete terms and conditions, please visit{' '}
+                    <a href="https://www.iubenda.com/terms-and-conditions/70554621" target="_blank" rel="noopener noreferrer" className="text-orange-400 hover:text-orange-300 underline">
+                      our iubenda Terms & Conditions page
+                    </a>
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <a 
+                    href="https://www.iubenda.com/terms-and-conditions/70554621" 
+                    className="iubenda-black iubenda-noiframe iubenda-embed iubenda-noiframe iub-body-embed" 
+                    title="Terms and Conditions"
+                  >
+                    Terms and Conditions
+                  </a>
+                  <Script
+                    id="iubenda-terms-embed"
+                    strategy="afterInteractive"
+                    dangerouslySetInnerHTML={{
+                      __html: `
+                        (function (w,d) {
+                          var loader = function () {
+                            var s = d.createElement("script"), tag = d.getElementsByTagName("script")[0]; 
+                            s.src="https://cdn.iubenda.com/iubenda.js"; 
+                            tag.parentNode.insertBefore(s,tag);
+                          }; 
+                          // Run immediately instead of waiting for load event
+                          if(d.readyState === 'complete'){
+                            loader();
+                          }else if(w.addEventListener){
+                            w.addEventListener("load", loader, false);
+                          }else if(w.attachEvent){
+                            w.attachEvent("onload", loader);
+                          }else{
+                            w.onload = loader;
+                          }
+                          // Also try immediately as fallback
+                          setTimeout(loader, 100);
+                        })(window, document);
+                      `
+                    }}
+                  />
+                </>
+              )}
+            </div>
+
+            {/* Original content - Commented out to test iubenda embed */}
+            {/*
+            <>
+            <section className="mb-8 p-6 bg-gray-800/30 rounded-lg border-l-4 border-orange-400">
+              <h2 className="text-xl font-semibold mb-4 text-orange-400 font-serif">1. Acceptance of Terms and Binding Agreement</h2>
               <p className="mb-4 text-gray-300 font-serif leading-relaxed">
                 These Terms of Service (&quot;Terms&quot;) constitute a legally binding agreement between you (&quot;User&quot;, &quot;you&quot;, or &quot;your&quot;) and Quillia (&quot;Company&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) regarding your use of the Quillia fantasy journal application and related services (&quot;Service&quot;). By accessing, downloading, installing, or using the Service, you acknowledge that you have read, understood, and agree to be bound by these Terms and our Privacy Policy.
               </p>
@@ -405,8 +795,8 @@ export default function TermsPage() {
                 These Terms of Service are effective as of January 22, 2025.
               </p>
             </section>
-              </>
-            {/* )} */}
+            </>
+            */}
           </div>
 
           <div className="mt-8 text-center">

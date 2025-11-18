@@ -851,3 +851,37 @@ footer a {
   border-radius: 4px;
   border: none;
 }
+
+/* Position iubenda's cookie banner at the bottom */
+/* Target the specific banner ID and classes */
+/* Force it to bottom immediately via CSS before JS runs */
+#iubenda-cs-banner,
+.iubenda-cs-banner {
+  position: fixed !important;
+  bottom: 0 !important;
+  top: auto !important;
+  left: 0 !important;
+  right: 0 !important;
+  transform: translateY(0) !important;
+  z-index: 99999 !important;
+}
+
+/* Override any top positioning classes immediately */
+.iubenda-cs-top {
+  top: auto !important;
+  bottom: 0 !important;
+}
+
+/* Ensure the banner container is also positioned correctly */
+.iubenda-cs-container {
+  position: relative !important;
+}
+
+/* Hide privacy widget and consent button on all pages except /home and /legal/contact */
+body:not([data-page="/home"]):not([data-page="/legal/contact"]) .iub__us-widget,
+body:not([data-page="/home"]):not([data-page="/legal/contact"]) .iubenda-tp-btn.iubenda-cs-preferences-link {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}

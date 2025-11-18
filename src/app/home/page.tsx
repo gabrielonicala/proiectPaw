@@ -1374,7 +1374,7 @@ export default function LandingPage() {
                      {themePreviews.slice(0, 4).map((theme, index) => (
                        <div
                          key={theme.id}
-                         className={`border border-white/20 rounded-lg p-6 hover:border-white/40 transition-all duration-300 hover:scale-105 ${theme.id === 'ivory-quill' ? 'ivory-quill-overlay' : ''}`}
+                         className={`border border-white/20 rounded-lg p-6 hover:border-white/40 transition-all duration-300 ${theme.id === 'ivory-quill' ? 'ivory-quill-overlay' : ''}`}
                          style={{
                            backgroundImage: theme.background,
                            backgroundSize: theme.backgroundSize,
@@ -1408,7 +1408,7 @@ export default function LandingPage() {
                      {themePreviews.slice(4, 8).map((theme, index) => (
                        <div
                          key={theme.id}
-                         className={`border border-white/20 rounded-lg p-6 hover:border-white/40 transition-all duration-300 hover:scale-105 ${theme.id === 'ivory-quill' ? 'ivory-quill-overlay' : ''}`}
+                         className={`border border-white/20 rounded-lg p-6 hover:border-white/40 transition-all duration-300 ${theme.id === 'ivory-quill' ? 'ivory-quill-overlay' : ''}`}
                          style={{
                            backgroundImage: theme.background,
                            backgroundSize: theme.backgroundSize,
