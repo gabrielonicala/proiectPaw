@@ -7,6 +7,7 @@ import SessionProvider from "@/components/SessionProvider";
 import AssetPreloader from "@/components/AssetPreloader";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
 import ConditionalAnalytics from "@/components/ConditionalAnalytics";
+import IubendaBannerManager from "@/components/IubendaBannerManager";
 // import IubendaScriptLoader from "@/components/IubendaScriptLoader"; // Temporarily commented for Footer-only deployment
 
 const geistSans = Geist({
@@ -67,8 +68,10 @@ export default function RootLayout({
         {/* Temporarily hidden to see iubenda's default banner */}
         {/* <CookieConsentBanner /> */}
         <ConditionalAnalytics />
+        {/* Manage iubenda banner position and widget visibility */}
+        <IubendaBannerManager />
         {/* Move iubenda banner to bottom after it loads and hide privacy widget when logged in */}
-        {/* Temporarily disabled - causing loading issues */}
+        {/* Temporarily disabled - using IubendaBannerManager component instead */}
         {/* <script
           dangerouslySetInnerHTML={{
             __html: `

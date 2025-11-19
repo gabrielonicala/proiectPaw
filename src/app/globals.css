@@ -856,7 +856,9 @@ footer a {
 /* Target the specific banner ID and classes */
 /* Force it to bottom immediately via CSS before JS runs */
 #iubenda-cs-banner,
-.iubenda-cs-banner {
+.iubenda-cs-banner,
+[id*="iubenda-cs-banner"],
+[class*="iubenda-cs-banner"] {
   position: fixed !important;
   bottom: 0 !important;
   top: auto !important;
@@ -864,12 +866,22 @@ footer a {
   right: 0 !important;
   transform: translateY(0) !important;
   z-index: 99999 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
 }
 
 /* Override any top positioning classes immediately */
-.iubenda-cs-top {
+.iubenda-cs-top,
+[class*="iubenda-cs-top"] {
   top: auto !important;
   bottom: 0 !important;
+  position: fixed !important;
+}
+
+/* Target any element that might be the banner container */
+.iubenda-cs-container,
+[class*="iubenda-cs-container"] {
+  position: relative !important;
 }
 
 /* Ensure the banner container is also positioned correctly */
