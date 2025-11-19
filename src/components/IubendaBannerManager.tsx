@@ -51,11 +51,11 @@ export default function IubendaBannerManager() {
             consentButton.style.setProperty('opacity', '0', 'important');
             consentButton.style.setProperty('pointer-events', 'none', 'important');
           } else {
-            // Explicitly show the button
+            // Explicitly show the button and make it clickable
             consentButton.style.setProperty('display', 'block', 'important');
             consentButton.style.setProperty('visibility', 'visible', 'important');
             consentButton.style.setProperty('opacity', '1', 'important');
-            consentButton.style.removeProperty('pointer-events');
+            consentButton.style.setProperty('pointer-events', 'auto', 'important');
           }
         }
       } catch (e) {
