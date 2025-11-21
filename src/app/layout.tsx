@@ -44,6 +44,50 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <Script
+          id="iubenda-unified-embed"
+          strategy="afterInteractive"
+          src="https://embeds.iubenda.com/widgets/79c6704c-4cbd-460f-b519-5e7a3d06ddf8.js"
+        />
+        {/* iubenda Consent Database - Must be loaded for form consent collection */}
+        <Script
+          id="iubenda-consent-database"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              var _iub = _iub || {}; 
+              _iub.cons_instructions = _iub.cons_instructions || []; 
+              _iub.cons_instructions.push(["init", {api_key: "hILOWdQyCvy6xtOPwzGoeFGSr5yEdoZF"}]);
+            `
+          }}
+        />
+        <Script
+          id="iubenda-consent-database-script"
+          strategy="afterInteractive"
+          src="https://cdn.iubenda.com/cons/iubenda_cons.js"
+          async
+        />
+        {/* Google Consent Mode v2 - Must be loaded before any Google services */}
+        <Script
+          id="google-consent-mode"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('consent', 'default', {
+                'ad_storage': 'denied',
+                'ad_user_data': 'denied',
+                'ad_personalization': 'denied',
+                'analytics_storage': 'denied',
+                'functionality_storage': 'denied',
+                'personalization_storage': 'denied',
+                'security_storage': 'granted',
+                'wait_for_update': 500
+              });
+            `
+          }}
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
@@ -54,11 +98,11 @@ export default function RootLayout({
         {/* iubenda Privacy Controls and Cookie Solution - Unified Embedding Code */}
         {/* This should be placed at the very beginning of the <head> according to iubenda */}
         {/* Using strategy="beforeInteractive" to load it early */}
-        <Script
+        {/* <Script
           id="iubenda-unified-embed"
           strategy="afterInteractive"
           src="https://embeds.iubenda.com/widgets/79c6704c-4cbd-460f-b519-5e7a3d06ddf8.js"
-        />
+        /> */}
         {/* <IubendaScriptLoader /> */}
         <SessionProvider>
           <AssetPreloader>

@@ -7,6 +7,7 @@ import { Theme } from '@/types';
 import { themes } from '@/themes';
 
 interface ButtonProps {
+  id?: string;
   children: ReactNode;
   onClick?: (e?: React.MouseEvent<HTMLButtonElement>) => void;
   variant?: 'primary' | 'secondary' | 'accent' | 'destructive';
@@ -20,6 +21,7 @@ interface ButtonProps {
 }
 
 export default function Button({
+  id,
   children,
   onClick,
   variant = 'primary',
@@ -139,6 +141,7 @@ export default function Button({
 
   return (
     <motion.button
+      id={id}
       type={type}
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.95 }}

@@ -107,6 +107,14 @@ export default function Footer({ className = '' }: FooterProps) {
             >
               Privacy Policy
             </a>
+            {/* Notice at Collection - Required for California users */}
+            <a 
+              href="https://www.iubenda.com/privacy-policy/70554621#notice_at_collection" 
+              className="text-gray-400 hover:text-orange-400 transition-colors font-pixel relative z-50 pointer-events-auto" 
+              title="Notice at Collection"
+            >
+              Notice at Collection
+            </a>
             {/* iubenda Terms and Conditions Footer Widget */}
             <a 
               href="https://www.iubenda.com/terms-and-conditions/70554621" 

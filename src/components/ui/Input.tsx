@@ -6,6 +6,7 @@ import { themes } from '@/themes';
 
 interface InputProps {
   id?: string;
+  name?: string;
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
@@ -26,6 +27,7 @@ interface InputProps {
 
 export default function Input({
   id,
+  name,
   value,
   onChange,
   placeholder,
@@ -90,6 +92,7 @@ export default function Input({
         <div className="relative">
           <textarea
             id={id}
+            name={name}
             value={value}
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={onKeyDown}
@@ -126,6 +129,7 @@ export default function Input({
     <div className="space-y-2">
       <input
         id={id}
+        name={name}
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}

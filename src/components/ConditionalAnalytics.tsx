@@ -36,6 +36,31 @@ export default function ConditionalAnalytics() {
   const [canUsePerformance, setCanUsePerformance] = useState(false);
 
   useEffect(() => {
+    // Update Google Consent Mode based on iubenda consent
+    const updateGoogleConsentMode = (analytics: boolean, performance: boolean) => {
+      if (typeof window === 'undefined') return;
+      
+      // Ensure gtag function exists (from Consent Mode initialization)
+      if (!(window as any).gtag) {
+        // Initialize if not already done
+        (window as any).dataLayer = (window as any).dataLayer || [];
+        (window as any).gtag = function(...args: any[]) {
+          ((window as any).dataLayer = (window as any).dataLayer || []).push(args);
+        };
+      }
+      
+      // Update Google Consent Mode v2
+      (window as any).gtag('consent', 'update', {
+        'analytics_storage': analytics ? 'granted' : 'denied',
+        'ad_storage': 'denied', // You don't use ads, so keep denied
+        'ad_user_data': 'denied',
+        'ad_personalization': 'denied',
+        'functionality_storage': performance ? 'granted' : 'denied',
+        'personalization_storage': performance ? 'granted' : 'denied',
+        'security_storage': 'granted' // Always granted for security
+      });
+    };
+
     // Check consent status periodically until iubenda is ready
     const checkConsent = () => {
       const analytics = checkIubendaConsent('analytics');
@@ -43,6 +68,9 @@ export default function ConditionalAnalytics() {
       
       setCanUseAnalytics(analytics);
       setCanUsePerformance(performance);
+      
+      // Update Google Consent Mode
+      updateGoogleConsentMode(analytics, performance);
       
       // Disable analytics if user hasn't consented
       if (!analytics && typeof window !== 'undefined') {

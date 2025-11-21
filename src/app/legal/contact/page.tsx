@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Script from 'next/script';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
@@ -259,7 +260,7 @@ export default function ContactPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form id="contact-form" name="contact-form" onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2 font-pixel">
@@ -267,6 +268,7 @@ export default function ContactPage() {
                 </label>
                 <Input
                   id="name"
+                  name="name"
                   type="text"
                   value={formData.name}
                   onChange={(value) => handleInputChange('name', value)}
@@ -282,6 +284,7 @@ export default function ContactPage() {
                 </label>
                 <Input
                   id="email"
+                  name="email"
                   type="email"
                   value={formData.email}
                   onChange={(value) => handleInputChange('email', value)}
@@ -298,6 +301,7 @@ export default function ContactPage() {
               </label>
               <Input
                 id="subject"
+                name="subject"
                 type="text"
                 value={formData.subject}
                 onChange={(value) => handleInputChange('subject', value)}
@@ -313,6 +317,7 @@ export default function ContactPage() {
               </label>
               <select
                 id="type"
+                name="type"
                 value={formData.type}
                 onChange={(e) => handleInputChange('type', e.target.value)}
                 className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-white font-pixel focus:outline-none focus:ring-2 focus:ring-orange-500"
@@ -332,6 +337,7 @@ export default function ContactPage() {
               </label>
               <textarea
                 id="message"
+                name="message"
                 value={formData.message}
                 onChange={(e) => handleInputChange('message', e.target.value)}
                 placeholder="Tell us more about your inquiry..."
@@ -342,6 +348,7 @@ export default function ContactPage() {
             </div>
 
             <Button
+              id="contact-submit"
               type="submit"
               disabled={isLoading}
               className="w-full relative"
@@ -356,6 +363,142 @@ export default function ContactPage() {
               )}
             </Button>
           </form>
+          {/* iubenda Consent Database - Submit function for contact form */}
+          <Script
+            id="iubenda-consent-contact"
+            strategy="afterInteractive"
+            dangerouslySetInnerHTML={{
+              __html: `
+                (function() {
+                  // Initialize global submission tracking Set if it doesn't exist
+                  if (!window._iubConsentSubmissions) {
+                    window._iubConsentSubmissions = new Set();
+                  }
+                  
+                  function waitForIubenda(callback, maxAttempts = 50) {
+                    let attempts = 0;
+                    const checkInterval = setInterval(function() {
+                      attempts++;
+                      if (window._iub && window._iub.cons_instructions) {
+                        clearInterval(checkInterval);
+                        callback();
+                      } else if (attempts >= maxAttempts) {
+                        clearInterval(checkInterval);
+                        console.warn('iubenda Consent Database not loaded after ' + maxAttempts + ' attempts');
+                      }
+                    }, 100);
+                  }
+                  
+                  function setupConsentCollection() {
+                    const form = document.getElementById('contact-form');
+                    
+                    if (!form) {
+                      // Retry if form not found yet
+                      setTimeout(setupConsentCollection, 500);
+                      return;
+                    }
+                    
+                    // Check if this form already has a handler attached
+                    if (form._iubConsentHandlerAttached) {
+                      return; // Already set up
+                    }
+                    form._iubConsentHandlerAttached = true;
+                    
+                    // Create handler
+                    const consentHandler = function(e) {
+                      // Simple debounce - prevent multiple rapid fires
+                      if (form._iubSending) {
+                        return;
+                      }
+                      form._iubSending = true;
+                      setTimeout(function() {
+                        form._iubSending = false;
+                      }, 500);
+                      
+                      const formData = new FormData(form);
+                      const email = (formData.get('email') || '').trim();
+                      const name = (formData.get('name') || '').trim();
+                      const subject = (formData.get('subject') || '').trim();
+                      const message = (formData.get('message') || '').trim();
+                      
+                      // Create a unique hash for this submission
+                      const submissionHash = btoa(email + '|' + name + '|' + subject + '|' + message.substring(0, 100)).replace(/[^a-zA-Z0-9]/g, '');
+                      const submissionId = 'contact_' + submissionHash + '_' + Date.now();
+                      
+                      // Check if we've already processed this exact submission
+                      if (window._iubConsentSubmissions.has(submissionId)) {
+                        console.log('Duplicate consent submission prevented:', submissionId);
+                        return;
+                      }
+                      
+                      // Mark as processed immediately
+                      window._iubConsentSubmissions.add(submissionId);
+                      
+                      // Clean up old entries (keep only last 100)
+                      if (window._iubConsentSubmissions.size > 100) {
+                        const entries = Array.from(window._iubConsentSubmissions);
+                        window._iubConsentSubmissions.clear();
+                        entries.slice(-50).forEach(function(id) {
+                          window._iubConsentSubmissions.add(id);
+                        });
+                      }
+                      
+                      // Send consent
+                      try {
+                        if (window._iub && window._iub.cons_instructions) {
+                          const formDataObj = {};
+                          for (let [key, value] of formData.entries()) {
+                            formDataObj[key] = value;
+                          }
+                          
+                          window._iub.cons_instructions.push(["submit", {
+                            form: form,
+                            consent: {
+                              subject: {
+                                email: email,
+                                full_name: name
+                              },
+                              legal_notices: [
+                                {
+                                  identifier: "cookie_policy",
+                                  version: 1
+                                }
+                              ],
+                              proofs: [
+                                {
+                                  content: JSON.stringify(formDataObj),
+                                  form: form.outerHTML
+                                }
+                              ],
+                              preferences: {}
+                            }
+                          }]);
+                        }
+                      } catch(err) {
+                        console.error('Error sending consent data:', err);
+                        // Remove from set on error so it can be retried
+                        window._iubConsentSubmissions.delete(submissionId);
+                      }
+                    };
+                    
+                    // Attach listener only once
+                    form.addEventListener('submit', consentHandler, { once: false, passive: true });
+                  }
+                  
+                  // Wait for iubenda and set up
+                  waitForIubenda(setupConsentCollection);
+                  
+                  if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', function() {
+                      waitForIubenda(setupConsentCollection);
+                    });
+                  } else {
+                    waitForIubenda(setupConsentCollection);
+                  }
+                })();
+              `
+            }}
+          />
         </div>
       </Card>
       </div>

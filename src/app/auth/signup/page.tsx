@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import Script from 'next/script';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
@@ -278,13 +279,14 @@ export default function SignUpPage() {
             <div className="text-center text-white/70 my-4 -mb-4 text-sm font-pixel">or</div>
           </div> */}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form id="signup-form" name="signup-form" onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2 font-pixel">
                 Username
               </label>
               <Input
                 id="username"
+                name="username"
                 type="text"
                 value={username}
                 onChange={setUsername}
@@ -299,6 +301,7 @@ export default function SignUpPage() {
               </label>
               <Input
                 id="email"
+                name="email"
                 type="email"
                 value={email}
                 onChange={setEmail}
@@ -313,6 +316,7 @@ export default function SignUpPage() {
               </label>
               <Input
                 id="password"
+                name="password"
                 type="password"
                 value={password}
                 onChange={setPassword}
@@ -327,6 +331,7 @@ export default function SignUpPage() {
               </label>
               <Input
                 id="confirmPassword"
+                name="confirmPassword"
                 type="password"
                 value={confirmPassword}
                 onChange={setConfirmPassword}
@@ -342,6 +347,7 @@ export default function SignUpPage() {
             )}
 
             <Button
+              id="signup-submit"
               type="submit"
               disabled={isLoading}
               className="w-full relative"
@@ -356,6 +362,140 @@ export default function SignUpPage() {
               )}
             </Button>
           </form>
+          {/* iubenda Consent Database - Submit function for signup form */}
+          <Script
+            id="iubenda-consent-signup"
+            strategy="afterInteractive"
+            dangerouslySetInnerHTML={{
+              __html: `
+                (function() {
+                  // Initialize global submission tracking Set if it doesn't exist
+                  if (!window._iubConsentSubmissions) {
+                    window._iubConsentSubmissions = new Set();
+                  }
+                  
+                  function waitForIubenda(callback, maxAttempts = 50) {
+                    let attempts = 0;
+                    const checkInterval = setInterval(function() {
+                      attempts++;
+                      if (window._iub && window._iub.cons_instructions) {
+                        clearInterval(checkInterval);
+                        callback();
+                      } else if (attempts >= maxAttempts) {
+                        clearInterval(checkInterval);
+                        console.warn('iubenda Consent Database not loaded after ' + maxAttempts + ' attempts');
+                      }
+                    }, 100);
+                  }
+                  
+                  function setupConsentCollection() {
+                    const form = document.getElementById('signup-form');
+                    
+                    if (!form) {
+                      // Retry if form not found yet
+                      setTimeout(setupConsentCollection, 500);
+                      return;
+                    }
+                    
+                    // Check if this form already has a handler attached
+                    if (form._iubConsentHandlerAttached) {
+                      return; // Already set up
+                    }
+                    form._iubConsentHandlerAttached = true;
+                    
+                    // Create handler
+                    const consentHandler = function(e) {
+                      // Simple debounce - prevent multiple rapid fires
+                      if (form._iubSending) {
+                        return;
+                      }
+                      form._iubSending = true;
+                      setTimeout(function() {
+                        form._iubSending = false;
+                      }, 500);
+                      
+                      const formData = new FormData(form);
+                      const email = (formData.get('email') || '').trim();
+                      const username = (formData.get('username') || '').trim();
+                      
+                      // Create a unique hash for this submission
+                      const submissionHash = btoa(email + '|' + username).replace(/[^a-zA-Z0-9]/g, '');
+                      const submissionId = 'signup_' + submissionHash + '_' + Date.now();
+                      
+                      // Check if we've already processed this exact submission
+                      if (window._iubConsentSubmissions.has(submissionId)) {
+                        console.log('Duplicate consent submission prevented:', submissionId);
+                        return;
+                      }
+                      
+                      // Mark as processed immediately
+                      window._iubConsentSubmissions.add(submissionId);
+                      
+                      // Clean up old entries (keep only last 100)
+                      if (window._iubConsentSubmissions.size > 100) {
+                        const entries = Array.from(window._iubConsentSubmissions);
+                        window._iubConsentSubmissions.clear();
+                        entries.slice(-50).forEach(function(id) {
+                          window._iubConsentSubmissions.add(id);
+                        });
+                      }
+                      
+                      // Send consent
+                      try {
+                        if (window._iub && window._iub.cons_instructions) {
+                          const formDataObj = {};
+                          for (let [key, value] of formData.entries()) {
+                            formDataObj[key] = value;
+                          }
+                          
+                          window._iub.cons_instructions.push(["submit", {
+                            form: form,
+                            consent: {
+                              subject: {
+                                email: email,
+                                full_name: username
+                              },
+                              legal_notices: [
+                                {
+                                  identifier: "cookie_policy",
+                                  version: 1
+                                }
+                              ],
+                              proofs: [
+                                {
+                                  content: JSON.stringify(formDataObj),
+                                  form: form.outerHTML
+                                }
+                              ],
+                              preferences: {}
+                            }
+                          }]);
+                        }
+                      } catch(err) {
+                        console.error('Error sending consent data:', err);
+                        // Remove from set on error so it can be retried
+                        window._iubConsentSubmissions.delete(submissionId);
+                      }
+                    };
+                    
+                    // Attach listener only once
+                    form.addEventListener('submit', consentHandler, { once: false, passive: true });
+                  }
+                  
+                  // Wait for iubenda and set up
+                  waitForIubenda(setupConsentCollection);
+                  
+                  if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', function() {
+                      waitForIubenda(setupConsentCollection);
+                    });
+                  } else {
+                    waitForIubenda(setupConsentCollection);
+                  }
+                })();
+              `
+            }}
+          />
 
           {/* Forgot password link - only needed on sign-in page
           <div className="mt-4 text-center">
