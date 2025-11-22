@@ -17,6 +17,10 @@ export function middleware(request: NextRequest) {
     requestId
   );
   
+  // Note: Page view tracking is now handled by PageViewTracker component
+  // which calls /api/analytics/track. This is because middleware runs
+  // on Edge Runtime which doesn't support Prisma/Node.js database connections.
+  
   // Create response with request ID header
   const response = NextResponse.next({
     request: {

@@ -150,3 +150,25 @@ model DailyUsage {
   @@unique([userId, date])
   @@index([userId, date])
 }
+
+model PageView {
+  id           String   @id @default(cuid())
+  path         String
+  method       String   @default("GET")
+  userAgent    String?
+  referer      String?
+  referrerSource String?  // Parsed referrer source (google, direct, social, etc.)
+  deviceType   String?  // mobile, desktop, tablet
+  browser      String?  // chrome, firefox, safari, etc.
+  country      String?  // Country code (e.g., US, GB, DE)
+  ipHash       String?  // Hashed IP for privacy (first 3 octets only)
+  createdAt    DateTime @default(now())
+
+  @@index([path])
+  @@index([createdAt])
+  @@index([path, createdAt])
+  @@index([deviceType])
+  @@index([browser])
+  @@index([country])
+  @@index([referrerSource])
+}
