@@ -101,10 +101,16 @@ function getThemePrompt(themeConfig: any, sceneText: string, avatarDescription: 
     : `Scene: ${sceneText}`;
   
   const reimagineInstruction = isFromChapter
-    ? `Visualize this fantasy chapter as a detailed illustration.`
+    ? `Identify the most significant or central moment from this fantasy chapter and visualize ONLY that single, unified scene, as a detailed illustration. Focus on ONE key moment - if the chapter describes multiple activities, select the most prominent, relevant or meaningful scene.`
     : `Reimagine this real-world experience naturally within that world.`;
-  
-  return `Generate a high-quality digital illustration in ${styleDesc} style.
+
+  return `CRITICAL REQUIREMENTS:
+- Generate a SINGLE, unified scene - DO NOT create multiple panels, collages, grid layouts, or separate scenes
+- ABSOLUTELY NO TEXT, WORDS, LABELS, TITLES, or LETTERING of any kind in the image
+- NO speech bubbles, signs, banners, or written elements whatsoever
+- Focus on ONE key moment from the scene, not multiple moments
+
+Generate a high-quality digital illustration in ${styleDesc} style.
 
 ${sceneIntro}
 
@@ -125,16 +131,18 @@ Character representation:
 - Accurately represent the gender identity of any characters described using pronouns
 
 Physical accuracy:
-- Ensure all characters interact correctly with objects and environments - no body parts intersecting or passing through solid objects
+- Ensure all characters and objects interact correctly with other objects and environments - no body parts intersecting or passing through solid objects, no extra fingers,hands or legs
 - Maintain proper spatial relationships between characters, objects, and the environment
 
-Visual style: detailed digital art, cinematic composition, 1024x1024, no text or lettering.
+Visual style: detailed digital art, cinematic and immersive composition, 1024x1024, detailed background, SINGLE unified scene, ABSOLUTELY NO TEXT OR LETTERING.
 
 Cinematography:
 
 - Avoid direct eye contact with the viewer.
 
-- Frame the character at a natural angle (three-quarter, profile, or motion shot) to create depth and realism.`;
+- Frame the character at a natural angle (three-quarter, profile, or motion shot) to create depth and realism.
+
+REMINDER: This must be ONE single scene with NO text, labels, or multiple panels.`;
 }
 
 function getThemeStyleDescription(themeId: string): string {

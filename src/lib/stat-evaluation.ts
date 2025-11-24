@@ -42,26 +42,28 @@ export async function evaluateStatChanges(
 Character's current stats and their meanings:
 ${statDescriptions}
 
-Original user input:
+Original user input (provided for context only - to understand what the real-world actions represent):
 "${originalText}"
 
-Reimagined story/chapter:
+Reimagined story/chapter (this is the PRIMARY source for generating stat change reasons):
 "${reimaginedText}"
 
-Based on the character's actions, decisions, and experiences in this story, evaluate how each stat should change. Consider:
+Based on the character's actions, decisions, and experiences in the REIMAGINED STORY, evaluate how each stat should change. Consider:
 - Positive actions that demonstrate growth in a stat
 - Negative actions or missed opportunities that might decrease a stat
 - The character's overall development and choices
 
+CRITICAL: When writing the "reason" for each stat change, you MUST use the language, context, and fantasy elements from the REIMAGINED STORY. Reference the specific actions, objects, and situations described in the reimagined chapter, NOT the original real-world text. The original text is only provided to help you understand what the actions mean, but the reasons must be written in the fantasy/theme context.
+
 Return a JSON object with the exact stat names as keys. Each stat should have:
 - "change": integer between -4 and +4 (the amount to change the stat)
-- "reason": brief explanation for the change
+- "reason": brief explanation for the change, written using the language and context from the REIMAGINED STORY
 - "confidence": number between 0 and 1 (how confident you are in this evaluation)
 
-Example format:
+Example format (using fantasy context):
 {
-  "Discipline": { "change": 1, "reason": "Completed a difficult task despite fatigue", "confidence": 0.8 },
-  "Valor": { "change": -1, "reason": "Avoided a direct confrontation", "confidence": 0.6 }
+  "Discipline": { "change": 1, "reason": "Patiently smoothed tangled scrolls and guided a young scribe with gentle words", "confidence": 0.8 },
+  "Valor": { "change": -1, "reason": "Avoided a direct confrontation with the rival clan", "confidence": 0.6 }
 }
 
 Only include stats that should change. If a stat shouldn't change, don't include it in the response.`;
