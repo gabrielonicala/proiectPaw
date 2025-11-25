@@ -8,7 +8,11 @@ import { PADDLE_CONFIG, TRIBUTE_PLAN } from '@/lib/paddle';
 console.log('Paddle config check:', {
   vendorId: PADDLE_CONFIG.vendorId,
   apiKey: PADDLE_CONFIG.apiKey ? 'Set' : 'Not set',
-  priceId: TRIBUTE_PLAN.priceId,
+  priceIds: {
+    weekly: TRIBUTE_PLAN.weekly.priceId,
+    monthly: TRIBUTE_PLAN.monthly.priceId,
+    yearly: TRIBUTE_PLAN.yearly.priceId
+  },
   environment: PADDLE_CONFIG.environment
 });
 
@@ -20,13 +24,17 @@ if (!PADDLE_CONFIG.vendorId || !PADDLE_CONFIG.apiKey) {
   throw new Error('Paddle configuration is missing');
 }
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     
     if (!(session as { user: { id: string } })?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Get billing cycle from request body
+    const body = await request.json().catch(() => ({}));
+    const billingCycle = (body.billingCycle || 'monthly') as 'weekly' | 'monthly' | 'yearly';
 
     // Get user from database
     const user = await db.user.findUnique({
@@ -42,17 +50,24 @@ export async function POST() {
       return NextResponse.json({ error: 'User already has an active subscription' }, { status: 400 });
     }
 
+    // Get the appropriate price ID based on billing cycle
+    const plan = TRIBUTE_PLAN[billingCycle];
+    if (!plan) {
+      return NextResponse.json({ error: 'Invalid billing cycle' }, { status: 400 });
+    }
+
     // Create Paddle checkout session using the correct API format
     const checkoutData = {
       items: [
         {
-          price_id: TRIBUTE_PLAN.priceId,
+          price_id: plan.priceId,
           quantity: 1
         }
       ],
       customer_email: user.email,
       custom_data: {
-        userId: user.id
+        userId: user.id,
+        billingCycle: billingCycle
       },
       return_url: `${process.env.NEXTAUTH_URL}/tribute/success`,
       cancel_url: `${process.env.NEXTAUTH_URL}/tribute/cancel`

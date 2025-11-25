@@ -41,10 +41,10 @@ export async function POST(request: NextRequest) {
             where: { id: userId },
             data: {
               subscriptionStatus: 'active',
-              subscriptionPlan: 'tribute',
+              subscriptionPlan: 'monthly', // Default to monthly for Stripe (legacy)
               subscriptionId: session.subscription as string,
-              subscriptionEndsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
-              characterSlots: 3, // Tribute plan gets 3 character slots
+              subscriptionEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+              characterSlots: 3, // Paid plans get 3 character slots
             },
           });
         }
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
             where: { subscriptionId },
             data: {
               subscriptionStatus: 'active',
-              subscriptionEndsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+              subscriptionEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
             },
           });
         }
@@ -88,11 +88,11 @@ export async function POST(request: NextRequest) {
         const subscription = event.data.object as Stripe.Subscription;
         const subscriptionId = subscription.id;
 
-        // Mark subscription as canceled and reset character slots
+        // Mark subscription as free (subscription deleted = back to free)
         await db.user.updateMany({
           where: { subscriptionId },
           data: {
-            subscriptionStatus: 'canceled',
+            subscriptionStatus: 'free',
             subscriptionPlan: 'free',
             characterSlots: 1, // Reset to free plan (1 character slot)
           },

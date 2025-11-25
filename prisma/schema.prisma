@@ -24,7 +24,7 @@ model User {
   activeCharacterId       String?
   characterSlots          Int            @default(1)
   subscriptionPlan        String?        @default("free")
-  subscriptionStatus      String?        @default("inactive")
+  subscriptionStatus      String?        @default("free")
   subscriptionId          String?        @unique
   subscriptionEndsAt      DateTime?
   timezone                String?        @default("UTC")

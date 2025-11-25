@@ -261,17 +261,13 @@ export async function migrateCharacterAccess(): Promise<void> {
  */
 export async function cleanupExpiredSubscriptions(): Promise<void> {
   console.log('🧹 Starting expired subscription cleanup...');
-  console.log('🔍 Looking for users with:', {
-    subscriptionPlan: 'tribute',
-    subscriptionStatus: 'canceled',
-    subscriptionEndsAt: { lt: new Date() }
-  });
+  console.log('🔍 Looking for users with expired paid subscriptions');
 
   try {
-    // Find users with expired subscriptions
+    // Find users with expired subscriptions (any paid plan)
     const expiredUsers = await db.user.findMany({
       where: {
-        subscriptionPlan: 'tribute',
+        subscriptionPlan: { in: ['weekly', 'monthly', 'yearly'] },
         subscriptionStatus: 'canceled',
         subscriptionEndsAt: { lt: new Date() }
       },
@@ -301,7 +297,7 @@ export async function cleanupExpiredSubscriptions(): Promise<void> {
         where: { id: expiredUser.id },
         data: {
           subscriptionPlan: 'free',
-          subscriptionStatus: 'inactive',
+          subscriptionStatus: 'free',
           subscriptionId: null,
           subscriptionEndsAt: null,
           characterSlots: 1 // Reset to free plan character slots

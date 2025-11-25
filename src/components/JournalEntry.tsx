@@ -503,6 +503,7 @@ export default function JournalEntry({
           onProfileView={onProfileView}
           onTributeView={onTributeView}
           theme={migrateTheme(activeCharacter.theme) as Theme}
+          userEmail={user.email}
         />
 
         {/* Main Header */}

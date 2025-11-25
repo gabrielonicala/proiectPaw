@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { signOut } from 'next-auth/react';
-import { Calendar, User, RefreshCw } from 'lucide-react';
+import { Calendar, User, RefreshCw, Gift } from 'lucide-react';
 import Button from './ui/Button';
 import { Character, Theme } from '@/types';
 
@@ -17,6 +17,7 @@ interface AppNavigationProps {
   onBack?: () => void;
   showLogout?: boolean;
   theme?: Theme;
+  userEmail?: string;
 }
 
 export default function AppNavigation({
@@ -28,7 +29,8 @@ export default function AppNavigation({
   onTributeView,
   onBack,
   showLogout = false,
-  theme = 'obsidian-veil'
+  theme = 'obsidian-veil',
+  userEmail
 }: AppNavigationProps) {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -131,6 +133,23 @@ export default function AppNavigation({
         {currentPage === 'journal' ? (
           // Journal Entry: Navigation with responsive text/icons
           <>
+            {/* Show Tribute button only for specific email addresses */}
+            {(userEmail === 'gabrielonicala@gmail.com' || userEmail === 'contact@quillia.app') && (
+              <>
+                <button 
+                  onClick={onTributeView} 
+                  className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button hidden md:flex"
+                >
+                  TRIBUTE
+                </button>
+                <button 
+                  onClick={onTributeView} 
+                  className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button navbar-button-icon md:hidden"
+                >
+                  <Gift className="w-5 h-5" />
+                </button>
+              </>
+            )}
             <button 
               onClick={onCalendarView} 
               className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button hidden md:flex"
@@ -155,12 +174,6 @@ export default function AppNavigation({
             >
               <User className="w-5 h-5" />
             </button>
-            {/* <Button onClick={onTributeView} variant="secondary" className="hidden md:flex" theme={theme}>
-              Tribute
-            </Button>
-            <Button onClick={onTributeView} variant="secondary" className="md:hidden" theme={theme}>
-              💎
-            </Button> */}
           </>
         ) : (
           // Other pages: Back button and optional logout

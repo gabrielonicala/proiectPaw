@@ -4,6 +4,51 @@ import crypto from 'crypto';
 
 // Validate webhook secret
 const webhookSecret = process.env.PADDLE_WEBHOOK_SECRET;
+
+/**
+ * Calculate subscription end date based on billing cycle
+ */
+function calculateSubscriptionEndDate(billingCycle: string, startDate: Date = new Date()): Date {
+  const endDate = new Date(startDate);
+  
+  switch (billingCycle) {
+    case 'weekly':
+      endDate.setDate(endDate.getDate() + 7);
+      break;
+    case 'monthly':
+      endDate.setMonth(endDate.getMonth() + 1);
+      break;
+    case 'yearly':
+      endDate.setFullYear(endDate.getFullYear() + 1);
+      break;
+    default:
+      // Default to monthly if invalid
+      endDate.setMonth(endDate.getMonth() + 1);
+  }
+  
+  return endDate;
+}
+
+/**
+ * Get billing cycle from subscription data or custom_data
+ */
+function getBillingCycle(subscription: any): string {
+  // First try custom_data
+  if (subscription.custom_data?.billingCycle) {
+    return subscription.custom_data.billingCycle;
+  }
+  
+  // Try to infer from interval in subscription
+  if (subscription.items && subscription.items.length > 0) {
+    const interval = subscription.items[0].price?.billing_cycle?.interval;
+    if (interval === 'week') return 'weekly';
+    if (interval === 'month') return 'monthly';
+    if (interval === 'year') return 'yearly';
+  }
+  
+  // Default to monthly
+  return 'monthly';
+}
 if (!webhookSecret) {
   console.error('❌ PADDLE_WEBHOOK_SECRET is not set');
   throw new Error('Paddle webhook secret is not configured');
@@ -64,20 +109,25 @@ export async function POST(request: NextRequest) {
       case 'subscription.created': {
         const subscription = event.data;
         const userId = subscription.custom_data?.userId;
+        const billingCycle = subscription.custom_data?.billingCycle || 'monthly'; // Default to monthly if not provided
 
         if (userId) {
+          // Validate billing cycle
+          const validBillingCycles = ['weekly', 'monthly', 'yearly'];
+          const subscriptionPlan = validBillingCycles.includes(billingCycle) ? billingCycle : 'monthly';
+
           // Update user subscription status
           await db.user.update({
             where: { id: userId },
             data: {
               subscriptionStatus: 'active',
-              subscriptionPlan: 'tribute',
+              subscriptionPlan: subscriptionPlan,
               subscriptionId: subscription.id,
               subscriptionEndsAt: new Date(subscription.next_billed_at),
-              characterSlots: 3, // Tribute plan gets 3 character slots
+              characterSlots: 3, // Paid plans get 3 character slots
             },
           });
-          console.log('✅ Subscription created for user:', userId);
+          console.log('✅ Subscription created for user:', userId, 'plan:', subscriptionPlan);
         }
         break;
       }
@@ -96,17 +146,30 @@ export async function POST(request: NextRequest) {
             }
           }
           
-          // If no valid next_billed_at, calculate 7 days from now for weekly subscription
+          // If no valid next_billed_at, calculate based on billing cycle
           if (!subscriptionEndsAt && subscription.status === 'active') {
-            subscriptionEndsAt = new Date();
-            subscriptionEndsAt.setDate(subscriptionEndsAt.getDate() + 7);
+            const billingCycle = getBillingCycle(subscription);
+            subscriptionEndsAt = calculateSubscriptionEndDate(billingCycle);
+          }
+
+          // Determine status: if subscription is not active and has expired, set to free
+          let newStatus: string;
+          if (subscription.status === 'active') {
+            newStatus = 'active';
+          } else if (subscriptionEndsAt && subscriptionEndsAt < new Date()) {
+            // Expired subscription - set to free
+            newStatus = 'free';
+          } else {
+            newStatus = 'inactive';
           }
 
           await db.user.update({
             where: { id: userId },
             data: {
-              subscriptionStatus: subscription.status === 'active' ? 'active' : 'inactive',
+              subscriptionStatus: newStatus,
               subscriptionEndsAt: subscriptionEndsAt,
+              // If expired, also update plan to free
+              ...(newStatus === 'free' ? { subscriptionPlan: 'free', characterSlots: 1 } : {}),
             },
           });
           console.log('✅ Subscription updated for user:', userId);
@@ -138,10 +201,10 @@ export async function POST(request: NextRequest) {
             }
           }
           
-          // If still no valid date, set to 7 days from now (end of current period)
+          // If still no valid date, calculate based on billing cycle
           if (!subscriptionEndsAt) {
-            subscriptionEndsAt = new Date();
-            subscriptionEndsAt.setDate(subscriptionEndsAt.getDate() + 7);
+            const billingCycle = getBillingCycle(subscription);
+            subscriptionEndsAt = calculateSubscriptionEndDate(billingCycle);
           }
 
           await db.user.update({
@@ -162,9 +225,9 @@ export async function POST(request: NextRequest) {
 
         if (userId && transaction.status === 'completed') {
           // Update subscription end date for successful payment
-          // Calculate next billing date (7 days from now for weekly subscription)
-          const nextBillingDate = new Date();
-          nextBillingDate.setDate(nextBillingDate.getDate() + 7);
+          // Get billing cycle from transaction or subscription data
+          const billingCycle = transaction.custom_data?.billingCycle || getBillingCycle(transaction.subscription || transaction);
+          const nextBillingDate = calculateSubscriptionEndDate(billingCycle);
           
           await db.user.update({
             where: { id: userId },
@@ -201,8 +264,8 @@ export async function POST(request: NextRequest) {
 
         if (userId) {
           // Update subscription status for successful payment
-          const nextBillingDate = new Date();
-          nextBillingDate.setDate(nextBillingDate.getDate() + 7);
+          const billingCycle = transaction.custom_data?.billingCycle || getBillingCycle(transaction.subscription || transaction);
+          const nextBillingDate = calculateSubscriptionEndDate(billingCycle);
           
           await db.user.update({
             where: { id: userId },
@@ -222,8 +285,8 @@ export async function POST(request: NextRequest) {
 
         if (userId) {
           // Update subscription status when activated
-          const nextBillingDate = new Date();
-          nextBillingDate.setDate(nextBillingDate.getDate() + 7);
+          const billingCycle = getBillingCycle(subscription);
+          const nextBillingDate = calculateSubscriptionEndDate(billingCycle);
           
           await db.user.update({
             where: { id: userId },

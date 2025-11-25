@@ -120,11 +120,11 @@ export const authOptions = {
             data: { 
               username,
               emailVerified: now, // Google users are pre-verified
-              // For testing: give tribute subscription for 1 year
-              subscriptionPlan: 'tribute',
-              subscriptionStatus: 'active',
-              subscriptionEndsAt: oneYearFromNow,
-              characterSlots: 3, // Tribute users get 3 character slots
+              // New users start with free plan
+              subscriptionPlan: 'free',
+              subscriptionStatus: 'free',
+              subscriptionEndsAt: null,
+              characterSlots: 1, // Free users get 1 character slot
             }
           });
           console.log('Generated username for new Google user:', user.email, '->', username);

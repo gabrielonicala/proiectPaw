@@ -31,9 +31,9 @@ export async function GET(request: NextRequest) {
       where: { id: (session as { user: { id: string } }).user.id },
       data: {
         subscriptionStatus: 'active',
-        subscriptionPlan: 'tribute',
+        subscriptionPlan: 'monthly', // Default to monthly for Stripe (legacy)
         subscriptionId: checkoutSession.subscription as string,
-        subscriptionEndsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+        subscriptionEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
       },
     });
 

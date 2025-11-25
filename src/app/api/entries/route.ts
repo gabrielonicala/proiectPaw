@@ -93,12 +93,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Get user with timezone and subscription plan
+    // Get user with timezone and subscription info
     const user = await db.user.findUnique({
       where: { id: userId },
       select: {
         timezone: true,
         subscriptionPlan: true,
+        subscriptionStatus: true,
+        subscriptionEndsAt: true,
       }
     });
 
@@ -107,11 +109,15 @@ export async function POST(request: NextRequest) {
     }
 
     const userTimezone = user.timezone || 'UTC';
-    const subscriptionPlan = user.subscriptionPlan || 'free';
 
     // Check if user can create this type of entry (using new DailyUsage system)
+    // Pass full user object to check premium access properly
     const type = outputType === 'text' ? 'chapters' : 'scenes';
-    const canCreate = await canCreateEntry(userId, type, userTimezone, subscriptionPlan);
+    const canCreate = await canCreateEntry(userId, type, userTimezone, {
+      subscriptionPlan: user.subscriptionPlan,
+      subscriptionStatus: user.subscriptionStatus,
+      subscriptionEndsAt: user.subscriptionEndsAt,
+    });
 
     if (!canCreate.allowed) {
       return NextResponse.json(

@@ -10,9 +10,10 @@ import AppNavigation from '@/components/AppNavigation';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import AlertModal from '@/components/AlertModal';
 import { User, Character, Theme } from '@/types';
-import { USE_SHARED_LIMITS } from '@/lib/subscription-limits';
+import { USE_SHARED_LIMITS, SUBSCRIPTION_LIMITS } from '@/lib/subscription-limits';
 import { migrateTheme } from '@/lib/theme-migration';
 import { themes } from '@/themes';
+import { isPaidPlan, hasPremiumAccess } from '@/lib/paddle';
 // import Footer from './Footer';
 
 interface SubscriptionData {
@@ -41,6 +42,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
+  const [selectedBillingCycle, setSelectedBillingCycle] = useState<'weekly' | 'monthly' | 'yearly'>('monthly');
   
   // Modal states
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
@@ -53,7 +55,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
 
   useEffect(() => {
     // Use user data directly instead of calling API
-    const hasActiveSubscription = user.subscriptionPlan === 'tribute' && user.subscriptionStatus === 'active';
+    const hasActiveSubscription = hasPremiumAccess(user);
     setSubscription({ hasSubscription: hasActiveSubscription });
   }, [user]);
 
@@ -63,6 +65,10 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
       console.log('Making request to /api/paddle/checkout');
       const response = await fetch('/api/paddle/checkout', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ billingCycle: selectedBillingCycle }),
       });
       
       console.log('Response status:', response.status);
@@ -249,10 +255,10 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
         ))}
       </div>
 
-      <div className="flex-1 p-4">
+      <div className="flex-1 p-1 sm:p-2 md:p-4 overflow-x-hidden">
       {/* <MovingGradientBackground theme={activeCharacter.theme} /> */}
       
-      <div className="relative z-10 max-w-4xl mx-auto">
+      <div className="relative z-10 max-w-4xl mx-auto w-full px-1 sm:px-2 md:px-4 max-w-full">
         {/* Navigation */}
         <AppNavigation
           activeCharacter={activeCharacter}
@@ -293,39 +299,47 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
           </motion.p>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
+        <div className="grid md:grid-cols-2 gap-3 sm:gap-4 md:gap-6 mb-8 w-full max-w-full overflow-hidden">
           {/* Free Plan */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <Card theme={activeCharacter.theme} effect="vintage" className="h-full">
-              <div className="p-6">
-                <h3 className="font-pixel text-2xl text-white mb-4">Common Adventurer</h3>
-                <div className="text-4xl font-bold text-gray-300 mb-4">$0<span className="text-lg">/week</span></div>
-                <ul className="space-y-3 text-gray-300 mb-6">
-                  <li className="flex items-center">
-                    <span className="text-green-400 mr-2">✓</span>
-                    5 chapters per day
+            <Card theme={activeCharacter.theme} effect="vintage" className="h-full w-full max-w-full min-w-0 overflow-hidden">
+              <div className="p-3 sm:p-4 md:p-6">
+                <h3 className="font-pixel text-lg sm:text-xl md:text-2xl text-white mb-3 sm:mb-4 break-words overflow-wrap-anywhere">Common Adventurer</h3>
+                {/* Price section - same height as billing selector + price in paid card */}
+                <div className="mb-3 sm:mb-4 w-full flex flex-col justify-between" style={{ minHeight: '7.5rem' }}>
+                  {/* Spacer to match billing cycle selector height */}
+                  <div className="mb-3 sm:mb-4"></div>
+                  {/* Price centered between selector and price positions */}
+                  <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-300 text-center -mt-8">$0<span className="text-sm sm:text-base md:text-lg">/week</span></div>
+                  {/* Spacer to match price margin bottom */}
+                  <div className="mb-3 sm:mb-4"></div>
+                </div>
+                <ul className="space-y-2 sm:space-y-3 text-gray-300 mb-4 sm:mb-6 text-sm sm:text-base">
+                  <li className="flex items-center break-words">
+                    <span className="text-green-400 mr-2 flex-shrink-0">✓</span>
+                    <span className="min-w-0">{SUBSCRIPTION_LIMITS.FREE.CHARACTER_SLOTS} character</span>
                   </li>
-                  <li className="flex items-center">
-                    <span className="text-green-400 mr-2">✓</span>
-                    1 character
+                  <li className="flex items-center break-words">
+                    <span className="text-green-400 mr-2 flex-shrink-0">✓</span>
+                    <span className="min-w-0">{SUBSCRIPTION_LIMITS.FREE.DAILY_CHAPTERS} chapters per day</span>
                   </li>
-                  <li className="flex items-center">
-                    <span className="text-green-400 mr-2">✓</span>
-                    Basic support
+                  <li className="flex items-center break-words">
+                    <span className="text-green-400 mr-2 flex-shrink-0">✓</span>
+                    <span className="min-w-0">{SUBSCRIPTION_LIMITS.FREE.DAILY_SCENES} scene per day</span>
                   </li>
-                  <li className="flex items-center">
-                    <span className="text-green-400 mr-2">✓</span>
-                    Basic achievements
+                  <li className="flex items-center break-words">
+                    <span className="text-green-400 mr-2 flex-shrink-0">✓</span>
+                    <span className="min-w-0">Basic achievements</span>
                   </li>
                 </ul>
                 
-                {/* Show "Your Current Plan" for free users (only when they don't have any active or cancelled subscription) */}
-                {user.subscriptionPlan !== 'tribute' ? (
-                  <div className="text-lg font-pixel text-yellow-400 mt-20 text-center">
+                {/* Show "Your Current Plan" for free users or users without premium access */}
+                {!hasPremiumAccess(user) ? (
+                  <div className="font-pixel text-yellow-400 text-center" style={{ fontSize: '1.3rem' }}>
                     Your Current Plan
                   </div>
                 ) : null}
@@ -342,73 +356,135 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
             <Card 
               theme={activeCharacter.theme} 
               effect="glow" 
-              className={`h-full ${
-                user.subscriptionPlan === 'tribute' && user.subscriptionStatus === 'active' 
+              className={`h-full w-full max-w-full min-w-0 overflow-hidden ${
+                user.subscriptionPlan === selectedBillingCycle && hasPremiumAccess(user)
                   ? 'ring-4 ring-yellow-400 ring-opacity-75' 
                   : ''
               }`}
             >
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-pixel text-2xl text-white">Unbound Adventurer</h3>
-                  <span className="bg-yellow-400 text-white px-2 py-1 text-xs font-pixel rounded border-2 border-black">
+              <div className="p-3 sm:p-4 md:p-6">
+                <div className="flex items-center justify-between mb-3 sm:mb-4 gap-2 min-w-0">
+                  <h3 className="font-pixel text-lg sm:text-xl md:text-2xl text-white break-words min-w-0 flex-shrink overflow-wrap-anywhere">Unbound Adventurer</h3>
+                  <span className={`bg-yellow-400 text-white px-1.5 sm:px-2 py-1 text-xs font-pixel rounded border-2 border-black flex-shrink-0 ${
+                    selectedBillingCycle === 'monthly' ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                  }`}>
                     POPULAR
                   </span>
                 </div>
-                <div className="text-4xl font-bold text-yellow-400 mb-4">$7<span className="text-lg">/week</span></div>
-                <ul className="space-y-3 text-gray-300 mb-6">
-                  <li className="flex items-center">
-                    <span className="text-green-400 mr-2">✓</span>
-                    {USE_SHARED_LIMITS ? '30 chapters daily (shared)' : '10 chapters per character daily'}
+                {/* Billing Cycle Selector */}
+                <div className="mb-3 sm:mb-4 w-full" style={{ minHeight: '7.5rem' }}>
+                  <div className="flex gap-1.5 sm:gap-2 mb-3 sm:mb-4 w-full min-w-0">
+                    <button
+                      onClick={() => setSelectedBillingCycle('weekly')}
+                      className={`flex-1 px-1.5 sm:px-2 md:px-3 py-1.5 sm:py-2 rounded font-pixel text-xs transition-all min-w-0 ${
+                        selectedBillingCycle === 'weekly'
+                          ? 'bg-yellow-400 text-white border-2 border-yellow-400'
+                          : 'bg-gray-800 text-gray-300 border-2 border-gray-700 hover:border-gray-600'
+                      }`}
+                    >
+                      Weekly
+                    </button>
+                    <button
+                      onClick={() => setSelectedBillingCycle('monthly')}
+                      className={`flex-1 px-1.5 sm:px-2 md:px-3 py-1.5 sm:py-2 rounded font-pixel text-xs transition-all min-w-0 ${
+                        selectedBillingCycle === 'monthly'
+                          ? 'bg-yellow-400 text-white border-2 border-yellow-400'
+                          : 'bg-gray-800 text-gray-300 border-2 border-gray-700 hover:border-gray-600'
+                      }`}
+                    >
+                      Monthly
+                    </button>
+                    <button
+                      onClick={() => setSelectedBillingCycle('yearly')}
+                      className={`flex-1 px-1.5 sm:px-2 md:px-3 py-1.5 sm:py-2 rounded font-pixel text-xs transition-all min-w-0 ${
+                        selectedBillingCycle === 'yearly'
+                          ? 'bg-yellow-400 text-white border-2 border-yellow-400'
+                          : 'bg-gray-800 text-gray-300 border-2 border-gray-700 hover:border-gray-600'
+                      }`}
+                    >
+                      Yearly
+                    </button>
+                  </div>
+                  
+                  {/* Price Display */}
+                  <div className="text-center mb-3 sm:mb-4">
+                    {selectedBillingCycle === 'weekly' && (
+                      <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-yellow-400">
+                        $4<span className="text-sm sm:text-base md:text-lg">/week</span>
+                      </div>
+                    )}
+                    {selectedBillingCycle === 'monthly' && (
+                      <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-yellow-400">
+                        $12<span className="text-sm sm:text-base md:text-lg">/month</span>
+                      </div>
+                    )}
+                    {selectedBillingCycle === 'yearly' && (
+                      <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-yellow-400">
+                        $108<span className="text-sm sm:text-base md:text-lg">/year</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <ul className="space-y-2 sm:space-y-3 text-gray-300 mb-4 sm:mb-6 text-sm sm:text-base">
+                  <li className="flex items-center break-words">
+                    <span className="text-green-400 mr-2 flex-shrink-0">✓</span>
+                    <span className="min-w-0">{SUBSCRIPTION_LIMITS.TRIBUTE.CHARACTER_SLOTS} characters</span>
                   </li>
-                  <li className="flex items-center">
-                    <span className="text-green-400 mr-2">✓</span>
-                    {USE_SHARED_LIMITS ? '3 scenes daily (shared)' : '1 scene per character daily'}
+                  <li className="flex items-center break-words">
+                    <span className="text-green-400 mr-2 flex-shrink-0">✓</span>
+                    <span className="min-w-0">{USE_SHARED_LIMITS 
+                      ? `${SUBSCRIPTION_LIMITS.TRIBUTE.DAILY_CHAPTERS_SHARED} chapters daily (shared)` 
+                      : `${SUBSCRIPTION_LIMITS.TRIBUTE.DAILY_CHAPTERS_PER_CHARACTER} chapters per character daily`}</span>
                   </li>
-                  <li className="flex items-center">
-                    <span className="text-green-400 mr-2">✓</span>
-                    3 characters
+                  <li className="flex items-center break-words">
+                    <span className="text-green-400 mr-2 flex-shrink-0">✓</span>
+                    <span className="min-w-0">{USE_SHARED_LIMITS 
+                      ? `${SUBSCRIPTION_LIMITS.TRIBUTE.DAILY_SCENES_SHARED} scenes daily (shared)` 
+                      : `${SUBSCRIPTION_LIMITS.TRIBUTE.DAILY_SCENES_PER_CHARACTER} scene per character daily`}</span>
                   </li>
-                  <li className="flex items-center">
-                    <span className="text-green-400 mr-2">✓</span>
-                    Priority support
-                  </li>
-                  <li className="flex items-center">
-                    <span className="text-green-400 mr-2">✓</span>
-                    Special achievements
+                  <li className="flex items-center break-words">
+                    <span className="text-green-400 mr-2 flex-shrink-0">✓</span>
+                    <span className="min-w-0">Special achievements</span>
                   </li>
                 </ul>
                 
-                {user.subscriptionPlan === 'tribute' && user.subscriptionStatus === 'active' ? (
-                  <Button
+                {hasPremiumAccess(user) && user.subscriptionPlan === selectedBillingCycle ? (
+                  // User has premium access matching the selected billing cycle - show cancel button
+                  <button
                     onClick={handleCancelSubscription}
-                    variant="secondary"
-                    theme={activeCharacter.theme}
-                    className="w-full"
                     disabled={isCanceling}
+                    className="w-full font-pixel text-white bg-red-600 hover:bg-red-700 active:bg-red-800 border-2 border-red-500 px-4 py-3 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isCanceling ? 'Canceling...' : 'Cancel Tribute'}
-                  </Button>
-                ) : user.subscriptionPlan === 'tribute' && user.subscriptionStatus === 'canceled' ? (
+                    {isCanceling ? 'Stopping...' : 'Stop tribute'}
+                  </button>
+                ) : hasPremiumAccess(user) && user.subscriptionPlan !== selectedBillingCycle ? (
+                  // User has active subscription but different billing cycle - show message
+                  <div className="text-center p-4 bg-gray-800 border border-yellow-400 rounded-lg">
+                    <p className="font-pixel text-yellow-400 text-sm">
+                      You&apos;re currently on the {user.subscriptionPlan === 'weekly' ? 'weekly' : user.subscriptionPlan === 'monthly' ? 'monthly' : 'yearly'} plan. Switch to your current plan to manage your subscription.
+                    </p>
+                  </div>
+                ) : isPaidPlan(user.subscriptionPlan) && user.subscriptionStatus === 'canceled' && user.subscriptionPlan === selectedBillingCycle ? (
+                  // User has canceled subscription matching the selected billing cycle - show canceled message
                   <div className="text-center p-4 bg-gray-800 border border-yellow-400 rounded-lg">
                     <p className="font-pixel text-yellow-400 text-sm">
                       Your Tribute has been cancelled. You will retain access until the end of your current period.
                     </p>
                   </div>
                 ) : (
-                  <Button
+                  // User is free or inactive - show start subscription button
+                  <button
                     onClick={handleCreateSubscription}
-                    variant="accent"
-                    theme={activeCharacter.theme}
-                    className="w-full"
                     disabled={isCreating}
+                    className="w-full font-pixel text-white bg-yellow-400 hover:bg-yellow-500 active:bg-yellow-600 border-2 border-yellow-400 px-4 py-3 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isCreating ? 'Creating...' : 'Start Tribute - $7/week'}
-                  </Button>
+                    {isCreating ? 'Creating...' : 'Start Tribute'}
+                  </button>
                 )}
                 
-                {/* Show "Your Current Plan" for tribute subscribers (active or cancelled but still have access) */}
-                {user.subscriptionPlan === 'tribute' && (
+                {/* Show "Your Current Plan" only when the selected billing cycle matches and user has premium access */}
+                {user.subscriptionPlan === selectedBillingCycle && hasPremiumAccess(user) && (
                   <div className="text-lg font-pixel text-yellow-400 mt-6 text-center">
                     Your Current Plan
                   </div>

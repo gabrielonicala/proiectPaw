@@ -5,6 +5,8 @@
 
 import { db } from './db';
 import { getUserDate, getNextResetTime } from './timezone-utils';
+import { hasPremiumAccess } from './paddle';
+import { SUBSCRIPTION_LIMITS } from './subscription-limits';
 
 export interface DailyUsageData {
   chapters: number;
@@ -91,18 +93,27 @@ export async function incrementDailyUsage(
 export async function getDailyUsageWithLimits(
   userId: string,
   userTimezone: string = 'UTC',
-  subscriptionPlan: string = 'free'
+  user: { 
+    subscriptionPlan?: string | null; 
+    subscriptionStatus?: string | null; 
+    subscriptionEndsAt?: Date | null 
+  }
 ): Promise<DailyUsageData> {
   const usage = await getOrCreateDailyUsage(userId, userTimezone);
   
-  // Define limits based on subscription plan
-  const limits = {
-    free: { chapters: 5, scenes: 3 },
-    tribute: { chapters: 30, scenes: 30 },
-    // Add more plans as needed
-  };
+  // Determine limits based on premium access (not just plan type)
+  let chaptersLimit: number;
+  let scenesLimit: number;
   
-  const planLimits = limits[subscriptionPlan as keyof typeof limits] || limits.free;
+  if (hasPremiumAccess(user)) {
+    // All paid plans (weekly, monthly, yearly) always use shared limits
+    chaptersLimit = SUBSCRIPTION_LIMITS.TRIBUTE.DAILY_CHAPTERS_SHARED; // 15
+    scenesLimit = SUBSCRIPTION_LIMITS.TRIBUTE.DAILY_SCENES_SHARED; // 5
+  } else {
+    // Free plan or inactive/expired subscription
+    chaptersLimit = SUBSCRIPTION_LIMITS.FREE.DAILY_CHAPTERS; // 5
+    scenesLimit = SUBSCRIPTION_LIMITS.FREE.DAILY_SCENES; // 1
+  }
   
   // Get next reset time
   const nextResetAt = getNextResetTime(userTimezone);
@@ -110,8 +121,8 @@ export async function getDailyUsageWithLimits(
   return {
     chapters: usage.chapters,
     scenes: usage.scenes,
-    chaptersLimit: planLimits.chapters,
-    scenesLimit: planLimits.scenes,
+    chaptersLimit,
+    scenesLimit,
     nextResetAt,
   };
 }
@@ -123,17 +134,29 @@ export async function canCreateEntry(
   userId: string,
   type: 'chapters' | 'scenes',
   userTimezone: string = 'UTC',
-  subscriptionPlan: string = 'free'
+  user: { 
+    subscriptionPlan?: string | null; 
+    subscriptionStatus?: string | null; 
+    subscriptionEndsAt?: Date | null 
+  }
 ): Promise<{ allowed: boolean; remaining: number; limit: number }> {
   const usage = await getOrCreateDailyUsage(userId, userTimezone);
   
-  const limits = {
-    free: { chapters: 5, scenes: 3 },
-    tribute: { chapters: 30, scenes: 30 },
-  };
+  // Determine limits based on premium access (not just plan type)
+  let limit: number;
   
-  const planLimits = limits[subscriptionPlan as keyof typeof limits] || limits.free;
-  const limit = planLimits[type];
+  if (hasPremiumAccess(user)) {
+    // All paid plans (weekly, monthly, yearly) always use shared limits
+    limit = type === 'chapters' 
+      ? SUBSCRIPTION_LIMITS.TRIBUTE.DAILY_CHAPTERS_SHARED // 15
+      : SUBSCRIPTION_LIMITS.TRIBUTE.DAILY_SCENES_SHARED; // 5
+  } else {
+    // Free plan or inactive/expired subscription
+    limit = type === 'chapters'
+      ? SUBSCRIPTION_LIMITS.FREE.DAILY_CHAPTERS // 5
+      : SUBSCRIPTION_LIMITS.FREE.DAILY_SCENES; // 1
+  }
+  
   const used = type === 'chapters' ? usage.chapters : usage.scenes;
   const remaining = Math.max(0, limit - used);
   

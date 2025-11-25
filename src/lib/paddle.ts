@@ -8,9 +8,23 @@ export const PADDLE_CONFIG = {
     : 'https://sandbox-api.paddle.com'
 };
 
-// Tribute subscription plan
+// Tribute subscription plans - different price IDs for different billing cycles
 export const TRIBUTE_PLAN = {
-  priceId: process.env.PADDLE_PRICE_ID || 'pri_01h8xce4x86pq3byesf7a4k0c5' // You'll need to get this from Paddle
+  weekly: {
+    priceId: process.env.PADDLE_PRICE_ID_WEEKLY || 'pri_weekly',
+    amount: 399, // $4.00 in cents
+    interval: 'week'
+  },
+  monthly: {
+    priceId: process.env.PADDLE_PRICE_ID_MONTHLY || 'pri_monthly',
+    amount: 1199, // $12.00 in cents
+    interval: 'month'
+  },
+  yearly: {
+    priceId: process.env.PADDLE_PRICE_ID_YEARLY || 'pri_yearly',
+    amount: 10799, // $108.00 in cents
+    interval: 'year'
+  }
 };
 
 export function hasActiveSubscription(user: { subscriptionStatus?: string | null; subscriptionEndsAt?: Date | null }): boolean {
@@ -24,14 +38,35 @@ export function canAccessPremiumFeatures(user: { subscriptionStatus?: string | n
 }
 
 /**
+ * Check if a subscription plan is a paid plan
+ */
+export function isPaidPlan(plan: string | null | undefined): boolean {
+  return plan === 'weekly' || plan === 'monthly' || plan === 'yearly';
+}
+
+/**
  * Check if user has premium access (active subscription OR cancelled but still in grace period)
+ * Also validates subscription state - invalid states return false
  */
 export function hasPremiumAccess(user: { 
   subscriptionPlan?: string | null; 
   subscriptionStatus?: string | null; 
   subscriptionEndsAt?: Date | null 
 }): boolean {
-  if (user.subscriptionPlan !== 'tribute') {
+  // Free users never have premium access
+  if (user.subscriptionStatus === 'free') {
+    return false;
+  }
+  
+  // Validate state: if status is active, plan must be paid
+  // If plan is free, status should be 'free' (invalid state = no premium access)
+  if (user.subscriptionStatus === 'active' && !isPaidPlan(user.subscriptionPlan)) {
+    // Invalid state: active status with free plan - treat as no premium access
+    return false;
+  }
+  
+  // Must have a paid plan to have premium access
+  if (!isPaidPlan(user.subscriptionPlan)) {
     return false;
   }
   

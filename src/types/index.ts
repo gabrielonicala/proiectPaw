@@ -8,9 +8,9 @@ export interface User {
   activeCharacterId?: string;
   characterSlots: number;
   // Subscription fields
-  subscriptionStatus?: 'active' | 'inactive' | 'canceled' | 'past_due';
+  subscriptionStatus?: 'free' | 'active' | 'inactive' | 'canceled' | 'past_due';
   subscriptionId?: string;
-  subscriptionPlan?: 'free' | 'tribute';
+  subscriptionPlan?: 'free' | 'weekly' | 'monthly' | 'yearly';
   subscriptionEndsAt?: Date;
   // Timezone (set once on signup, locked forever)
   timezone?: string;

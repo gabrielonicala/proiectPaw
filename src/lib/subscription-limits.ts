@@ -5,7 +5,7 @@ import { hasPremiumAccess } from './paddle';
 export const SUBSCRIPTION_LIMITS = {
   FREE: {
     DAILY_CHAPTERS: 5,
-    DAILY_SCENES: 0, // Free users can't generate scenes
+    DAILY_SCENES: 1, // Free users get 1 scene per day
     CHARACTER_SLOTS: 1
   },
   TRIBUTE: {
@@ -13,8 +13,8 @@ export const SUBSCRIPTION_LIMITS = {
     DAILY_SCENES_PER_CHARACTER: 1,
     CHARACTER_SLOTS: 3,
     // Shared limits (alternative approach)
-    DAILY_CHAPTERS_SHARED: 30, // Total across all characters
-    DAILY_SCENES_SHARED: 30,    // Total across all characters
+    DAILY_CHAPTERS_SHARED: 15, // Total across all characters
+    DAILY_SCENES_SHARED: 5,    // Total across all characters
   }
 } as const;
 
@@ -22,12 +22,12 @@ export const SUBSCRIPTION_LIMITS = {
 // 
 // PER-CHARACTER LIMITS (false):
 //   - Tribute: 10 chapters + 1 scene per character (30 total chapters, 3 total scenes)
-//   - Free: 5 chapters + 0 scenes (shared across all characters)
+//   - Free: 5 chapters + 1 scene (shared across all characters)
 //   - Encourages character diversity and exploration
 //
 // SHARED LIMITS (true):
-//   - Tribute: 30 chapters + 3 scenes (shared across all characters)
-//   - Free: 5 chapters + 0 scenes (shared across all characters)
+//   - Tribute: 15 chapters + 5 scenes (shared across all characters)
+//   - Free: 5 chapters + 1 scene (shared across all characters)
 //   - Maximum flexibility, can focus on one character
 //
 // To toggle: Run `npx tsx scripts/toggle-limits.ts`
@@ -142,32 +142,37 @@ export async function canCreateEntry(
       }
     }
   } else if (outputType === 'image') {
-    if (!isActiveSubscription) {
-      return {
-        allowed: false,
-        reason: 'Scene generation is only available with the Tribute plan. Upgrade to unlock this feature!',
-        usage: dailyUsage
-      };
-    }
-
-    if (USE_SHARED_LIMITS) {
-      // Tribute users: 3 scenes total per day (across all characters)
-      const limit = SUBSCRIPTION_LIMITS.TRIBUTE.DAILY_SCENES_SHARED;
-      if (dailyUsage.scenes >= limit) {
-        return {
-          allowed: false,
-          reason: `You've reached your daily scene limit of ${limit} scenes. Try again tomorrow!`,
-          usage: dailyUsage,
-          limit
-        };
+    if (isActiveSubscription) {
+      if (USE_SHARED_LIMITS) {
+        // Tribute users: 5 scenes total per day (across all characters)
+        const limit = SUBSCRIPTION_LIMITS.TRIBUTE.DAILY_SCENES_SHARED;
+        if (dailyUsage.scenes >= limit) {
+          return {
+            allowed: false,
+            reason: `You've reached your daily scene limit of ${limit} scenes. Try again tomorrow!`,
+            usage: dailyUsage,
+            limit
+          };
+        }
+      } else {
+        // Tribute users: 1 scene per character per day
+        const limit = SUBSCRIPTION_LIMITS.TRIBUTE.DAILY_SCENES_PER_CHARACTER;
+        if (dailyUsage.scenes >= limit) {
+          return {
+            allowed: false,
+            reason: `You've reached your daily scene limit of ${limit} scene for this character. Try again tomorrow or switch to another character.`,
+            usage: dailyUsage,
+            limit
+          };
+        }
       }
     } else {
-      // Tribute users: 1 scene per character per day
-      const limit = SUBSCRIPTION_LIMITS.TRIBUTE.DAILY_SCENES_PER_CHARACTER;
+      // Free users: 1 scene total per day (across all characters)
+      const limit = SUBSCRIPTION_LIMITS.FREE.DAILY_SCENES;
       if (dailyUsage.scenes >= limit) {
         return {
           allowed: false,
-          reason: `You've reached your daily scene limit of ${limit} scene for this character. Try again tomorrow or switch to another character.`,
+          reason: `You've reached your daily scene limit of ${limit} scene. Upgrade to Tribute plan for 5 scenes per day!`,
           usage: dailyUsage,
           limit
         };

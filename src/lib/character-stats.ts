@@ -387,8 +387,10 @@ export function generateAchievements(
     }
   ];
 
-  // Special achievements for Unbound Adventurer subscribers
-  const isUnboundAdventurer = userSubscription?.plan === 'tribute' && userSubscription?.status === 'active';
+  // Special achievements for Unbound Adventurer subscribers (any paid plan)
+  const isUnboundAdventurer = userSubscription?.plan && 
+    ['weekly', 'monthly', 'yearly'].includes(userSubscription.plan) && 
+    userSubscription?.status === 'active';
   
   if (isUnboundAdventurer) {
     const specialAchievements: Achievement[] = [

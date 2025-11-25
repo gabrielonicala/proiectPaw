@@ -30,12 +30,14 @@ export async function GET(request: NextRequest) {
       }, { status: 401 });
     }
 
-    // Get user with timezone
+    // Get user with timezone and subscription info
     const user = await db.user.findUnique({
       where: { id: userId },
       select: {
         timezone: true,
         subscriptionPlan: true,
+        subscriptionStatus: true,
+        subscriptionEndsAt: true,
       }
     });
 
@@ -44,7 +46,6 @@ export async function GET(request: NextRequest) {
     }
 
     const userTimezone = user.timezone || 'UTC';
-    const subscriptionPlan = user.subscriptionPlan || 'free';
 
     // Run cleanup periodically (once per day) to prevent table growth
     // This runs in the background and doesn't block the response
@@ -58,7 +59,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Get daily usage from DailyUsage table (not counting entries)
-    const usageData = await getDailyUsageWithLimits(userId, userTimezone, subscriptionPlan);
+    // Pass full user object to check premium access properly
+    const usageData = await getDailyUsageWithLimits(userId, userTimezone, {
+      subscriptionPlan: user.subscriptionPlan,
+      subscriptionStatus: user.subscriptionStatus,
+      subscriptionEndsAt: user.subscriptionEndsAt,
+    });
 
     // Get subscription limits for plan info
     const subscriptionLimits = await getSubscriptionLimits(userId);

@@ -86,11 +86,11 @@ export async function POST(request: NextRequest) {
         verificationToken,
         verificationTokenExpiry,
         timezone: validTimezone, // Set once on signup, locked forever
-        // Auto-assign premium plan for testing
-        subscriptionPlan: 'tribute',
-        subscriptionStatus: 'active',
-        characterSlots: 3, // Premium plan gets 3 character slots
-        subscriptionEndsAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
+        // New users start with free plan
+        subscriptionPlan: 'free',
+        subscriptionStatus: 'free',
+        characterSlots: 1, // Free plan gets 1 character slot
+        subscriptionEndsAt: null,
       },
       select: {
         id: true,
