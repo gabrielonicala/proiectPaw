@@ -2,17 +2,17 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    // Fetch the full rendered privacy policy page from iubenda
-    const response = await fetch('https://www.iubenda.com/privacy-policy/70554621', {
+    // Fetch the full rendered cookie policy page from iubenda
+    const response = await fetch('https://www.iubenda.com/privacy-policy/70554621/cookie-policy', {
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; Quillia/1.0)',
       },
     });
 
     if (!response.ok) {
-      console.error('Failed to fetch iubenda policy:', response.status, response.statusText);
+      console.error('Failed to fetch iubenda cookie policy:', response.status, response.statusText);
       return NextResponse.json(
-        { error: 'Failed to fetch privacy policy' },
+        { error: 'Failed to fetch cookie policy' },
         { status: response.status }
       );
     }
@@ -63,6 +63,7 @@ export async function GET() {
     // Remove elements containing specific footer text (handles nested elements)
     const textsToRemove = [
       'Downloadable documents',
+      'Cookie Policy by iubenda',
       'Privacy Policy by iubenda',
       'Generate yours with',
       'iubenda hosts this content',
@@ -90,10 +91,10 @@ export async function GET() {
     }
     
     // Also remove welcome text patterns (fallback)
-    html = html.replace(/<[^>]*>[\s\S]*?Welcome to the privacy policy[\s\S]*?<\/[^>]+>/gi, '');
-    html = html.replace(/<p[^>]*>[\s\S]*?Welcome to the privacy policy[\s\S]*?<\/p>/gi, '');
-    html = html.replace(/<div[^>]*>[\s\S]*?Welcome to the privacy policy[\s\S]*?<\/div>/gi, '');
-    html = removeElementsWithText(html, 'Welcome to the privacy policy');
+    html = html.replace(/<[^>]*>[\s\S]*?Welcome to the[\s\S]*?<\/[^>]+>/gi, '');
+    html = html.replace(/<p[^>]*>[\s\S]*?Welcome to the[\s\S]*?<\/p>/gi, '');
+    html = html.replace(/<div[^>]*>[\s\S]*?Welcome to the[\s\S]*?<\/div>/gi, '');
+    html = removeElementsWithText(html, 'Welcome to the');
     
     // Remove "Latest update" and "Download PDF" elements - more aggressive
     html = html.replace(/<[^>]*>[\s\S]*?Latest update[\s\S]*?Download PDF[\s\S]*?<\/[^>]+>/gi, '');
@@ -110,7 +111,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error('Error fetching iubenda privacy policy:', error);
+    console.error('Error fetching iubenda cookie policy:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

@@ -456,7 +456,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
                     disabled={isCanceling}
                     className="w-full font-pixel text-white bg-red-600 hover:bg-red-700 active:bg-red-800 border-2 border-red-500 px-4 py-3 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isCanceling ? 'Stopping...' : 'Stop tribute'}
+                    {isCanceling ? 'Stopping...' : 'Stop Tribute'}
                   </button>
                 ) : hasPremiumAccess(user) && user.subscriptionPlan !== selectedBillingCycle ? (
                   // User has active subscription but different billing cycle - show message

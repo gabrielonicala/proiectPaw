@@ -43,7 +43,7 @@ export default function Footer({ className = '' }: FooterProps) {
   }, []);
 
   return (
-    <footer className={`bg-gray-900/80 border-t border-gray-700 relative z-50 ${className}`}>
+    <footer className={`border-t border-gray-800 relative z-50 ${className}`} style={{ backgroundColor: '#0d1117' }}>
       <div className="container mx-auto px-4 py-6 relative z-50">
         <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           {/* Logo and Description */}
@@ -91,22 +91,52 @@ export default function Footer({ className = '' }: FooterProps) {
             >
               Contact
             </Link>
-            {/* iubenda Cookie Policy Footer Widget */}
-            <a 
-              href="https://www.iubenda.com/privacy-policy/70554621/cookie-policy" 
-              className="iubenda-nostyle iubenda-noiframe iubenda-embed iubenda-noiframe text-gray-400 hover:text-orange-400 transition-colors font-pixel relative z-50 pointer-events-auto" 
-              title="Cookie Policy"
+            {/* Cookie Policy - Now hosted on our domain */}
+            <Link 
+              href="/legal/cookie-policy" 
+              className="text-gray-400 hover:text-orange-400 transition-colors font-pixel relative z-50 pointer-events-auto"
+              onClick={(e) => {
+                // Only apply transition if we're not already on the cookie policy page
+                if (pathname !== '/legal/cookie-policy') {
+                  e.preventDefault();
+                  // Find the main page container and fade it out
+                  const mainContainer = document.querySelector('.min-h-screen');
+                  if (mainContainer) {
+                    (mainContainer as HTMLElement).style.transition = 'opacity 0.15s ease-in-out';
+                    (mainContainer as HTMLElement).style.opacity = '0';
+                  }
+                  // Navigate after fade-out
+                  setTimeout(() => {
+                    router.push('/legal/cookie-policy');
+                  }, 150);
+                }
+              }}
             >
               Cookie Policy
-            </a>
-            {/* iubenda Privacy Policy Footer Widget */}
-            <a 
-              href="https://www.iubenda.com/privacy-policy/70554621" 
-              className="iubenda-nostyle iubenda-noiframe iubenda-embed iubenda-noiframe text-gray-400 hover:text-orange-400 transition-colors font-pixel relative z-50 pointer-events-auto" 
-              title="Privacy Policy"
+            </Link>
+            {/* Privacy Policy - Now hosted on our domain */}
+            <Link 
+              href="/legal/privacy" 
+              className="text-gray-400 hover:text-orange-400 transition-colors font-pixel relative z-50 pointer-events-auto"
+              onClick={(e) => {
+                // Only apply transition if we're not already on the privacy page
+                if (pathname !== '/legal/privacy') {
+                  e.preventDefault();
+                  // Find the main page container and fade it out
+                  const mainContainer = document.querySelector('.min-h-screen');
+                  if (mainContainer) {
+                    (mainContainer as HTMLElement).style.transition = 'opacity 0.15s ease-in-out';
+                    (mainContainer as HTMLElement).style.opacity = '0';
+                  }
+                  // Navigate after fade-out
+                  setTimeout(() => {
+                    router.push('/legal/privacy');
+                  }, 150);
+                }
+              }}
             >
               Privacy Policy
-            </a>
+            </Link>
             {/* Notice at Collection - Required for California users */}
             <a 
               href="https://www.iubenda.com/privacy-policy/70554621#notice_at_collection" 
@@ -115,14 +145,29 @@ export default function Footer({ className = '' }: FooterProps) {
             >
               Notice at Collection
             </a>
-            {/* iubenda Terms and Conditions Footer Widget */}
-            <a 
-              href="https://www.iubenda.com/terms-and-conditions/70554621" 
-              className="iubenda-nostyle iubenda-noiframe iubenda-embed iubenda-noiframe text-gray-400 hover:text-orange-400 transition-colors font-pixel relative z-50 pointer-events-auto" 
-              title="Terms and Conditions"
+            {/* Terms & Conditions - Now hosted on our domain */}
+            <Link 
+              href="/legal/terms" 
+              className="text-gray-400 hover:text-orange-400 transition-colors font-pixel relative z-50 pointer-events-auto"
+              onClick={(e) => {
+                // Only apply transition if we're not already on the terms page
+                if (pathname !== '/legal/terms') {
+                  e.preventDefault();
+                  // Find the main page container and fade it out
+                  const mainContainer = document.querySelector('.min-h-screen');
+                  if (mainContainer) {
+                    (mainContainer as HTMLElement).style.transition = 'opacity 0.15s ease-in-out';
+                    (mainContainer as HTMLElement).style.opacity = '0';
+                  }
+                  // Navigate after fade-out
+                  setTimeout(() => {
+                    router.push('/legal/terms');
+                  }, 150);
+                }
+              }}
             >
               Terms & Conditions
-            </a>
+            </Link>
           </div>
         </div>
 

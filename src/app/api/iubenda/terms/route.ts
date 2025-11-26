@@ -3,12 +3,10 @@ import { NextResponse } from 'next/server';
 export async function GET() {
   try {
     // Get Terms ID from environment variable or use default
-    // You can find this in your iubenda dashboard
-    const termsId = process.env.NEXT_PUBLIC_IUBENDA_TERMS_ID || '70554621'; // Replace with your actual Terms ID
+    const termsId = process.env.NEXT_PUBLIC_IUBENDA_TERMS_ID || '70554621';
     
-    // Fetch the terms from iubenda's no-markup endpoint
-    // Try the same endpoint format as Privacy Policy
-    const response = await fetch(`https://www.iubenda.com/terms-and-conditions/${termsId}/no-markup`, {
+    // Fetch the full rendered terms page from iubenda
+    const response = await fetch(`https://www.iubenda.com/terms-and-conditions/${termsId}`, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; Quillia/1.0)',
       },
@@ -18,14 +16,26 @@ export async function GET() {
       const errorText = await response.text().catch(() => 'No error details');
       console.error('Failed to fetch iubenda terms:', response.status, response.statusText);
       console.error('Error details:', errorText);
-      console.error('URL attempted:', `https://www.iubenda.com/terms-and-conditions/${termsId}/no-markup`);
       return NextResponse.json(
-        { error: 'Failed to fetch terms and conditions', details: errorText, url: `https://www.iubenda.com/terms-and-conditions/${termsId}/no-markup` },
+        { error: 'Failed to fetch terms and conditions', details: errorText },
         { status: response.status }
       );
     }
 
     let html = await response.text();
+    
+    // Extract the main content from the page
+    // Look for the main content container (usually has id="iub-legalDoc" or similar)
+    const mainContentMatch = html.match(/<div[^>]*id="iub-legalDoc"[^>]*>([\s\S]*?)<\/div>\s*<\/div>\s*<\/div>/i);
+    if (mainContentMatch) {
+      html = mainContentMatch[1];
+    } else {
+      // Fallback: try to find the main content area
+      const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+      if (bodyMatch) {
+        html = bodyMatch[1];
+      }
+    }
     
     // Remove footer elements from HTML using regex (server-side processing)
     // This function removes HTML elements (and their content) containing specific text

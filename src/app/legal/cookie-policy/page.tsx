@@ -5,7 +5,7 @@ import Footer from '@/components/Footer';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 
-export default function PrivacyPage() {
+export default function CookiePolicyPage() {
   const [contentLoaded, setContentLoaded] = useState(false);
   const pathname = usePathname();
 
@@ -17,7 +17,7 @@ export default function PrivacyPage() {
     const initTimeout = setTimeout(() => {
       // Force reload iubenda content on every page visit
       const loadIubendaContent = () => {
-        const container = document.getElementById('iubenda-privacy-policy');
+        const container = document.getElementById('iubenda-cookie-policy');
         if (!container) return;
 
         // COMPLETELY CLEAR the container - remove ALL content
@@ -25,10 +25,10 @@ export default function PrivacyPage() {
 
         // Create fresh anchor tag
         const anchor = document.createElement('a');
-        anchor.href = 'https://www.iubenda.com/privacy-policy/70554621';
+        anchor.href = 'https://www.iubenda.com/privacy-policy/70554621/cookie-policy';
         anchor.className = 'iubenda-black iubenda-noiframe iubenda-embed iubenda-noiframe iub-body-embed';
-        anchor.title = 'Privacy Policy';
-        anchor.textContent = 'Privacy Policy';
+        anchor.title = 'Cookie Policy';
+        anchor.textContent = 'Cookie Policy';
         container.appendChild(anchor);
 
         // Remove existing iubenda script to force fresh load
@@ -68,13 +68,13 @@ export default function PrivacyPage() {
 
     // Check for content loading
     const checkContent = () => {
-      const container = document.getElementById('iubenda-privacy-policy');
+      const container = document.getElementById('iubenda-cookie-policy');
       if (!container) return false;
 
       const hasContent = container.innerHTML.length > 500 && 
                         container.querySelector('h1, h2, h3, section');
       const anchor = container.querySelector('a.iub-body-embed');
-      const anchorReplaced = !anchor || !container.innerHTML.includes('Privacy Policy</a>');
+      const anchorReplaced = !anchor || !container.innerHTML.includes('Cookie Policy</a>');
 
       if (hasContent || (anchorReplaced && container.innerHTML.length > 200)) {
         setContentLoaded(true);
@@ -84,7 +84,7 @@ export default function PrivacyPage() {
     };
 
     // Use MutationObserver to detect when content loads
-    const container = document.getElementById('iubenda-privacy-policy');
+    const container = document.getElementById('iubenda-cookie-policy');
     if (container) {
       const observer = new MutationObserver(() => {
         if (checkContent()) {
@@ -128,11 +128,11 @@ export default function PrivacyPage() {
 
   return (
     <div className={`min-h-screen bg-white transition-opacity duration-300 ${contentLoaded ? 'opacity-100' : 'opacity-0'}`}>
-      {/* Allow text selection on privacy policy page */}
+      {/* Allow text selection on cookie policy page */}
       <style dangerouslySetInnerHTML={{
         __html: `
-          #iubenda-privacy-policy,
-          #iubenda-privacy-policy * {
+          #iubenda-cookie-policy,
+          #iubenda-cookie-policy * {
             -webkit-user-select: text !important;
             -khtml-user-select: text !important;
             -moz-user-select: text !important;
@@ -141,17 +141,18 @@ export default function PrivacyPage() {
           }
         `
       }} />
-      {/* iubenda Privacy Policy - Clean embed, no custom styling, full width */}
-      <div id="iubenda-privacy-policy" key={pathname}>
+      {/* iubenda Cookie Policy - Clean embed, no custom styling, full width */}
+      <div id="iubenda-cookie-policy" key={pathname}>
         <a 
-          href="https://www.iubenda.com/privacy-policy/70554621" 
+          href="https://www.iubenda.com/privacy-policy/70554621/cookie-policy" 
           className="iubenda-black iubenda-noiframe iubenda-embed iubenda-noiframe iub-body-embed" 
-          title="Privacy Policy"
+          title="Cookie Policy"
         >
-          Privacy Policy
+          Cookie Policy
         </a>
       </div>
       <Footer />
     </div>
   );
 }
+
