@@ -454,7 +454,8 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
                   <button
                     onClick={handleCancelSubscription}
                     disabled={isCanceling}
-                    className="w-full font-pixel text-white bg-red-600 hover:bg-red-700 active:bg-red-800 border-2 border-red-500 px-4 py-3 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ fontSize: '1.1rem' }}
+                    className="w-full font-pixel text-white bg-red-600 hover:bg-red-700 active:bg-red-800 border-2 border-red-500 px-4 py-5 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isCanceling ? 'Stopping...' : 'Stop Tribute'}
                   </button>
@@ -481,13 +482,6 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
                   >
                     {isCreating ? 'Creating...' : 'Start Tribute'}
                   </button>
-                )}
-                
-                {/* Show "Your Current Plan" only when the selected billing cycle matches and user has premium access */}
-                {user.subscriptionPlan === selectedBillingCycle && hasPremiumAccess(user) && (
-                  <div className="text-lg font-pixel text-yellow-400 mt-6 text-center">
-                    Your Current Plan
-                  </div>
                 )}
               </div>
             </Card>

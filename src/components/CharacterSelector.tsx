@@ -1,8 +1,8 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useState, useMemo } from 'react';
-import { Trash, Pencil, Check, X } from 'lucide-react';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { Trash, Pencil, Check } from 'lucide-react';
 import Button from './ui/Button';
 import Card from './ui/Card';
 import Input from './ui/Input';
@@ -50,6 +50,9 @@ export default function CharacterSelector({
   const [editingName, setEditingName] = useState<string | null>(null);
   const [tempName, setTempName] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const nameEditRef = useRef<HTMLDivElement>(null);
+  const inputContainerRef = useRef<HTMLDivElement>(null);
+  const checkButtonRef = useRef<HTMLDivElement>(null);
 
   const handleCharacterSwitch = async (character: Character) => {
     if (character.id === activeCharacter?.id) return;
@@ -216,6 +219,45 @@ export default function CharacterSelector({
     setTempName('');
   };
 
+  // Handle clicks outside the name edit input to cancel editing
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (editingName && nameEditRef.current && !nameEditRef.current.contains(event.target as Node)) {
+        setEditingName(null);
+        setTempName('');
+      }
+    };
+
+    if (editingName) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [editingName]);
+
+  // Position check button at the end of the input
+  useEffect(() => {
+    if (editingName && inputContainerRef.current && checkButtonRef.current) {
+      const updateButtonPosition = () => {
+        const inputContainer = inputContainerRef.current;
+        const checkButton = checkButtonRef.current;
+        if (inputContainer && checkButton) {
+          const inputWidth = inputContainer.offsetWidth;
+          checkButton.style.left = `${inputWidth + 8}px`; // 8px for gap (0.5rem)
+        }
+      };
+
+      updateButtonPosition();
+      window.addEventListener('resize', updateButtonPosition);
+
+      return () => {
+        window.removeEventListener('resize', updateButtonPosition);
+      };
+    }
+  }, [editingName, tempName]);
+
   const handleDeleteCharacter = async (characterId: string) => {
     setIsDeleting(characterId);
     try {
@@ -367,7 +409,7 @@ export default function CharacterSelector({
                        }`
                  }`}
                >
-                <div className="flex items-center gap-4 p-4 relative">
+                <div className="flex items-center gap-2 -pl-6 -ml-4 pr-4 py-4 relative">
                   {/* Lock Overlay for locked characters */}
                   {isLocked && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
@@ -410,7 +452,7 @@ export default function CharacterSelector({
                   </div>
                   
                   {/* Character Info - Right Side */}
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 flex-shrink-0">
                     {isLocked ? (
                       <div className="mb-1">
                         <h3 className="font-pixel text-lg text-gray-400">
@@ -421,51 +463,55 @@ export default function CharacterSelector({
                         </div>
                       </div>
                     ) : editingName === character.id ? (
-                      <div className="flex items-center gap-2 mb-1">
-                         <Input
-                           value={tempName}
-                           onChange={setTempName}
-                           className="text-lg font-pixel"
-                           theme={character.theme}
-                           onKeyDown={(e) => {
-                             if (e.key === 'Enter') {
-                               handleSaveName(character.id);
-                             } else if (e.key === 'Escape') {
-                               handleCancelEditName();
-                             }
-                           }}
-                           autoFocus
-                         />
+                      <div ref={nameEditRef} className="flex items-center gap-2 mb-1 relative" style={{ minHeight: '1.75rem' }}>
+                         <h3 className="font-pixel text-lg text-white whitespace-nowrap opacity-0">
+                           {character.name}
+                         </h3>
                          <Button
-                           onClick={() => handleSaveName(character.id)}
-                           variant="primary"
+                           variant="secondary"
                            size="sm"
-                           className="text-xs px-2 py-1 navbar-button-icon bg-transparent border-none"
-                           theme={character.theme}
-                           style={{
-                             background: 'transparent',
-                             border: 'none'
-                           }}
+                           className="text-xs px-1 py-1 opacity-0 pointer-events-none flex-shrink-0"
+                           style={{ width: '1.5rem', height: '1.5rem' }}
                          >
                            <Check className="w-4 h-4" />
                          </Button>
-                         <Button
-                           onClick={handleCancelEditName}
-                           variant="secondary"
-                           size="sm"
-                           className="text-xs px-2 py-1 navbar-button-icon bg-transparent border-none"
-                           theme={character.theme}
-                           style={{
-                             background: 'transparent',
-                             border: 'none'
-                           }}
-                         >
-                           <X className="w-4 h-4" />
-                         </Button>
+                         <div ref={inputContainerRef} className="absolute left-0" style={{ maxWidth: '200px' }}>
+                            <Input
+                              value={tempName}
+                              onChange={setTempName}
+                              className="text-lg font-pixel border-0 rounded-none bg-transparent px-0 py-1 w-full"
+                              theme={character.theme}
+                              maxLength={15}
+                             onKeyDown={(e) => {
+                               if (e.key === 'Enter') {
+                                 handleSaveName(character.id);
+                               } else if (e.key === 'Escape') {
+                                 handleCancelEditName();
+                               }
+                             }}
+                             autoFocus
+                           />
+                         </div>
+                         <div ref={checkButtonRef} className="absolute">
+                           <Button
+                             onClick={() => handleSaveName(character.id)}
+                             variant="secondary"
+                             size="sm"
+                             className="text-xs px-1 py-1 opacity-60 hover:opacity-100 navbar-button-icon bg-transparent border-none flex-shrink-0"
+                             theme={character.theme}
+                             style={{
+                               background: 'transparent',
+                               borderWidth: 0,
+                               borderColor: 'transparent'
+                             }}
+                           >
+                             <Check className="w-4 h-4" />
+                           </Button>
+                         </div>
                       </div>
                     ) : (
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-pixel text-lg text-white">
+                        <h3 className="font-pixel text-lg text-white whitespace-nowrap">
                           {character.name}
                         </h3>
                          <Button
@@ -661,7 +707,7 @@ export default function CharacterSelector({
                   className="mt-3 text-lg px-6 py-2 w-full"
                   theme={activeCharacter?.theme || 'obsidian-veil'}
                 >
-                  PLEDGE ALLEGIANCE
+                  REACH NEW LEVELS
                 </Button>
                </div>
              )}

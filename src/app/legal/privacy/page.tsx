@@ -40,12 +40,12 @@ export default function PrivacyPage() {
         // Clear iubenda from window if it exists
         if ((window as any).iubenda) {
           delete (window as any).iubenda;
-        }
-
+      }
+      
         // Create and load script fresh
-        const script = document.createElement('script');
-        script.src = 'https://cdn.iubenda.com/iubenda.js';
-        script.async = true;
+      const script = document.createElement('script');
+      script.src = 'https://cdn.iubenda.com/iubenda.js';
+      script.async = true;
         script.onload = () => {
           // Wait a bit for iubenda to initialize, then trigger load
           setTimeout(() => {
@@ -70,7 +70,7 @@ export default function PrivacyPage() {
     const checkContent = () => {
       const container = document.getElementById('iubenda-privacy-policy');
       if (!container) return false;
-
+      
       const hasContent = container.innerHTML.length > 500 && 
                         container.querySelector('h1, h2, h3, section');
       const anchor = container.querySelector('a.iub-body-embed');
@@ -82,7 +82,7 @@ export default function PrivacyPage() {
       }
       return false;
     };
-
+    
     // Use MutationObserver to detect when content loads
     const container = document.getElementById('iubenda-privacy-policy');
     if (container) {
@@ -119,7 +119,7 @@ export default function PrivacyPage() {
         clearTimeout(fallbackTimeout);
         observer.disconnect();
       };
-    }
+      }
 
     return () => {
       clearTimeout(initTimeout);
@@ -138,18 +138,18 @@ export default function PrivacyPage() {
             -moz-user-select: text !important;
             -ms-user-select: text !important;
             user-select: text !important;
-          }
+        }
         `
       }} />
       {/* iubenda Privacy Policy - Clean embed, no custom styling, full width */}
       <div id="iubenda-privacy-policy" key={pathname}>
-        <a 
-          href="https://www.iubenda.com/privacy-policy/70554621" 
-          className="iubenda-black iubenda-noiframe iubenda-embed iubenda-noiframe iub-body-embed" 
-          title="Privacy Policy"
-        >
-          Privacy Policy
-        </a>
+              <a 
+                href="https://www.iubenda.com/privacy-policy/70554621" 
+                className="iubenda-black iubenda-noiframe iubenda-embed iubenda-noiframe iub-body-embed" 
+                title="Privacy Policy"
+              >
+                Privacy Policy
+              </a>
       </div>
       <Footer />
     </div>

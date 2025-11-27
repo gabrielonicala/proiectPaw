@@ -33,6 +33,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (username.length > 20) {
+      return NextResponse.json(
+        { error: 'Username must be at most 20 characters long' },
+        { status: 400 }
+      );
+    }
+
     if (!/^[a-zA-Z0-9_]+$/.test(username)) {
       return NextResponse.json(
         { error: 'Username can only contain letters, numbers, and underscores' },
@@ -86,11 +93,17 @@ export async function POST(request: NextRequest) {
         verificationToken,
         verificationTokenExpiry,
         timezone: validTimezone, // Set once on signup, locked forever
-        // New users start with free plan
-        subscriptionPlan: 'free',
-        subscriptionStatus: 'free',
-        characterSlots: 1, // Free plan gets 1 character slot
-        subscriptionEndsAt: null,
+        // TEMPORARY: For testing purposes, new users start with yearly plan
+        // TODO: Revert to free plan before official launch
+        subscriptionPlan: 'yearly',
+        subscriptionStatus: 'active',
+        characterSlots: 3, // Paid plan gets 3 character slots
+        subscriptionEndsAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
+        // Original free plan defaults (commented out for easy restoration):
+        // subscriptionPlan: 'free',
+        // subscriptionStatus: 'free',
+        // characterSlots: 1, // Free plan gets 1 character slot
+        // subscriptionEndsAt: null,
       },
       select: {
         id: true,

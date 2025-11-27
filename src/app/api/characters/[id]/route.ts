@@ -17,6 +17,14 @@ export async function PUT(
     const { name, description, avatar } = await request.json();
     const { id } = await params;
 
+    // Validate character name length if provided
+    if (name && name.length > 15) {
+      return NextResponse.json(
+        { error: 'Character name must be at most 15 characters long' },
+        { status: 400 }
+      );
+    }
+
     // Verify the character belongs to the user
     const existingCharacter = await db.character.findFirst({
       where: { 

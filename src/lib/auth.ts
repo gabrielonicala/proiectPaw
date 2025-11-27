@@ -120,11 +120,17 @@ export const authOptions = {
             data: { 
               username,
               emailVerified: now, // Google users are pre-verified
-              // New users start with free plan
-              subscriptionPlan: 'free',
-              subscriptionStatus: 'free',
-              subscriptionEndsAt: null,
-              characterSlots: 1, // Free users get 1 character slot
+              // TEMPORARY: For testing purposes, new users start with yearly plan
+              // TODO: Revert to free plan before official launch
+              subscriptionPlan: 'yearly',
+              subscriptionStatus: 'active',
+              subscriptionEndsAt: oneYearFromNow,
+              characterSlots: 3, // Paid plan gets 3 character slots
+              // Original free plan defaults (commented out for easy restoration):
+              // subscriptionPlan: 'free',
+              // subscriptionStatus: 'free',
+              // subscriptionEndsAt: null,
+              // characterSlots: 1, // Free users get 1 character slot
             }
           });
           console.log('Generated username for new Google user:', user.email, '->', username);

@@ -690,7 +690,8 @@ export default function JournalEntry({
                   {/* Input Labels - What happened today? and Today's Quota */}
                   <div className="flex justify-between items-center mb-2">
                     <div className="flex flex-col">
-                      <h3 className="font-pixel text-yellow-400 text-xl">What happened today?</h3>
+                      {/* <h3 className="font-pixel text-yellow-400 text-xl">What happened today?</h3> */}
+                      <h3 className="font-pixel text-yellow-400 text-xl">Today&apos;s story?</h3>
                       <div className="mt-2">
                         <div className="text-center">
                           <div className="flex justify-start text-sm gap-2">
@@ -733,8 +734,9 @@ export default function JournalEntry({
                 <Input
                   value={entryText}
                   onChange={setEntryText}
-                    placeholder={`Describe your day, your thoughts, or anything you'd like to transform into an adventure!
-Hint: Rich details weave the most captivating tales.`}
+//                     placeholder={`Describe your day, your thoughts, or anything you'd like to transform into an adventure!
+// Hint: Rich details weave the most captivating tales.`}
+                  placeholder={`Describe your day, your thoughts, or anything you'd like to transform into an adventure!`}
                   type="textarea"
                   rows={6}
                   className="w-full journal-textarea"

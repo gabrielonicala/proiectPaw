@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { HiInformationCircle } from "react-icons/hi";
-import { RefreshCw, Pencil, MoreVertical } from 'lucide-react';
+import { RefreshCw, Pencil, MoreVertical, Check } from 'lucide-react';
 import Button from './ui/Button';
 import Card from './ui/Card';
 import Input from './ui/Input';
@@ -17,6 +17,7 @@ import LayeredAvatarBuilder from './LayeredAvatarBuilder';
 import { LayeredAvatar } from '@/lib/layered-avatars';
 import { CharacterStats } from '@/lib/character-stats';
 import { getCachedImageUrl } from '@/lib/asset-cache';
+import { hasPremiumAccess } from '@/lib/paddle';
 // import Footer from './Footer';
 
 interface UserProfileProps {
@@ -52,6 +53,9 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
   const [statsHeight, setStatsHeight] = useState<number>(0);
   
   const statsRef = useRef<HTMLDivElement>(null);
+  const usernameEditRef = useRef<HTMLDivElement>(null);
+  const usernameInputContainerRef = useRef<HTMLDivElement>(null);
+  const usernameCheckButtonRef = useRef<HTMLDivElement>(null);
   const [newUsername, setNewUsername] = useState(user.username || '');
   const [usernameError, setUsernameError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -60,9 +64,30 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
   useEffect(() => {
     setNewUsername(user.username || '');
   }, [user.username]);
+
+  // Handle clicks outside the username edit input to cancel editing
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isChangingUsername && usernameEditRef.current && !usernameEditRef.current.contains(event.target as Node)) {
+        setNewUsername(user.username || '');
+        setUsernameError('');
+        setIsChangingUsername(false);
+      }
+    };
+
+    if (isChangingUsername) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isChangingUsername, user.username]);
+
   const [showLayeredAvatarBuilder, setShowLayeredAvatarBuilder] = useState(false);
   const [selectedCharacterId, setSelectedCharacterId] = useState(activeCharacter.id);
   const [openTooltip, setOpenTooltip] = useState<string | null>(null);
+  const [showStarTooltip, setShowStarTooltip] = useState(false);
   const [characterStats, setCharacterStats] = useState<CharacterStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
   const [showDeleteAccountConfirm, setShowDeleteAccountConfirm] = useState(false);
@@ -513,35 +538,67 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
                 {/* Username Section */}
                 <div className="flex items-center justify-center gap-2 mb-2">
                   {isChangingUsername ? (
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="text"
-                        value={newUsername}
-                        onChange={setNewUsername}
-                        placeholder="Enter new username"
-                        className="text-sm w-32"
-                        theme={activeCharacter.theme}
-                      />
+                    <div ref={usernameEditRef} className="flex items-center gap-2 relative">
+                      {hasPremiumAccess(user) && user.username && (
+                        <span className="text-base -mt-2 relative cursor-help flex-shrink-0">
+                          🌟
+                        </span>
+                      )}
+                      <div ref={usernameInputContainerRef} className="relative" style={{ width: '25ch' }}>
+                        <Input
+                          type="text"
+                          value={newUsername}
+                          onChange={setNewUsername}
+                          placeholder="Enter new username"
+                          className="text-sm font-pixel border-0 rounded-none bg-transparent px-0 py-1 w-full"
+                          theme={activeCharacter.theme}
+                          maxLength={20}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              handleUsernameChange();
+                            } else if (e.key === 'Escape') {
+                              handleCancelUsernameChange();
+                            }
+                          }}
+                          autoFocus
+                        />
+                      </div>
+                      <div ref={usernameCheckButtonRef}>
                         <Button
                           onClick={handleUsernameChange}
                           disabled={isLoading}
-                        className="px-2 py-1 text-xs"
-                        theme={activeCharacter.theme}
-                        >
-                          {isLoading ? 'Saving...' : 'Save'}
-                        </Button>
-                        <Button
-                          onClick={handleCancelUsernameChange}
                           variant="secondary"
-                        className="px-2 py-1 text-xs"
-                        theme={activeCharacter.theme}
+                          size="sm"
+                          className="text-xs px-1 py-1 opacity-60 hover:opacity-100 navbar-button-icon bg-transparent border-none flex-shrink-0"
+                          theme={activeCharacter.theme}
+                          style={{
+                            background: 'transparent',
+                            borderWidth: 0,
+                            borderColor: 'transparent'
+                          }}
                         >
-                          Cancel
+                          <Check className="w-4 h-4" />
                         </Button>
+                      </div>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <span className="font-pixel text-sm text-gray-300">
+                      <span className="font-pixel text-sm text-gray-300 flex items-center gap-1">
+                        {hasPremiumAccess(user) && user.username && (
+                          <span 
+                            className="text-base -mt-2 relative cursor-help"
+                            onMouseEnter={() => setShowStarTooltip(true)}
+                            onMouseLeave={() => setShowStarTooltip(false)}
+                          >
+                            🌟
+                            {showStarTooltip && (
+                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 px-3 py-2 bg-gray-900 text-white text-sm font-pixel rounded-lg shadow-lg z-10 whitespace-nowrap">
+                                Unbound Adventurer
+                                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                              </div>
+                            )}
+                          </span>
+                        )}
                         {user.username ? `@${user.username}` : 'No username set'}
                       </span>
                       <button

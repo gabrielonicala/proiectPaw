@@ -621,7 +621,7 @@ export default function CharacterCreator({ user, onCharacterCreate, onBack, curr
                         borderColor: themes[selectedTheme].colors.border,
                         color: themes[selectedTheme].colors.text
                       }}
-                      maxLength={50}
+                      maxLength={15}
                     />
                   </div>
 

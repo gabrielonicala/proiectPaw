@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
+import { Eye, EyeOff } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
@@ -14,6 +15,8 @@ export default function SignUpPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
@@ -271,13 +274,13 @@ export default function SignUpPage() {
           </div>
 
           {/* Google Sign-Up Option */}
-          {/* <div className="mb-6">
+          <div className="mb-6">
             <GoogleSignInButton 
               variant="signup"
               className="w-full"
             />
             <div className="text-center text-white/70 my-4 -mb-4 text-sm font-pixel">or</div>
-          </div> */}
+          </div>
 
           <form id="signup-form" name="signup-form" onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -314,30 +317,58 @@ export default function SignUpPage() {
               <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2 font-pixel">
                 Password
               </label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                value={password}
-                onChange={setPassword}
-                placeholder="Enter your password"
-                className="w-full"
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={setPassword}
+                  placeholder="Enter your password"
+                  className="w-full pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
             </div>
 
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2 font-pixel">
                 Confirm Password
               </label>
-              <Input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={setConfirmPassword}
-                placeholder="Confirm your password"
-                className="w-full"
-              />
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={setConfirmPassword}
+                  placeholder="Confirm your password"
+                  className="w-full pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors"
+                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
             </div>
 
             {error && (
@@ -515,7 +546,7 @@ export default function SignUpPage() {
           </div>
 
           {/* Test Account Message */}
-          <div className="mt-8 p-4 bg-gray-800/50 border border-gray-600 rounded-lg">
+          {/* <div className="mt-8 p-4 bg-gray-800/50 border border-gray-600 rounded-lg">
             <div className="text-center">
               <p className="text-gray-300 text-sm font-pixel mb-2">
                 Thank you for trying out Quillia!
@@ -535,7 +566,7 @@ export default function SignUpPage() {
                 Hope you enjoy Quillia!
               </p>
             </div>
-          </div>
+          </div> */}
 
           {/* Back to Quillia Button */}
           <div className="mt-6 text-center">

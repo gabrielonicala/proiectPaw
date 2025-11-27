@@ -53,9 +53,9 @@ export default function AppNavigation({
       case 'calendar':
         return 'ADVENTURE CALENDAR';
       case 'tribute':
-        return 'PLEDGE ALLEGIANCE';
+        return 'REACH NEW LEVELS';
       case 'character-select':
-        return 'SELECT CHARACTER';
+        return 'SELECT A CHARACTER';
       default:
         return '';
     }
@@ -66,13 +66,13 @@ export default function AppNavigation({
       case 'journal':
         return `Tell us about your day, ${activeCharacter?.name || 'Adventurer'}`;
       case 'profile':
-        return `${activeCharacter?.name || 'Adventurer'}'s Journey`;
+        return `${activeCharacter?.name || 'Adventurer'}'s adventure log`;
       case 'calendar':
-        return `${activeCharacter?.name || 'Adventurer'}'s adventure through time`;
+        return `${activeCharacter?.name || 'Adventurer'}'s journey through time`;
       case 'tribute':
-        return 'Enhance your journey';
+        return 'Unlock your potential';
       case 'character-select':
-        return 'Choose which character to play as';
+        return 'Which path will you take?';
       default:
         return '';
     }

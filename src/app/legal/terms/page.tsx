@@ -12,7 +12,7 @@ export default function TermsPage() {
   useEffect(() => {
     // Reset state on route change
     setContentLoaded(false);
-    
+          
     // Wait a bit for any page transitions to complete
     const initTimeout = setTimeout(() => {
       // Force reload iubenda content on every page visit
@@ -35,12 +35,12 @@ export default function TermsPage() {
         const existingScript = document.querySelector('script[src="https://cdn.iubenda.com/iubenda.js"]');
         if (existingScript) {
           existingScript.remove();
-        }
-
+          }
+          
         // Clear iubenda from window if it exists
         if ((window as any).iubenda) {
           delete (window as any).iubenda;
-        }
+            }
 
         // Create and load script fresh
         const script = document.createElement('script');
@@ -56,8 +56,8 @@ export default function TermsPage() {
               // Also try direct processing
               if (typeof (window as any).iubenda.processEmbeds === 'function') {
                 (window as any).iubenda.processEmbeds();
-              }
             }
+          }
           }, 200);
         };
         document.head.appendChild(script);
@@ -82,10 +82,10 @@ export default function TermsPage() {
       }
       return false;
     };
-
+    
     // Use MutationObserver to detect when content loads
-    const container = document.getElementById('iubenda-terms');
-    if (container) {
+        const container = document.getElementById('iubenda-terms');
+        if (container) {
       const observer = new MutationObserver(() => {
         if (checkContent()) {
           observer.disconnect();
@@ -103,7 +103,7 @@ export default function TermsPage() {
         if (checkContent()) {
           clearInterval(interval);
           observer.disconnect();
-        }
+      }
       }, 200);
 
       // Fallback timeout - show page after 3 seconds
@@ -119,7 +119,7 @@ export default function TermsPage() {
         clearTimeout(fallbackTimeout);
         observer.disconnect();
       };
-    }
+      }
 
     return () => {
       clearTimeout(initTimeout);
@@ -143,13 +143,13 @@ export default function TermsPage() {
       }} />
       {/* iubenda Terms & Conditions - Clean embed, no custom styling, full width */}
       <div id="iubenda-terms" key={pathname}>
-        <a 
-          href="https://www.iubenda.com/terms-and-conditions/70554621" 
-          className="iubenda-black iubenda-noiframe iubenda-embed iubenda-noiframe iub-body-embed" 
-          title="Terms and Conditions"
-        >
-          Terms and Conditions
-        </a>
+                  <a 
+                    href="https://www.iubenda.com/terms-and-conditions/70554621" 
+                    className="iubenda-black iubenda-noiframe iubenda-embed iubenda-noiframe iub-body-embed" 
+                    title="Terms and Conditions"
+                  >
+                    Terms and Conditions
+                  </a>
       </div>
       <Footer />
     </div>

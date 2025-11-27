@@ -29,6 +29,13 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    if (username.length > 20) {
+      return NextResponse.json(
+        { error: 'Username must be at most 20 characters long' },
+        { status: 400 }
+      );
+    }
+
     if (!/^[a-zA-Z0-9_]+$/.test(username)) {
       return NextResponse.json(
         { error: 'Username can only contain letters, numbers, and underscores' },

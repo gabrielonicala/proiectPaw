@@ -92,6 +92,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Name and theme are required' }, { status: 400 });
     }
 
+    // Validate character name length
+    if (name.length > 15) {
+      return NextResponse.json(
+        { error: 'Character name must be at most 15 characters long' },
+        { status: 400 }
+      );
+    }
+
     // Check if user has available character slots
     const user = await db.user.findUnique({
       where: { id: (session as { user: { id: string } }).user.id },
