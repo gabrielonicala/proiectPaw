@@ -273,7 +273,7 @@ function SignInContent() {
                 value={identifier}
                 onChange={setIdentifier}
                 // placeholder="Enter your email or username"
-                placeholder="Email or username"
+                placeholder="Email or Username"
                 className="w-full"
               />
             </div>
