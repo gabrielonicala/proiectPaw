@@ -57,6 +57,12 @@ export default function SignUpPage() {
       return;
     }
 
+    if (password.length > 20) {
+      setError('Password must be at most 20 characters');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       // Create user account
       const response = await fetch('/api/auth/signup', {
@@ -293,7 +299,8 @@ export default function SignUpPage() {
                 type="text"
                 value={username}
                 onChange={setUsername}
-                placeholder="Choose a unique username"
+                // placeholder="Choose a unique username"
+                placeholder="Username"
                 className="w-full"
               />
             </div>
@@ -308,7 +315,8 @@ export default function SignUpPage() {
                 type="email"
                 value={email}
                 onChange={setEmail}
-                placeholder="Enter your email"
+                // placeholder="Enter your email"
+                placeholder="Email"
                 className="w-full"
               />
             </div>
@@ -324,13 +332,15 @@ export default function SignUpPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={setPassword}
-                  placeholder="Enter your password"
-                  className="w-full pr-10"
+                  // placeholder="Enter your password"
+                  placeholder="Password"
+                  className="w-full pr-12"
+                  maxLength={20}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors"
+                  className="absolute top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors flex items-center justify-center right-[2%] min-[769px]:right-[4%]"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? (
@@ -353,13 +363,15 @@ export default function SignUpPage() {
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={setConfirmPassword}
-                  placeholder="Confirm your password"
-                  className="w-full pr-10"
+                  // placeholder="Confirm your password"
+                  placeholder="Confirm password"
+                  className="w-full pr-12"
+                  maxLength={20}
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors"
+                  className="absolute top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors flex items-center justify-center right-[2%] min-[769px]:right-[4%]"
                   aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                 >
                   {showConfirmPassword ? (

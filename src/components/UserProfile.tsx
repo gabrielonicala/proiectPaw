@@ -545,13 +545,13 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
                         </span>
                       )}
                       <div ref={usernameInputContainerRef} className="relative" style={{ width: '25ch' }}>
-                        <Input
-                          type="text"
-                          value={newUsername}
-                          onChange={setNewUsername}
-                          placeholder="Enter new username"
+                      <Input
+                        type="text"
+                        value={newUsername}
+                        onChange={setNewUsername}
+                        placeholder="Enter new username"
                           className="text-sm font-pixel border-0 rounded-none bg-transparent px-0 py-1 w-full"
-                          theme={activeCharacter.theme}
+                        theme={activeCharacter.theme}
                           maxLength={20}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
@@ -570,7 +570,7 @@ export default function UserProfile({ user, activeCharacter, onBack, onAvatarCha
                           variant="secondary"
                           size="sm"
                           className="text-xs px-1 py-1 opacity-60 hover:opacity-100 navbar-button-icon bg-transparent border-none flex-shrink-0"
-                          theme={activeCharacter.theme}
+                        theme={activeCharacter.theme}
                           style={{
                             background: 'transparent',
                             borderWidth: 0,

@@ -48,6 +48,12 @@ function ResetPasswordContent() {
       return;
     }
 
+    if (password.length > 20) {
+      setError('Password must be at most 20 characters');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch('/api/auth/reset-password', {
         method: 'POST',
@@ -139,6 +145,7 @@ function ResetPasswordContent() {
                 onChange={setPassword}
                 placeholder="Enter your new password"
                 className="w-full"
+                maxLength={20}
               />
             </div>
 
@@ -153,6 +160,7 @@ function ResetPasswordContent() {
                 onChange={setConfirmPassword}
                 placeholder="Confirm your new password"
                 className="w-full"
+                maxLength={20}
               />
             </div>
 

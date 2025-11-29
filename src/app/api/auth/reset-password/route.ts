@@ -21,6 +21,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (password.length > 20) {
+      return NextResponse.json(
+        { error: 'Password must be at most 20 characters long' },
+        { status: 400 }
+      );
+    }
+
     // Find user with valid reset token
     const user = await db.user.findFirst({
       where: {

@@ -272,7 +272,8 @@ function SignInContent() {
                 type="text"
                 value={identifier}
                 onChange={setIdentifier}
-                placeholder="Enter your email or username"
+                // placeholder="Enter your email or username"
+                placeholder="Email or username"
                 className="w-full"
               />
             </div>
@@ -287,13 +288,15 @@ function SignInContent() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={setPassword}
-                  placeholder="Enter your password"
-                  className="w-full pr-10"
+                  // placeholder="Enter your password"
+                  placeholder="Password"
+                  className="w-full pr-12"
+                  maxLength={40}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors"
+                  className="absolute top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors flex items-center justify-center right-[2%] min-[769px]:right-[4%]"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? (
