@@ -8,8 +8,8 @@ export const FASTSPRING_CONFIG = {
   storeId: process.env.FASTSPRING_STORE_ID,
   // FastSpring checkout base URL (test or live)
   checkoutBaseUrl: process.env.FASTSPRING_CHECKOUT_URL || 'https://quillia.test.onfastspring.com',
-  // FastSpring storefront subdomain for JavaScript API
-  storefront: process.env.FASTSPRING_STOREFRONT || 'quillia.test.onfastspring.com',
+  // FastSpring storefront for Popup Storefront (includes /popup-{name})
+  storefront: process.env.FASTSPRING_STOREFRONT || 'quillia.test.onfastspring.com/popup-quillia',
   webhookSecret: process.env.FASTSPRING_WEBHOOK_SECRET
 };
 

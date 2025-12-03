@@ -92,6 +92,15 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
+        {/* FastSpring Store Builder Library - for Popup Storefront */}
+        <Script
+          id="fsc-api"
+          src="https://sbl.onfastspring.com/sbl/1.0.6/fastspring-builder.min.js"
+          type="text/javascript"
+          data-storefront={process.env.NEXT_PUBLIC_FASTSPRING_STOREFRONT || 'quillia.test.onfastspring.com/popup-quillia'}
+          data-continuous="true"
+          strategy="afterInteractive"
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

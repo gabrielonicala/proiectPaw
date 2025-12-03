@@ -62,46 +62,91 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
   const handleCreateSubscription = async () => {
     setIsCreating(true);
     try {
-      console.log('Making request to /api/fastspring/checkout');
-      const response = await fetch('/api/fastspring/checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ billingCycle: selectedBillingCycle }),
-      });
-      
-      console.log('Response status:', response.status);
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-      
-      if (!response.ok) {
-        const responseText = await response.text();
-        console.log('Error response body:', responseText);
+      // Check if FastSpring API is loaded
+      if (typeof window === 'undefined' || !(window as any).fastspring) {
+        // Wait a bit for the script to load
+        await new Promise(resolve => setTimeout(resolve, 500));
         
-        if (response.headers.get('content-type')?.includes('text/html')) {
-          alert('Subscription service is not configured yet. Please set up FastSpring checkout URL first.');
+        if (!(window as any).fastspring) {
+          alert('FastSpring checkout is loading. Please try again in a moment.');
           setIsCreating(false);
           return;
         }
-        throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      const fastspring = (window as any).fastspring;
+      const productPath = getProductPath(selectedBillingCycle);
       
-      const data = await response.json();
-      console.log('Success response:', data);
-      
-      if (data.success && data.checkoutUrl) {
-        // Redirect to checkout URL (userId is included as URL parameter)
-        window.location.href = data.checkoutUrl;
-      } else {
-        alert('Failed to create subscription. Please try again.');
+      // Set up one-time event listeners for popup callbacks (window-level events)
+      const handleOrderComplete = (event: any) => {
+        console.log('Order completed:', event);
+        // Clean up listeners
+        window.removeEventListener('fsc:order.complete', handleOrderComplete);
+        window.removeEventListener('fsc:order.failed', handleOrderFailed);
+        // The webhook will handle the subscription update
+        // Reload to show updated subscription status
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      };
+
+      const handleOrderFailed = (event: any) => {
+        console.error('Order failed:', event);
+        // Clean up listeners
+        window.removeEventListener('fsc:order.complete', handleOrderComplete);
+        window.removeEventListener('fsc:order.failed', handleOrderFailed);
+        alert('Checkout failed. Please try again.');
+        setIsCreating(false);
+      };
+
+      // Register event listeners before opening checkout
+      window.addEventListener('fsc:order.complete', handleOrderComplete);
+      window.addEventListener('fsc:order.failed', handleOrderFailed);
+
+      // Reset the session first (clear any existing cart)
+      fastspring.builder.reset();
+
+      // Build session object with account (buyerReference) and products
+      // According to FastSpring docs: https://developer.fastspring.com/reference/session-object
+      const sessionData: any = {
+        account: {
+          buyerReference: user.id
+        },
+        products: [{
+          path: productPath,
+          quantity: 1
+        }]
+      };
+
+      // Add payment contact if available (helps with tax calculation)
+      if (user.email) {
+        sessionData.paymentContact = {
+          email: user.email
+        };
       }
+
+      // Push session data to FastSpring
+      fastspring.builder.push(sessionData);
+
+      // Open the popup checkout
+      fastspring.builder.checkout();
+
     } catch (error) {
-      console.error('Error creating subscription:', error);
-      alert('Subscription service is not configured yet. Please set up FastSpring checkout URL first.');
-    } finally {
+      console.error('Error opening FastSpring checkout:', error);
+      alert('Failed to open checkout. Please try again.');
       setIsCreating(false);
     }
   };
+
+  // Helper function to get product path
+  function getProductPath(billingCycle: 'weekly' | 'monthly' | 'yearly'): string {
+    const paths = {
+      weekly: 'quillia-weekly-tribute',
+      monthly: 'quillia-monthly-tribute',
+      yearly: 'quillia-yearly-tribute'
+    };
+    return paths[billingCycle];
+  }
 
   const handleCancelSubscription = () => {
     setShowCancelConfirm(true);

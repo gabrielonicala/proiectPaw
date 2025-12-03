@@ -117,11 +117,20 @@ export async function POST(request: NextRequest) {
         case 'order.fulfilled': {
           const order = eventData;
           
-          // Get userId from buyerReference (set during session creation)
-          const userId = order.buyerReference;
+          // Get userId from buyerReference (set during popup checkout or session creation)
+          // buyerReference can be on order, order.account, or in tags
+          let userId = order.buyerReference || order.account?.buyerReference;
+          
+          // Fallback: try to get from tags if buyerReference is not set
+          if (!userId && order.items?.[0]?.tags) {
+            const tags = typeof order.items[0].tags === 'string' 
+              ? JSON.parse(order.items[0].tags) 
+              : order.items[0].tags;
+            userId = tags?.userId;
+          }
           
           if (!userId) {
-            console.warn('⚠️ No buyerReference found in order - cannot match user');
+            console.warn('⚠️ No buyerReference or userId in tags found in order - cannot match user');
             break;
           }
 

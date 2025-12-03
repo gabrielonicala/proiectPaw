@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     // Create FastSpring checkout session with buyerReference (userId)
     // This ensures webhooks can match the subscription to the correct user
     // Include country code if detected to enable automatic tax calculation
-    const { checkoutUrl } = await createCheckoutSession(
+    const { sessionId, checkoutUrl } = await createCheckoutSession(
       billingCycle,
       user.id,
       user.email || '',
@@ -95,6 +95,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ 
       success: true, 
+      sessionId: sessionId,
       checkoutUrl: checkoutUrl
     });
 
