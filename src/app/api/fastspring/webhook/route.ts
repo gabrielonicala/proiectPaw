@@ -46,13 +46,22 @@ function getBillingCycle(subscription: any): string {
     return tags.billingCycle;
   }
   
-  // Try to infer from product path
-  if (subscription.product?.product || subscription.items?.[0]?.product) {
-    const productPath = subscription.product?.product || subscription.items[0].product;
+  // Try to infer from product path (can be in different places)
+  const productPath = subscription.product || 
+                      subscription.product?.product || 
+                      subscription.items?.[0]?.product ||
+                      '';
+  
+  if (typeof productPath === 'string') {
     if (productPath.includes('weekly')) return 'weekly';
     if (productPath.includes('yearly')) return 'yearly';
     if (productPath.includes('monthly')) return 'monthly';
   }
+  
+  // Try intervalUnit from subscription
+  if (subscription.intervalUnit === 'week') return 'weekly';
+  if (subscription.intervalUnit === 'year') return 'yearly';
+  if (subscription.intervalUnit === 'month') return 'monthly';
   
   return 'monthly';
 }
@@ -86,147 +95,190 @@ export async function POST(request: NextRequest) {
       console.log('✅ Webhook signature verification passed');
     }
 
-    const event = JSON.parse(body);
-    console.log('📨 Received FastSpring webhook:', event.type || event.event || JSON.stringify(event).substring(0, 100));
+    const payload = JSON.parse(body);
+    console.log('📨 Received FastSpring webhook payload:', JSON.stringify(payload).substring(0, 200));
 
-    // FastSpring webhook events can have different structures
-    const eventType = event.type || event.event || event['@type'];
+    // FastSpring sends events in an array: { events: [{ type, data, ... }] }
+    if (!payload.events || !Array.isArray(payload.events)) {
+      console.error('❌ Invalid webhook format - expected events array');
+      return NextResponse.json({ error: 'Invalid webhook format' }, { status: 400 });
+    }
+
+    // Process each event in the array
+    for (const event of payload.events) {
+      const eventType = event.type;
+      const eventData = event.data;
+      
+      console.log(`📨 Processing event: ${eventType}`);
     
-    // Process the webhook event
-    switch (eventType) {
-      case 'order.completed':
-      case 'order.fulfilled': {
-        const order = event.data || event;
-        const subscription = order.subscription || order.subscriptions?.[0];
-        
-        // Try to get userId from tags
-        let tags = subscription?.tags || order.tags;
-        if (typeof tags === 'string') {
-          try {
-            tags = JSON.parse(tags);
-          } catch {
-            tags = {};
-          }
-        }
-        
-        const userId = tags?.userId;
-
-        if (userId && subscription) {
-          const billingCycle = getBillingCycle(subscription);
+      // Process the webhook event
+      switch (eventType) {
+        case 'order.completed':
+        case 'order.fulfilled': {
+          const order = eventData;
           
-          let subscriptionEndsAt: Date | null = null;
-          if (subscription.endDate) {
-            subscriptionEndsAt = new Date(subscription.endDate);
-          } else if (subscription.nextChargeDate) {
-            subscriptionEndsAt = new Date(subscription.nextChargeDate);
-          } else {
-            subscriptionEndsAt = calculateSubscriptionEndDate(billingCycle);
+          // Get userId from buyerReference (set during session creation)
+          const userId = order.buyerReference;
+          
+          if (!userId) {
+            console.warn('⚠️ No buyerReference found in order - cannot match user');
+            break;
           }
 
-          await db.user.update({
-            where: { id: userId },
-            data: {
-              subscriptionStatus: 'active',
-              subscriptionPlan: billingCycle,
-              subscriptionId: subscription.id || subscription.subscription,
-              subscriptionEndsAt: subscriptionEndsAt,
-              characterSlots: 3,
-            },
+          // Find user by buyerReference (userId)
+          const user = await db.user.findUnique({
+            where: { id: userId }
           });
-          console.log('✅ Subscription created for user:', userId, 'plan:', billingCycle);
-        }
-        break;
-      }
 
-      case 'subscription.activated':
-      case 'subscription.updated': {
-        const subscription = event.data || event;
-        let tags = subscription.tags;
-        if (typeof tags === 'string') {
-          try {
-            tags = JSON.parse(tags);
-          } catch {
-            tags = {};
+          if (!user) {
+            console.error('❌ User not found for buyerReference:', userId);
+            break;
           }
-        }
-        const userId = tags?.userId;
 
-        if (userId) {
-          const billingCycle = getBillingCycle(subscription);
+          // Get subscription from order items
+          const subscriptionId = order.items?.[0]?.subscription;
           
-          let subscriptionEndsAt: Date | null = null;
-          if (subscription.endDate) {
-            subscriptionEndsAt = new Date(subscription.endDate);
-          } else if (subscription.nextChargeDate) {
-            subscriptionEndsAt = new Date(subscription.nextChargeDate);
-          } else if (subscription.status === 'active') {
-            subscriptionEndsAt = calculateSubscriptionEndDate(billingCycle);
-          }
-
-          let newStatus: string;
-          if (subscription.status === 'active' || subscription.status === 'active_trial') {
-            newStatus = 'active';
-          } else if (subscription.status === 'canceled' || subscription.status === 'deactivated') {
-            newStatus = 'canceled';
-          } else if (subscriptionEndsAt && subscriptionEndsAt < new Date()) {
-            newStatus = 'free';
+          if (subscriptionId) {
+            // Determine billing cycle from product path
+            const productPath = order.items[0].product || '';
+            let billingCycle = 'monthly';
+            if (productPath.includes('weekly')) billingCycle = 'weekly';
+            else if (productPath.includes('yearly')) billingCycle = 'yearly';
+            
+            // Store subscription ID - subscription.activated will update with proper end date
+            await db.user.update({
+              where: { id: user.id },
+              data: {
+                subscriptionStatus: 'active',
+                subscriptionPlan: billingCycle,
+                subscriptionId: subscriptionId,
+                characterSlots: 3,
+              },
+            });
+            console.log('✅ Order completed - subscription ID stored for user:', user.id, 'plan:', billingCycle);
           } else {
-            newStatus = 'inactive';
+            console.warn('⚠️ No subscription ID found in order items');
           }
-
-          await db.user.update({
-            where: { id: userId },
-            data: {
-              subscriptionStatus: newStatus,
-              subscriptionPlan: newStatus === 'free' ? 'free' : billingCycle,
-              subscriptionEndsAt: subscriptionEndsAt,
-              ...(newStatus === 'free' ? { characterSlots: 1 } : {}),
-            },
-          });
-          console.log('✅ Subscription updated for user:', userId, 'status:', newStatus);
+          break;
         }
-        break;
-      }
 
-      case 'subscription.canceled':
-      case 'subscription.deactivated': {
-        const subscription = event.data || event;
-        let tags = subscription.tags;
-        if (typeof tags === 'string') {
-          try {
-            tags = JSON.parse(tags);
-          } catch {
-            tags = {};
-          }
-        }
-        const userId = tags?.userId;
-
-        if (userId) {
-          let subscriptionEndsAt: Date | null = null;
+        case 'subscription.activated':
+        case 'subscription.updated': {
+          const subscription = eventData;
+          const subscriptionId = subscription.id || subscription.subscription;
           
-          if (subscription.endDate) {
-            subscriptionEndsAt = new Date(subscription.endDate);
-          } else if (subscription.nextChargeDate) {
-            subscriptionEndsAt = new Date(subscription.nextChargeDate);
-          } else {
+          if (!subscriptionId) {
+            console.error('❌ No subscription ID found');
+            continue;
+          }
+
+          // Get userId from buyerReference (set during session creation)
+          // buyerReference is available on the subscription object
+          const userId = subscription.buyerReference || subscription.account?.buyerReference;
+          
+          let user = null;
+          
+          // First try to find by buyerReference (most reliable)
+          if (userId) {
+            user = await db.user.findUnique({
+              where: { id: userId }
+            });
+            console.log('Found user by buyerReference:', userId);
+          }
+          
+          // Fallback: find by subscription ID (from order.completed event)
+          if (!user) {
+            user = await db.user.findFirst({
+              where: { subscriptionId: subscriptionId }
+            });
+            console.log('Found user by subscriptionId:', subscriptionId);
+          }
+
+          if (user) {
             const billingCycle = getBillingCycle(subscription);
-            subscriptionEndsAt = calculateSubscriptionEndDate(billingCycle);
+            
+            let subscriptionEndsAt: Date | null = null;
+            if (subscription.nextChargeDateValue) {
+              subscriptionEndsAt = new Date(subscription.nextChargeDateValue);
+            } else if (subscription.next) {
+              subscriptionEndsAt = new Date(subscription.next);
+            } else if (subscription.endDate) {
+              subscriptionEndsAt = new Date(subscription.endDate);
+            } else {
+              subscriptionEndsAt = calculateSubscriptionEndDate(billingCycle);
+            }
+
+            let newStatus: string;
+            if (subscription.state === 'active' || subscription.active === true) {
+              newStatus = 'active';
+            } else if (subscription.state === 'canceled' || subscription.state === 'deactivated') {
+              newStatus = 'canceled';
+            } else if (subscriptionEndsAt && subscriptionEndsAt < new Date()) {
+              newStatus = 'free';
+            } else {
+              newStatus = 'inactive';
+            }
+
+            await db.user.update({
+              where: { id: user.id },
+              data: {
+                subscriptionStatus: newStatus,
+                subscriptionPlan: newStatus === 'free' ? 'free' : billingCycle,
+                subscriptionEndsAt: subscriptionEndsAt,
+                subscriptionId: subscriptionId, // Ensure subscription ID is stored
+                ...(newStatus === 'free' ? { characterSlots: 1 } : {}),
+              },
+            });
+            console.log('✅ Subscription updated for user:', user.id, 'status:', newStatus, 'plan:', billingCycle);
+          } else {
+            console.warn('⚠️ User not found for subscription:', subscriptionId, 'buyerReference:', userId);
+          }
+          break;
+        }
+
+        case 'subscription.canceled':
+        case 'subscription.deactivated': {
+          const subscription = eventData;
+          const subscriptionId = subscription.id || subscription.subscription;
+
+          if (!subscriptionId) {
+            console.error('❌ No subscription ID found');
+            continue;
           }
 
-          await db.user.update({
-            where: { id: userId },
-            data: {
-              subscriptionStatus: 'canceled',
-              subscriptionEndsAt: subscriptionEndsAt,
-            },
+          const user = await db.user.findFirst({
+            where: { subscriptionId: subscriptionId }
           });
-          console.log('✅ Subscription canceled for user:', userId);
-        }
-        break;
-      }
 
-      default:
-        console.log('ℹ️ Unhandled webhook event type:', eventType);
+          if (user) {
+            let subscriptionEndsAt: Date | null = null;
+            
+            if (subscription.endValue) {
+              subscriptionEndsAt = new Date(subscription.endValue);
+            } else if (subscription.end) {
+              subscriptionEndsAt = new Date(subscription.end);
+            } else if (subscription.nextChargeDateValue) {
+              subscriptionEndsAt = new Date(subscription.nextChargeDateValue);
+            } else {
+              const billingCycle = getBillingCycle(subscription);
+              subscriptionEndsAt = calculateSubscriptionEndDate(billingCycle);
+            }
+
+            await db.user.update({
+              where: { id: user.id },
+              data: {
+                subscriptionStatus: 'canceled',
+                subscriptionEndsAt: subscriptionEndsAt,
+              },
+            });
+            console.log('✅ Subscription canceled for user:', user.id);
+          }
+          break;
+        }
+
+        default:
+          console.log('ℹ️ Unhandled webhook event type:', eventType);
+      }
     }
 
     return NextResponse.json({ success: true });

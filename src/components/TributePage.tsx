@@ -90,6 +90,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
       console.log('Success response:', data);
       
       if (data.success && data.checkoutUrl) {
+        // Redirect to checkout URL (userId is included as URL parameter)
         window.location.href = data.checkoutUrl;
       } else {
         alert('Failed to create subscription. Please try again.');
