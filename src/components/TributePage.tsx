@@ -13,7 +13,7 @@ import { User, Character, Theme } from '@/types';
 import { USE_SHARED_LIMITS, SUBSCRIPTION_LIMITS } from '@/lib/subscription-limits';
 import { migrateTheme } from '@/lib/theme-migration';
 import { themes } from '@/themes';
-import { isPaidPlan, hasPremiumAccess } from '@/lib/paddle';
+import { isPaidPlan, hasPremiumAccess } from '@/lib/fastspring';
 // import Footer from './Footer';
 
 interface SubscriptionData {
@@ -62,8 +62,8 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
   const handleCreateSubscription = async () => {
     setIsCreating(true);
     try {
-      console.log('Making request to /api/paddle/checkout');
-      const response = await fetch('/api/paddle/checkout', {
+      console.log('Making request to /api/fastspring/checkout');
+      const response = await fetch('/api/fastspring/checkout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -79,7 +79,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
         console.log('Error response body:', responseText);
         
         if (response.headers.get('content-type')?.includes('text/html')) {
-          alert('Subscription service is not configured yet. Please set up Paddle API keys first.');
+          alert('Subscription service is not configured yet. Please set up FastSpring checkout URL first.');
           setIsCreating(false);
           return;
         }
@@ -96,7 +96,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
       }
     } catch (error) {
       console.error('Error creating subscription:', error);
-      alert('Subscription service is not configured yet. Please set up Paddle API keys first.');
+      alert('Subscription service is not configured yet. Please set up FastSpring checkout URL first.');
     } finally {
       setIsCreating(false);
     }
@@ -111,7 +111,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
     setIsCanceling(true);
     
     try {
-      const response = await fetch('/api/paddle/subscription/cancel', {
+      const response = await fetch('/api/fastspring/subscription/cancel', {
         method: 'POST',
       });
       
@@ -119,7 +119,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
         if (response.headers.get('content-type')?.includes('text/html')) {
           setAlertConfig({
             title: 'Configuration Error',
-            message: 'Subscription service is not configured yet. Please set up Paddle API keys first.',
+            message: 'Subscription service is not configured yet. Please set up FastSpring first.',
             variant: 'error'
           });
           setShowAlert(true);
