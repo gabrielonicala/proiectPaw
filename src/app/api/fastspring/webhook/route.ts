@@ -73,7 +73,12 @@ if (!webhookSecret) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Log the incoming request URL to debug redirect issues
+    const url = request.nextUrl.toString();
     console.log('📨 Webhook received from FastSpring');
+    console.log('📨 Request URL:', url);
+    console.log('📨 Host:', request.headers.get('host'));
+    
     const body = await request.text();
     const signature = request.headers.get('x-fs-signature') || request.headers.get('fastspring-signature');
 
@@ -96,7 +101,7 @@ export async function POST(request: NextRequest) {
     }
 
     const payload = JSON.parse(body);
-    console.log('📨 Received FastSpring webhook payload:', JSON.stringify(payload).substring(0, 200));
+    console.log('📨 Received FastSpring webhook payload:', JSON.stringify(payload, null, 2));
 
     // FastSpring sends events in an array: { events: [{ type, data, ... }] }
     if (!payload.events || !Array.isArray(payload.events)) {
@@ -121,6 +126,11 @@ export async function POST(request: NextRequest) {
           // buyerReference can be on order, order.account, or in tags
           let userId = order.buyerReference || order.account?.buyerReference;
           
+          // Also check account object if it exists
+          if (!userId && order.account) {
+            userId = order.account.buyerReference || order.account.accountCustomKey;
+          }
+          
           // Fallback: try to get from tags if buyerReference is not set
           if (!userId && order.items?.[0]?.tags) {
             const tags = typeof order.items[0].tags === 'string' 
@@ -130,7 +140,17 @@ export async function POST(request: NextRequest) {
           }
           
           if (!userId) {
-            console.warn('⚠️ No buyerReference or userId in tags found in order - cannot match user');
+            console.warn('⚠️ No buyerReference found in order - cannot match user directly');
+            console.warn('Order data (relevant fields):', JSON.stringify({
+              orderId: order.id,
+              orderReference: order.reference,
+              buyerReference: order.buyerReference,
+              account: order.account,
+              subscriptionId: order.items?.[0]?.subscription,
+              customerEmail: order.customer?.email
+            }, null, 2));
+            // We'll rely on subscriptionId matching from subscription.activated event
+            console.warn('⚠️ Will rely on subscriptionId matching from subscription.activated event');
             break;
           }
 
@@ -182,8 +202,13 @@ export async function POST(request: NextRequest) {
           }
 
           // Get userId from buyerReference (set during session creation)
-          // buyerReference is available on the subscription object
-          const userId = subscription.buyerReference || subscription.account?.buyerReference;
+          // buyerReference can be on subscription, subscription.account, or accountCustomKey
+          let userId = subscription.buyerReference || subscription.account?.buyerReference || subscription.accountCustomKey;
+          
+          // Also check account object if it exists
+          if (!userId && subscription.account) {
+            userId = subscription.account.buyerReference || subscription.account.accountCustomKey;
+          }
           
           let user = null;
           
@@ -192,7 +217,7 @@ export async function POST(request: NextRequest) {
             user = await db.user.findUnique({
               where: { id: userId }
             });
-            console.log('Found user by buyerReference:', userId);
+            console.log('Found user by buyerReference/accountCustomKey:', userId);
           }
           
           // Fallback: find by subscription ID (from order.completed event)
@@ -201,6 +226,21 @@ export async function POST(request: NextRequest) {
               where: { subscriptionId: subscriptionId }
             });
             console.log('Found user by subscriptionId:', subscriptionId);
+          }
+          
+          // Log detailed info if user still not found
+          if (!user) {
+            const accountId = subscription.account ? (typeof subscription.account === 'string' ? subscription.account : subscription.account.id) : null;
+            console.error('❌ Could not find user for subscription:', subscriptionId);
+            console.error('Subscription data (relevant fields):', JSON.stringify({
+              subscriptionId,
+              account: subscription.account,
+              accountId,
+              buyerReference: subscription.buyerReference,
+              accountCustomKey: subscription.accountCustomKey,
+              accountObject: typeof subscription.account === 'object' ? subscription.account : null
+            }, null, 2));
+            console.error('⚠️ This subscription will not be linked to a user. Check if buyerReference is being set correctly in checkout.');
           }
 
           if (user) {
@@ -290,13 +330,38 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true });
+    // Return 200 OK immediately - FastSpring requires this to mark webhook as successful
+    // Use status 200 explicitly to avoid any redirect issues
+    return NextResponse.json(
+      { success: true },
+      { 
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          // Prevent any caching or redirects
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        }
+      }
+    );
 
   } catch (error) {
     console.error('❌ Error processing FastSpring webhook:', error);
+    // Still return 200 to prevent FastSpring from retrying immediately
+    // Log the error for debugging, but acknowledge receipt
     return NextResponse.json(
-      { error: 'Webhook processing failed' },
-      { status: 500 }
+      { 
+        success: false,
+        error: 'Webhook processing failed',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { 
+        status: 200, // Return 200 even on error to acknowledge receipt
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      }
     );
   }
 }

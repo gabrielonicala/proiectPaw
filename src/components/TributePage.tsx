@@ -107,7 +107,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
       fastspring.builder.reset();
 
       // Build session object with account (buyerReference) and products
-      // According to FastSpring docs: https://developer.fastspring.com/reference/session-object
+      // Using direct session object format - more reliable than event-based
       const sessionData: any = {
         account: {
           buyerReference: user.id
@@ -125,8 +125,11 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
         };
       }
 
-      // Push session data to FastSpring
+      // Push the complete session data at once
       fastspring.builder.push(sessionData);
+
+      // Small delay to ensure session is ready (FastSpring needs a moment to process)
+      await new Promise(resolve => setTimeout(resolve, 200));
 
       // Open the popup checkout
       fastspring.builder.checkout();
