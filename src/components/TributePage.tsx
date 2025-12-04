@@ -78,12 +78,49 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
       const productPath = getProductPath(selectedBillingCycle);
       
       // Set up one-time event listeners for popup callbacks (window-level events)
-      const handleOrderComplete = (event: any) => {
+      const handleOrderComplete = async (event: any) => {
         console.log('Order completed:', event);
+        
+        // Extract subscription ID from the order event
+        // FastSpring event structure: event.data.items[0].subscription or event.data.subscription
+        const orderData = event.data || event;
+        const subscriptionId = orderData.items?.[0]?.subscription || 
+                              orderData.subscription || 
+                              orderData.subscriptions?.[0]?.id;
+        
+        if (subscriptionId) {
+          // Immediately link the subscription using the active session
+          // No need to wait for webhooks or match emails - we have the user right here
+          try {
+            const response = await fetch('/api/fastspring/subscription/link', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                subscriptionId: subscriptionId,
+                orderId: orderData.id || orderData.order,
+                billingCycle: selectedBillingCycle
+              }),
+            });
+
+            if (response.ok) {
+              console.log('✅ Subscription linked successfully');
+            } else {
+              console.error('Failed to link subscription:', await response.text());
+            }
+          } catch (error) {
+            console.error('Error linking subscription:', error);
+            // Don't fail the checkout - webhook will handle it as fallback
+          }
+        } else {
+          console.warn('⚠️ No subscription ID found in order event - webhook will handle it');
+        }
+        
         // Clean up listeners
         window.removeEventListener('fsc:order.complete', handleOrderComplete);
         window.removeEventListener('fsc:order.failed', handleOrderFailed);
-        // The webhook will handle the subscription update
+        
         // Reload to show updated subscription status
         setTimeout(() => {
           window.location.reload();
