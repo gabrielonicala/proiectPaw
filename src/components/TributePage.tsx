@@ -545,10 +545,10 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
         isOpen={showCancelConfirm}
         onClose={() => setShowCancelConfirm(false)}
         onConfirm={confirmCancelSubscription}
-        title="CANCEL TRIBUTE"
-        message="Are you sure you want to cancel your Tribute? You will lose access to premium features at the end of your current period."
-        confirmText="CANCEL TRIBUTE"
-        cancelText="KEEP TRIBUTE"
+        title="STOP TRIBUTE"
+        message="Are you sure you want to stop your Tribute? You will lose access to premium features at the end of your current period."
+        confirmText="STOP TRIBUTE"
+        cancelText="Cancel"
         confirmVariant="destructive"
         theme={activeCharacter?.theme || 'obsidian-veil'}
         isLoading={isCanceling}
