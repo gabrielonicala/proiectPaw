@@ -96,23 +96,27 @@ export async function POST(request: NextRequest) {
       // Continue without signature verification for now
     } else if (webhookSecret) {
       // Verify webhook signature if provided
-      // FastSpring uses HMAC SHA256 of the raw request body
-      const expectedSignature = crypto
+      // FastSpring uses HMAC SHA256 of the raw request body, encoded as base64
+      const expectedSignatureHex = crypto
         .createHmac('sha256', webhookSecret)
         .update(body)
         .digest('hex');
+      
+      // FastSpring sends signature as base64, so convert our hex to base64 for comparison
+      const expectedSignatureBase64 = Buffer.from(expectedSignatureHex, 'hex').toString('base64');
 
       console.log('🔐 Signature verification:', {
         received: signature.substring(0, 20) + '...',
-        expected: expectedSignature.substring(0, 20) + '...',
-        match: signature === expectedSignature,
+        expectedHex: expectedSignatureHex.substring(0, 20) + '...',
+        expectedBase64: expectedSignatureBase64.substring(0, 20) + '...',
+        match: signature === expectedSignatureBase64,
         bodyLength: body.length
       });
 
-      if (signature !== expectedSignature) {
+      if (signature !== expectedSignatureBase64) {
         console.error('❌ Webhook signature verification failed');
-        console.error('Received signature:', signature);
-        console.error('Expected signature:', expectedSignature);
+        console.error('Received signature (base64):', signature);
+        console.error('Expected signature (base64):', expectedSignatureBase64);
         // For now, log but continue - you can enable strict verification later
         console.warn('⚠️ Signature mismatch - continuing anyway for testing. Enable strict verification in production.');
         // Uncomment the line below to enable strict signature verification:
@@ -163,8 +167,21 @@ export async function POST(request: NextRequest) {
             userId = tags?.userId;
           }
           
+          // If buyerReference is missing, try email as last resort ONLY to establish subscriptionId link
+          // This is a one-time thing - once subscriptionId is stored, we use that for matching
+          if (!userId && order.customer?.email) {
+            console.warn('⚠️ No buyerReference found - using email as temporary fallback to establish subscriptionId link');
+            const userByEmail = await db.user.findUnique({
+              where: { email: order.customer.email }
+            });
+            if (userByEmail) {
+              userId = userByEmail.id;
+              console.log('✅ Found user by email (temporary) to store subscriptionId:', userId);
+            }
+          }
+          
           if (!userId) {
-            console.warn('⚠️ No buyerReference found in order - cannot match user directly');
+            console.warn('⚠️ No buyerReference or email match found in order - cannot match user');
             console.warn('Order data (relevant fields):', JSON.stringify({
               orderId: order.id,
               orderReference: order.reference,
@@ -173,8 +190,7 @@ export async function POST(request: NextRequest) {
               subscriptionId: order.items?.[0]?.subscription,
               customerEmail: order.customer?.email
             }, null, 2));
-            // We'll rely on subscriptionId matching from subscription.activated event
-            console.warn('⚠️ Will rely on subscriptionId matching from subscription.activated event');
+            console.warn('⚠️ subscription.activated event will also fail to match user');
             break;
           }
 
