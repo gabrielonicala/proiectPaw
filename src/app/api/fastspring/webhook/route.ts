@@ -265,50 +265,10 @@ export async function POST(request: NextRequest) {
             user = await db.user.findFirst({
               where: { subscriptionId: subscriptionId }
             });
-            console.log('Found user by subscriptionId:', subscriptionId);
-          }
-          
-          // Fallback: If subscription.activated arrives before order.completed,
-          // fetch the order from FastSpring API using initialOrderId to get email
-          if (!user && subscription.initialOrderId) {
-            try {
-              console.log('⚠️ subscription.activated arrived before order.completed - fetching order from FastSpring API');
-              const { FASTSPRING_CONFIG } = await import('@/lib/fastspring');
-              
-              if (FASTSPRING_CONFIG.apiUsername && FASTSPRING_CONFIG.apiPassword) {
-                const credentials = Buffer.from(`${FASTSPRING_CONFIG.apiUsername}:${FASTSPRING_CONFIG.apiPassword}`).toString('base64');
-                
-                const orderResponse = await fetch(
-                  `${FASTSPRING_CONFIG.apiBaseUrl}/orders/${subscription.initialOrderId}`,
-                  {
-                    headers: {
-                      'Authorization': `Basic ${credentials}`,
-                      'Content-Type': 'application/json'
-                    }
-                  }
-                );
-                
-                if (orderResponse.ok) {
-                  const orderData = await orderResponse.json();
-                  const orderEmail = orderData.customer?.email || orderData.recipients?.[0]?.recipient?.email;
-                  
-                  if (orderEmail) {
-                    console.log('✅ Fetched order email from FastSpring API:', orderEmail);
-                    const userByEmail = await db.user.findUnique({
-                      where: { email: orderEmail }
-                    });
-                    if (userByEmail) {
-                      user = userByEmail;
-                      console.log('✅ Found user by email from fetched order:', user.id);
-                    }
-                  }
-                } else {
-                  console.warn('⚠️ Failed to fetch order from FastSpring API:', orderResponse.status);
-                }
-              }
-            } catch (error) {
-              console.error('❌ Error fetching order from FastSpring API:', error);
-              // Continue without user - order.completed will handle it
+            if (user) {
+              console.log('✅ Found user by subscriptionId:', subscriptionId);
+            } else {
+              console.log('⚠️ User not found by subscriptionId:', subscriptionId, '- order.completed may not have processed yet');
             }
           }
           
