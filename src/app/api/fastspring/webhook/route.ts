@@ -167,66 +167,59 @@ export async function POST(request: NextRequest) {
             userId = tags?.userId;
           }
           
-          // If buyerReference is missing, try email as last resort ONLY to establish subscriptionId link
-          // This is a one-time thing - once subscriptionId is stored, we use that for matching
-          if (!userId && order.customer?.email) {
-            console.warn('⚠️ No buyerReference found - using email as temporary fallback to establish subscriptionId link');
-            const userByEmail = await db.user.findUnique({
-              where: { email: order.customer.email }
-            });
-            if (userByEmail) {
-              userId = userByEmail.id;
-              console.log('✅ Found user by email (temporary) to store subscriptionId:', userId);
-            }
-          }
-          
-          if (!userId) {
-            console.warn('⚠️ No buyerReference or email match found in order - cannot match user');
-            console.warn('Order data (relevant fields):', JSON.stringify({
-              orderId: order.id,
-              orderReference: order.reference,
-              buyerReference: order.buyerReference,
-              account: order.account,
-              subscriptionId: order.items?.[0]?.subscription,
-              customerEmail: order.customer?.email
-            }, null, 2));
-            console.warn('⚠️ subscription.activated event will also fail to match user');
-            break;
-          }
-
-          // Find user by buyerReference (userId)
-          const user = await db.user.findUnique({
-            where: { id: userId }
-          });
-
-          if (!user) {
-            console.error('❌ User not found for buyerReference:', userId);
-            break;
-          }
-
           // Get subscription from order items
           const subscriptionId = order.items?.[0]?.subscription;
           
-          if (subscriptionId) {
-            // Determine billing cycle from product path
-            const productPath = order.items[0].product || '';
-            let billingCycle = 'monthly';
-            if (productPath.includes('weekly')) billingCycle = 'weekly';
-            else if (productPath.includes('yearly')) billingCycle = 'yearly';
-            
-            // Store subscription ID - subscription.activated will update with proper end date
-            await db.user.update({
-              where: { id: user.id },
-              data: {
-                subscriptionStatus: 'active',
-                subscriptionPlan: billingCycle,
-                subscriptionId: subscriptionId,
-                characterSlots: 3,
-              },
+          // If we have buyerReference, use it to link the subscription
+          if (userId) {
+            const user = await db.user.findUnique({
+              where: { id: userId }
             });
-            console.log('✅ Order completed - subscription ID stored for user:', user.id, 'plan:', billingCycle);
+
+            if (!user) {
+              console.error('❌ User not found for buyerReference:', userId);
+              break;
+            }
+
+            if (subscriptionId) {
+              // Determine billing cycle from product path
+              const productPath = order.items[0].product || '';
+              let billingCycle = 'monthly';
+              if (productPath.includes('weekly')) billingCycle = 'weekly';
+              else if (productPath.includes('yearly')) billingCycle = 'yearly';
+              
+              // Store subscription ID - subscription.activated will update with proper end date
+              await db.user.update({
+                where: { id: user.id },
+                data: {
+                  subscriptionStatus: 'active',
+                  subscriptionPlan: billingCycle,
+                  subscriptionId: subscriptionId,
+                  characterSlots: 3,
+                },
+              });
+              console.log('✅ Order completed - subscription ID stored for user:', user.id, 'plan:', billingCycle);
+            }
+          } else if (subscriptionId) {
+            // No buyerReference, but we have subscriptionId - check if client-side linking already happened
+            const user = await db.user.findFirst({
+              where: { subscriptionId: subscriptionId }
+            });
+            
+            if (user) {
+              console.log('✅ Order completed - subscription already linked by client-side API for user:', user.id);
+              // Client-side linking already handled it, just log success
+            } else {
+              console.warn('⚠️ No buyerReference and subscription not yet linked - client-side linking should handle this');
+              console.warn('Order data (relevant fields):', JSON.stringify({
+                orderId: order.id,
+                orderReference: order.reference,
+                buyerReference: order.buyerReference,
+                subscriptionId: subscriptionId
+              }, null, 2));
+            }
           } else {
-            console.warn('⚠️ No subscription ID found in order items');
+            console.warn('⚠️ No buyerReference and no subscription ID found in order');
           }
           break;
         }
