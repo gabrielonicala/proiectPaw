@@ -79,42 +79,87 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
       
       // Set up one-time event listeners for popup callbacks (window-level events)
       const handleOrderComplete = async (event: any) => {
-        console.log('Order completed:', event);
+        console.log('🔔 FastSpring order.complete event received:', event);
+        console.log('🔔 Full event structure:', JSON.stringify(event, null, 2));
         
-        // Extract subscription ID from the order event
-        // FastSpring event structure: event.data.items[0].subscription or event.data.subscription
-        const orderData = event.data || event;
+        // Extract subscription ID from the order event - try multiple paths
+        const orderData = event.data || event.detail || event;
+        console.log('🔔 Order data extracted:', orderData);
+        
+        // Try multiple ways to get subscription ID
         const subscriptionId = orderData.items?.[0]?.subscription || 
                               orderData.subscription || 
-                              orderData.subscriptions?.[0]?.id;
+                              orderData.subscriptions?.[0]?.id ||
+                              orderData.subscriptions?.[0]?.subscription ||
+                              (orderData.items && orderData.items.find((item: any) => item.subscription)?.subscription);
+        
+        console.log('🔔 Extracted subscriptionId:', subscriptionId);
+        
+        const orderId = orderData.id || orderData.order || orderData.reference;
         
         if (subscriptionId) {
           // Immediately link the subscription using the active session
-          // No need to wait for webhooks or match emails - we have the user right here
+          console.log('🔔 Attempting to link subscription:', subscriptionId);
           try {
+            const linkPayload = {
+              subscriptionId: subscriptionId,
+              orderId: orderId,
+              billingCycle: selectedBillingCycle
+            };
+            console.log('🔔 Linking payload:', linkPayload);
+            
+            const response = await fetch('/api/fastspring/subscription/link', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(linkPayload),
+            });
+
+            const responseText = await response.text();
+            console.log('🔔 Link API response status:', response.status);
+            console.log('🔔 Link API response:', responseText);
+
+            if (response.ok) {
+              console.log('✅ Subscription linked successfully via client-side API');
+            } else {
+              console.error('❌ Failed to link subscription:', responseText);
+            }
+          } catch (error) {
+            console.error('❌ Error linking subscription:', error);
+          }
+        } else if (orderId) {
+          // Fallback: Try to fetch order details from our API to get subscription ID
+          console.log('⚠️ No subscription ID in event, attempting to fetch from order:', orderId);
+          try {
+            // Wait a moment for FastSpring to process the order
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Try linking with just orderId - API can fetch subscription from FastSpring
             const response = await fetch('/api/fastspring/subscription/link', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({
-                subscriptionId: subscriptionId,
-                orderId: orderData.id || orderData.order,
+                orderId: orderId,
                 billingCycle: selectedBillingCycle
               }),
             });
 
+            const responseText = await response.text();
             if (response.ok) {
-              console.log('✅ Subscription linked successfully');
+              console.log('✅ Subscription linked successfully via order ID fallback');
             } else {
-              console.error('Failed to link subscription:', await response.text());
+              console.error('❌ Failed to link via order ID:', responseText);
             }
           } catch (error) {
-            console.error('Error linking subscription:', error);
-            // Don't fail the checkout - webhook will handle it as fallback
+            console.error('❌ Error in order ID fallback:', error);
           }
         } else {
-          console.warn('⚠️ No subscription ID found in order event - webhook will handle it');
+          console.warn('⚠️ No subscription ID or order ID found in event');
+          console.warn('⚠️ Event structure:', JSON.stringify(event, null, 2));
+          console.warn('⚠️ Webhook will attempt to handle this, but may fail without buyerReference');
         }
         
         // Clean up listeners
@@ -124,7 +169,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
         // Reload to show updated subscription status
         setTimeout(() => {
           window.location.reload();
-        }, 1000);
+        }, 1500); // Give API call time to complete
       };
 
       const handleOrderFailed = (event: any) => {

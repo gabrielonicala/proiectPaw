@@ -18,10 +18,38 @@ export async function POST(request: NextRequest) {
 
     const userId = (session as { user: { id: string } }).user.id;
     const body = await request.json();
-    const { subscriptionId, orderId, billingCycle } = body;
+    let { subscriptionId } = body;
+    const { orderId, billingCycle } = body;
+
+    // If we don't have subscriptionId but have orderId, fetch it from FastSpring
+    if (!subscriptionId && orderId) {
+      try {
+        const { FASTSPRING_CONFIG } = await import('@/lib/fastspring');
+        if (FASTSPRING_CONFIG.apiUsername && FASTSPRING_CONFIG.apiPassword) {
+          const credentials = Buffer.from(`${FASTSPRING_CONFIG.apiUsername}:${FASTSPRING_CONFIG.apiPassword}`).toString('base64');
+          
+          const orderResponse = await fetch(`${FASTSPRING_CONFIG.apiBaseUrl}/orders/${orderId}`, {
+            headers: {
+              'Authorization': `Basic ${credentials}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (orderResponse.ok) {
+            const orderData = await orderResponse.json();
+            subscriptionId = orderData.items?.[0]?.subscription;
+            console.log('✅ Fetched subscriptionId from FastSpring order:', subscriptionId);
+          } else {
+            console.warn('⚠️ Failed to fetch order from FastSpring:', orderResponse.status);
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error fetching order from FastSpring:', error);
+      }
+    }
 
     if (!subscriptionId) {
-      return NextResponse.json({ error: 'Subscription ID is required' }, { status: 400 });
+      return NextResponse.json({ error: 'Subscription ID is required (could not fetch from order)' }, { status: 400 });
     }
 
     // Verify the user exists
