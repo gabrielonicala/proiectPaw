@@ -62,22 +62,29 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
   const handleCreateSubscription = async () => {
     setIsCreating(true);
     try {
+      console.log('🚀 Starting FastSpring checkout process...');
+      
       // Check if FastSpring API is loaded
       if (typeof window === 'undefined' || !(window as any).fastspring) {
+        console.log('⏳ FastSpring not loaded yet, waiting...');
         // Wait a bit for the script to load
         await new Promise(resolve => setTimeout(resolve, 500));
         
         if (!(window as any).fastspring) {
+          console.error('❌ FastSpring still not loaded after wait');
           alert('FastSpring checkout is loading. Please try again in a moment.');
           setIsCreating(false);
           return;
         }
       }
 
+      console.log('✅ FastSpring API is loaded');
       const fastspring = (window as any).fastspring;
       const productPath = getProductPath(selectedBillingCycle);
+      console.log('📦 Product path:', productPath);
       
       // Set up one-time event listeners for popup callbacks (window-level events)
+      // IMPORTANT: Register listeners BEFORE opening checkout
       const handleOrderComplete = async (event: any) => {
         console.log('🔔 FastSpring order.complete event received:', event);
         console.log('🔔 Full event structure:', JSON.stringify(event, null, 2));
@@ -191,11 +198,31 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
         setIsCreating(false);
       };
 
-      // Register event listeners before opening checkout
+      // Register event listeners BEFORE opening checkout
+      console.log('📝 Registering FastSpring event listeners...');
       window.addEventListener('fsc:order.complete', handleOrderComplete);
       window.addEventListener('fsc:order.failed', handleOrderFailed);
+      console.log('✅ Event listeners registered');
+      
+      // Also add a global listener that persists (in case the popup fires events differently)
+      const globalHandler = (event: any) => {
+        console.log('🌐 Global FastSpring event received:', event.type, event);
+      };
+      window.addEventListener('fsc:order.complete', globalHandler);
+      window.addEventListener('fsc:order.failed', globalHandler);
+      window.addEventListener('fsc:checkout.closed', globalHandler);
+      window.addEventListener('fsc:popup.closed', globalHandler);
+      
+      // Log all FastSpring events for debugging
+      const allEvents = ['fsc:order.complete', 'fsc:order.failed', 'fsc:checkout.closed', 'fsc:popup.closed', 'fsc:session.ready'];
+      allEvents.forEach(eventName => {
+        window.addEventListener(eventName, (e: any) => {
+          console.log(`🔔 FastSpring event: ${eventName}`, e);
+        });
+      });
 
       // Reset the session first (clear any existing cart)
+      console.log('🔄 Resetting FastSpring session...');
       fastspring.builder.reset();
 
       // Build session object with account (buyerReference) and products
@@ -218,13 +245,16 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
       }
 
       // Push the complete session data at once
+      console.log('📤 Pushing session data to FastSpring:', JSON.stringify(sessionData, null, 2));
       fastspring.builder.push(sessionData);
 
       // Small delay to ensure session is ready (FastSpring needs a moment to process)
       await new Promise(resolve => setTimeout(resolve, 200));
 
       // Open the popup checkout
+      console.log('🛒 Opening FastSpring checkout popup...');
       fastspring.builder.checkout();
+      console.log('✅ Checkout popup opened - waiting for order.complete event...');
 
     } catch (error) {
       console.error('Error opening FastSpring checkout:', error);
