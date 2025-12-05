@@ -241,6 +241,8 @@ export async function POST(request: NextRequest) {
             });
             console.log('✅ Order completed - subscription linked for user:', user.id, 'plan:', billingCycle);
           } else {
+            // FALLBACK: If we have account ID but no user, this means client-side linking hasn't happened yet
+            // Log this clearly so we can diagnose the issue
             console.warn('⚠️ Could not link order - no user found');
             console.warn('Order data (relevant fields):', JSON.stringify({
               orderId: order.id,
@@ -249,6 +251,9 @@ export async function POST(request: NextRequest) {
               buyerReference: order.buyerReference,
               subscriptionId: subscriptionId
             }, null, 2));
+            console.warn('⚠️ This likely means client-side linking did not run or failed.');
+            console.warn('⚠️ Check browser console logs during checkout to see if the fsc:order.complete event fired.');
+            console.warn('⚠️ The subscription.activated webhook may be able to link it if client-side linking completes.');
           }
           break;
         }
@@ -324,6 +329,57 @@ export async function POST(request: NextRequest) {
             }
           }
           
+          // FALLBACK 3: If we have account ID but no user, try fetching order details
+          // This might help if client-side linking hasn't completed yet
+          if (!user && accountId && subscription.initialOrderId) {
+            console.log('⚠️ User not found by account ID, attempting to fetch order details for:', subscription.initialOrderId);
+            try {
+              const { FASTSPRING_CONFIG } = await import('@/lib/fastspring');
+              if (FASTSPRING_CONFIG.apiUsername && FASTSPRING_CONFIG.apiPassword) {
+                const credentials = Buffer.from(`${FASTSPRING_CONFIG.apiUsername}:${FASTSPRING_CONFIG.apiPassword}`).toString('base64');
+                
+                const orderResponse = await fetch(
+                  `${FASTSPRING_CONFIG.apiBaseUrl}/orders/${subscription.initialOrderId}`,
+                  {
+                    headers: {
+                      'Authorization': `Basic ${credentials}`,
+                      'Content-Type': 'application/json'
+                    },
+                    signal: AbortSignal.timeout(5000)
+                  }
+                );
+                
+                if (orderResponse.ok) {
+                  const orderData = await orderResponse.json();
+                  console.log('✅ Fetched order from FastSpring API for fallback matching');
+                  
+                  // Check if order has buyerReference that we can use
+                  const orderBuyerReference = orderData.buyerReference || orderData.account?.buyerReference;
+                  if (orderBuyerReference) {
+                    user = await db.user.findUnique({
+                      where: { id: orderBuyerReference }
+                    });
+                    if (user) {
+                      console.log('✅ Found user by buyerReference from fetched order:', orderBuyerReference);
+                      // Store account ID for future matching
+                      if (!user.fastspringAccountId) {
+                        await db.user.update({
+                          where: { id: user.id },
+                          data: { fastspringAccountId: accountId }
+                        });
+                        console.log('✅ Stored FastSpring account ID for future matching:', accountId);
+                      }
+                    }
+                  }
+                } else {
+                  console.warn('⚠️ Failed to fetch order from FastSpring API:', orderResponse.status);
+                }
+              }
+            } catch (apiError) {
+              console.error('❌ Error fetching order from FastSpring API for fallback:', apiError);
+            }
+          }
+          
           // Log detailed info if user still not found
           if (!user) {
             console.error('❌ Could not find user for subscription:', subscriptionId);
@@ -336,6 +392,7 @@ export async function POST(request: NextRequest) {
               initialOrderId: subscription.initialOrderId
             }, null, 2));
             console.error('⚠️ This subscription will not be linked to a user. Client-side linking should handle this.');
+            console.error('⚠️ Check browser console logs to see if client-side linking ran and what data it received.');
           }
 
           if (user) {
