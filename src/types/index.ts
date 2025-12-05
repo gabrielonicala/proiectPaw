@@ -12,6 +12,7 @@ export interface User {
   subscriptionId?: string;
   subscriptionPlan?: 'free' | 'weekly' | 'monthly' | 'yearly';
   subscriptionEndsAt?: Date;
+  fastspringAccountId?: string; // FastSpring account ID for reliable webhook matching
   // Timezone (set once on signup, locked forever)
   timezone?: string;
   // Relations

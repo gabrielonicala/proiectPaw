@@ -18,11 +18,11 @@ export async function POST(request: NextRequest) {
 
     const userId = (session as { user: { id: string } }).user.id;
     const body = await request.json();
-    let { subscriptionId } = body;
+    let { subscriptionId, accountId } = body;
     const { orderId, billingCycle } = body;
 
-    // If we don't have subscriptionId but have orderId, fetch it from FastSpring
-    if (!subscriptionId && orderId) {
+    // If we don't have subscriptionId or accountId but have orderId, fetch from FastSpring
+    if (orderId && (!subscriptionId || !accountId)) {
       try {
         const { FASTSPRING_CONFIG } = await import('@/lib/fastspring');
         if (FASTSPRING_CONFIG.apiUsername && FASTSPRING_CONFIG.apiPassword) {
@@ -37,8 +37,17 @@ export async function POST(request: NextRequest) {
           
           if (orderResponse.ok) {
             const orderData = await orderResponse.json();
-            subscriptionId = orderData.items?.[0]?.subscription;
-            console.log('✅ Fetched subscriptionId from FastSpring order:', subscriptionId);
+            if (!subscriptionId) {
+              subscriptionId = orderData.items?.[0]?.subscription;
+              console.log('✅ Fetched subscriptionId from FastSpring order:', subscriptionId);
+            }
+            if (!accountId) {
+              // account can be a string ID or an object with an id property
+              accountId = typeof orderData.account === 'string' 
+                ? orderData.account 
+                : orderData.account?.id;
+              console.log('✅ Fetched accountId from FastSpring order:', accountId);
+            }
           } else {
             console.warn('⚠️ Failed to fetch order from FastSpring:', orderResponse.status);
           }
@@ -81,20 +90,30 @@ export async function POST(request: NextRequest) {
     }
 
     // Link the subscription to the user
+    // Store fastspringAccountId for reliable webhook matching
+    const updateData: any = {
+      subscriptionStatus: 'active',
+      subscriptionPlan: plan,
+      subscriptionId: subscriptionId,
+      subscriptionEndsAt: subscriptionEndsAt,
+      characterSlots: 3,
+    };
+    
+    // Store account ID if available (for reliable webhook matching)
+    if (accountId) {
+      updateData.fastspringAccountId = accountId;
+      console.log('✅ Storing FastSpring account ID:', accountId);
+    }
+
     await db.user.update({
       where: { id: userId },
-      data: {
-        subscriptionStatus: 'active',
-        subscriptionPlan: plan,
-        subscriptionId: subscriptionId,
-        subscriptionEndsAt: subscriptionEndsAt,
-        characterSlots: 3,
-      },
+      data: updateData,
     });
 
     console.log('✅ Subscription linked via client-side API:', {
       userId,
       subscriptionId,
+      accountId,
       orderId,
       plan
     });

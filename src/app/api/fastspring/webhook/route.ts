@@ -150,76 +150,105 @@ export async function POST(request: NextRequest) {
         case 'order.fulfilled': {
           const order = eventData;
           
-          // Get userId from buyerReference (set during popup checkout or session creation)
-          // buyerReference can be on order, order.account, or in tags
-          let userId = order.buyerReference || order.account?.buyerReference;
-          
-          // Also check account object if it exists
-          if (!userId && order.account) {
-            userId = order.account.buyerReference || order.account.accountCustomKey;
-          }
-          
-          // Fallback: try to get from tags if buyerReference is not set
-          if (!userId && order.items?.[0]?.tags) {
-            const tags = typeof order.items[0].tags === 'string' 
-              ? JSON.parse(order.items[0].tags) 
-              : order.items[0].tags;
-            userId = tags?.userId;
-          }
+          // Extract FastSpring account ID (primary matching method - most reliable)
+          // account can be a string ID or an object with an id property
+          const accountId = typeof order.account === 'string' 
+            ? order.account 
+            : order.account?.id;
           
           // Get subscription from order items
           const subscriptionId = order.items?.[0]?.subscription;
           
-          // If we have buyerReference, use it to link the subscription
-          if (userId) {
-            const user = await db.user.findUnique({
-              where: { id: userId }
+          let user = null;
+          
+          // PRIMARY: Try to find user by FastSpring account ID (most reliable)
+          if (accountId) {
+            user = await db.user.findUnique({
+              where: { fastspringAccountId: accountId }
             });
-
-            if (!user) {
-              console.error('❌ User not found for buyerReference:', userId);
-              break;
+            if (user) {
+              console.log('✅ Found user by FastSpring account ID:', accountId);
             }
-
-            if (subscriptionId) {
-              // Determine billing cycle from product path
-              const productPath = order.items[0].product || '';
-              let billingCycle = 'monthly';
-              if (productPath.includes('weekly')) billingCycle = 'weekly';
-              else if (productPath.includes('yearly')) billingCycle = 'yearly';
-              
-              // Store subscription ID - subscription.activated will update with proper end date
-              await db.user.update({
-                where: { id: user.id },
-                data: {
-                  subscriptionStatus: 'active',
-                  subscriptionPlan: billingCycle,
-                  subscriptionId: subscriptionId,
-                  characterSlots: 3,
-                },
+          }
+          
+          // FALLBACK 1: Try buyerReference (if account ID matching failed)
+          if (!user) {
+            let userId = order.buyerReference || order.account?.buyerReference;
+            if (!userId && order.account && typeof order.account === 'object') {
+              userId = order.account.buyerReference || order.account.accountCustomKey;
+            }
+            if (!userId && order.items?.[0]?.tags) {
+              const tags = typeof order.items[0].tags === 'string' 
+                ? JSON.parse(order.items[0].tags) 
+                : order.items[0].tags;
+              userId = tags?.userId;
+            }
+            
+            if (userId) {
+              user = await db.user.findUnique({
+                where: { id: userId }
               });
-              console.log('✅ Order completed - subscription ID stored for user:', user.id, 'plan:', billingCycle);
+              if (user) {
+                console.log('✅ Found user by buyerReference:', userId);
+                // Store account ID for future webhook matching
+                if (accountId && !user.fastspringAccountId) {
+                  await db.user.update({
+                    where: { id: user.id },
+                    data: { fastspringAccountId: accountId }
+                  });
+                  console.log('✅ Stored FastSpring account ID for future matching:', accountId);
+                }
+              }
             }
-          } else if (subscriptionId) {
-            // No buyerReference, but we have subscriptionId - check if client-side linking already happened
-            const user = await db.user.findFirst({
+          }
+          
+          // FALLBACK 2: Check if subscription already linked (client-side linking may have happened)
+          if (!user && subscriptionId) {
+            user = await db.user.findFirst({
               where: { subscriptionId: subscriptionId }
             });
-            
             if (user) {
-              console.log('✅ Order completed - subscription already linked by client-side API for user:', user.id);
-              // Client-side linking already handled it, just log success
-            } else {
-              console.warn('⚠️ No buyerReference and subscription not yet linked - client-side linking should handle this');
-              console.warn('Order data (relevant fields):', JSON.stringify({
-                orderId: order.id,
-                orderReference: order.reference,
-                buyerReference: order.buyerReference,
-                subscriptionId: subscriptionId
-              }, null, 2));
+              console.log('✅ Found user by subscriptionId (client-side linking already happened):', subscriptionId);
+              // Store account ID for future webhook matching
+              if (accountId && !user.fastspringAccountId) {
+                await db.user.update({
+                  where: { id: user.id },
+                  data: { fastspringAccountId: accountId }
+                });
+                console.log('✅ Stored FastSpring account ID for future matching:', accountId);
+              }
             }
+          }
+          
+          if (user && subscriptionId) {
+            // Determine billing cycle from product path
+            const productPath = order.items[0].product || '';
+            let billingCycle = 'monthly';
+            if (productPath.includes('weekly')) billingCycle = 'weekly';
+            else if (productPath.includes('yearly')) billingCycle = 'yearly';
+            
+            // Update subscription info (subscription.activated will update with proper end date)
+            await db.user.update({
+              where: { id: user.id },
+              data: {
+                subscriptionStatus: 'active',
+                subscriptionPlan: billingCycle,
+                subscriptionId: subscriptionId,
+                characterSlots: 3,
+                // Ensure account ID is stored
+                ...(accountId ? { fastspringAccountId: accountId } : {})
+              },
+            });
+            console.log('✅ Order completed - subscription linked for user:', user.id, 'plan:', billingCycle);
           } else {
-            console.warn('⚠️ No buyerReference and no subscription ID found in order');
+            console.warn('⚠️ Could not link order - no user found');
+            console.warn('Order data (relevant fields):', JSON.stringify({
+              orderId: order.id,
+              orderReference: order.reference,
+              accountId: accountId,
+              buyerReference: order.buyerReference,
+              subscriptionId: subscriptionId
+            }, null, 2));
           }
           break;
         }
@@ -234,50 +263,79 @@ export async function POST(request: NextRequest) {
             continue;
           }
 
-          // Get userId from buyerReference (set during session creation)
-          // buyerReference can be on subscription, subscription.account, or accountCustomKey
-          let userId = subscription.buyerReference || subscription.account?.buyerReference || subscription.accountCustomKey;
-          
-          // Also check account object if it exists
-          if (!userId && subscription.account) {
-            userId = subscription.account.buyerReference || subscription.account.accountCustomKey;
-          }
+          // Extract FastSpring account ID (primary matching method - most reliable)
+          // account can be a string ID or an object with an id property
+          const accountId = typeof subscription.account === 'string' 
+            ? subscription.account 
+            : subscription.account?.id;
           
           let user = null;
           
-          // First try to find by buyerReference (most reliable)
-          if (userId) {
+          // PRIMARY: Try to find user by FastSpring account ID (most reliable)
+          if (accountId) {
             user = await db.user.findUnique({
-              where: { id: userId }
+              where: { fastspringAccountId: accountId }
             });
-            console.log('Found user by buyerReference/accountCustomKey:', userId);
+            if (user) {
+              console.log('✅ Found user by FastSpring account ID:', accountId);
+            }
           }
           
-          // Fallback: find by subscription ID (from order.completed event)
+          // FALLBACK 1: Try buyerReference (if account ID matching failed)
+          if (!user) {
+            let userId = subscription.buyerReference || subscription.account?.buyerReference || subscription.accountCustomKey;
+            if (!userId && subscription.account && typeof subscription.account === 'object') {
+              userId = subscription.account.buyerReference || subscription.account.accountCustomKey;
+            }
+            
+            if (userId) {
+              user = await db.user.findUnique({
+                where: { id: userId }
+              });
+              if (user) {
+                console.log('✅ Found user by buyerReference/accountCustomKey:', userId);
+                // Store account ID for future webhook matching
+                if (accountId && !user.fastspringAccountId) {
+                  await db.user.update({
+                    where: { id: user.id },
+                    data: { fastspringAccountId: accountId }
+                  });
+                  console.log('✅ Stored FastSpring account ID for future matching:', accountId);
+                }
+              }
+            }
+          }
+          
+          // FALLBACK 2: Find by subscription ID (from order.completed event or client-side linking)
           if (!user) {
             user = await db.user.findFirst({
               where: { subscriptionId: subscriptionId }
             });
             if (user) {
               console.log('✅ Found user by subscriptionId:', subscriptionId);
-            } else {
-              console.log('⚠️ User not found by subscriptionId:', subscriptionId, '- order.completed may not have processed yet');
+              // Store account ID for future webhook matching
+              if (accountId && !user.fastspringAccountId) {
+                await db.user.update({
+                  where: { id: user.id },
+                  data: { fastspringAccountId: accountId }
+                });
+                console.log('✅ Stored FastSpring account ID for future matching:', accountId);
+              }
             }
           }
           
           // Log detailed info if user still not found
           if (!user) {
-            const accountId = subscription.account ? (typeof subscription.account === 'string' ? subscription.account : subscription.account.id) : null;
             console.error('❌ Could not find user for subscription:', subscriptionId);
             console.error('Subscription data (relevant fields):', JSON.stringify({
               subscriptionId,
               account: subscription.account,
-              accountId,
+              accountId: accountId,
               buyerReference: subscription.buyerReference,
               accountCustomKey: subscription.accountCustomKey,
-              accountObject: typeof subscription.account === 'object' ? subscription.account : null
+              initialOrderId: subscription.initialOrderId
             }, null, 2));
-            console.error('⚠️ This subscription will not be linked to a user. Check if buyerReference is being set correctly in checkout.');
+            console.error('⚠️ This subscription will not be linked to a user. Client-side linking should handle this.');
           }
 
           if (user) {
@@ -317,7 +375,7 @@ export async function POST(request: NextRequest) {
             });
             console.log('✅ Subscription updated for user:', user.id, 'status:', newStatus, 'plan:', billingCycle);
           } else {
-            console.warn('⚠️ User not found for subscription:', subscriptionId, 'buyerReference:', userId);
+            console.warn('⚠️ User not found for subscription:', subscriptionId, 'accountId:', accountId);
           }
           break;
         }

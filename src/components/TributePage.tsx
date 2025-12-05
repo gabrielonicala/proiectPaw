@@ -97,6 +97,14 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
         
         const orderId = orderData.id || orderData.order || orderData.reference;
         
+        // Extract FastSpring account ID (this is the key for reliable linking)
+        // account can be a string ID or an object with an id property
+        const accountId = typeof orderData.account === 'string' 
+          ? orderData.account 
+          : orderData.account?.id || orderData.accountId;
+        
+        console.log('🔔 Extracted accountId:', accountId);
+        
         if (subscriptionId) {
           // Immediately link the subscription using the active session
           console.log('🔔 Attempting to link subscription:', subscriptionId);
@@ -104,6 +112,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
             const linkPayload = {
               subscriptionId: subscriptionId,
               orderId: orderId,
+              accountId: accountId, // Include account ID for reliable linking
               billingCycle: selectedBillingCycle
             };
             console.log('🔔 Linking payload:', linkPayload);
@@ -143,6 +152,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
               },
               body: JSON.stringify({
                 orderId: orderId,
+                accountId: accountId, // Include account ID if available
                 billingCycle: selectedBillingCycle
               }),
             });

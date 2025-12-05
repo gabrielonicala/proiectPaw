@@ -27,6 +27,7 @@ model User {
   subscriptionStatus      String?        @default("free")
   subscriptionId          String?        @unique
   subscriptionEndsAt      DateTime?
+  fastspringAccountId     String?        @unique
   timezone                String?        @default("UTC")
   accounts                Account[]
   characters              Character[]
