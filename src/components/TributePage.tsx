@@ -62,167 +62,45 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
   const handleCreateSubscription = async () => {
     setIsCreating(true);
     try {
-      console.log('🚀 Starting FastSpring checkout process...');
-      
       // Check if FastSpring API is loaded
       if (typeof window === 'undefined' || !(window as any).fastspring) {
-        console.log('⏳ FastSpring not loaded yet, waiting...');
         // Wait a bit for the script to load
         await new Promise(resolve => setTimeout(resolve, 500));
         
         if (!(window as any).fastspring) {
-          console.error('❌ FastSpring still not loaded after wait');
           alert('FastSpring checkout is loading. Please try again in a moment.');
           setIsCreating(false);
           return;
         }
       }
 
-      console.log('✅ FastSpring API is loaded');
       const fastspring = (window as any).fastspring;
       const productPath = getProductPath(selectedBillingCycle);
-      console.log('📦 Product path:', productPath);
       
-      // Set up one-time event listeners for popup callbacks (window-level events)
-      // IMPORTANT: Register listeners BEFORE opening checkout
-      const handleOrderComplete = async (event: any) => {
-        console.log('🔔 FastSpring order.complete event received:', event);
-        console.log('🔔 Full event structure:', JSON.stringify(event, null, 2));
-        
-        // Extract subscription ID from the order event - try multiple paths
-        const orderData = event.data || event.detail || event;
-        console.log('🔔 Order data extracted:', orderData);
-        
-        // Try multiple ways to get subscription ID
-        const subscriptionId = orderData.items?.[0]?.subscription || 
-                              orderData.subscription || 
-                              orderData.subscriptions?.[0]?.id ||
-                              orderData.subscriptions?.[0]?.subscription ||
-                              (orderData.items && orderData.items.find((item: any) => item.subscription)?.subscription);
-        
-        console.log('🔔 Extracted subscriptionId:', subscriptionId);
-        
-        const orderId = orderData.id || orderData.order || orderData.reference;
-        
-        // Extract FastSpring account ID (this is the key for reliable linking)
-        // account can be a string ID or an object with an id property
-        const accountId = typeof orderData.account === 'string' 
-          ? orderData.account 
-          : orderData.account?.id || orderData.accountId;
-        
-        console.log('🔔 Extracted accountId:', accountId);
-        
-        if (subscriptionId) {
-          // Immediately link the subscription using the active session
-          console.log('🔔 Attempting to link subscription:', subscriptionId);
-          try {
-            const linkPayload = {
-              subscriptionId: subscriptionId,
-              orderId: orderId,
-              accountId: accountId, // Include account ID for reliable linking
-              billingCycle: selectedBillingCycle
-            };
-            console.log('🔔 Linking payload:', linkPayload);
-            
-            const response = await fetch('/api/fastspring/subscription/link', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(linkPayload),
-            });
-
-            const responseText = await response.text();
-            console.log('🔔 Link API response status:', response.status);
-            console.log('🔔 Link API response:', responseText);
-
-            if (response.ok) {
-              console.log('✅ Subscription linked successfully via client-side API');
-            } else {
-              console.error('❌ Failed to link subscription:', responseText);
-            }
-          } catch (error) {
-            console.error('❌ Error linking subscription:', error);
-          }
-        } else if (orderId) {
-          // Fallback: Try to fetch order details from our API to get subscription ID
-          console.log('⚠️ No subscription ID in event, attempting to fetch from order:', orderId);
-          try {
-            // Wait a moment for FastSpring to process the order
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-            // Try linking with just orderId - API can fetch subscription from FastSpring
-            const response = await fetch('/api/fastspring/subscription/link', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                orderId: orderId,
-                accountId: accountId, // Include account ID if available
-                billingCycle: selectedBillingCycle
-              }),
-            });
-
-            const responseText = await response.text();
-            if (response.ok) {
-              console.log('✅ Subscription linked successfully via order ID fallback');
-            } else {
-              console.error('❌ Failed to link via order ID:', responseText);
-            }
-          } catch (error) {
-            console.error('❌ Error in order ID fallback:', error);
-          }
-        } else {
-          console.warn('⚠️ No subscription ID or order ID found in event');
-          console.warn('⚠️ Event structure:', JSON.stringify(event, null, 2));
-          console.warn('⚠️ Webhook will attempt to handle this, but may fail without buyerReference');
-        }
-        
-        // Clean up listeners
-        window.removeEventListener('fsc:order.complete', handleOrderComplete);
-        window.removeEventListener('fsc:order.failed', handleOrderFailed);
-        
-        // Reload to show updated subscription status
-        setTimeout(() => {
-          window.location.reload();
-        }, 1500); // Give API call time to complete
-      };
-
-      const handleOrderFailed = (event: any) => {
-        console.error('Order failed:', event);
-        // Clean up listeners
-        window.removeEventListener('fsc:order.complete', handleOrderComplete);
-        window.removeEventListener('fsc:order.failed', handleOrderFailed);
-        alert('Checkout failed. Please try again.');
-        setIsCreating(false);
-      };
-
-      // Register event listeners BEFORE opening checkout
-      console.log('📝 Registering FastSpring event listeners...');
-      window.addEventListener('fsc:order.complete', handleOrderComplete);
-      window.addEventListener('fsc:order.failed', handleOrderFailed);
-      console.log('✅ Event listeners registered');
-      
-      // Also add a global listener that persists (in case the popup fires events differently)
-      const globalHandler = (event: any) => {
-        console.log('🌐 Global FastSpring event received:', event.type, event);
-      };
-      window.addEventListener('fsc:order.complete', globalHandler);
-      window.addEventListener('fsc:order.failed', globalHandler);
-      window.addEventListener('fsc:checkout.closed', globalHandler);
-      window.addEventListener('fsc:popup.closed', globalHandler);
-      
-      // Log all FastSpring events for debugging
-      const allEvents = ['fsc:order.complete', 'fsc:order.failed', 'fsc:checkout.closed', 'fsc:popup.closed', 'fsc:session.ready'];
-      allEvents.forEach(eventName => {
-        window.addEventListener(eventName, (e: any) => {
-          console.log(`🔔 FastSpring event: ${eventName}`, e);
+      // Notify backend that checkout is starting - this creates a temporary mapping
+      // that webhooks can use to link the account ID to the user
+      try {
+        await fetch('/api/fastspring/checkout/start', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         });
-      });
+      } catch (error) {
+        console.error('Failed to notify backend of checkout start:', error);
+        // Continue anyway - webhook will try to match
+      }
+
+      // Set up simple popup close handler to reset button state
+      const handlePopupClosed = () => {
+        setIsCreating(false);
+        window.removeEventListener('fsc:popup.closed', handlePopupClosed);
+        window.removeEventListener('fsc:checkout.closed', handlePopupClosed);
+      };
+      window.addEventListener('fsc:popup.closed', handlePopupClosed);
+      window.addEventListener('fsc:checkout.closed', handlePopupClosed);
 
       // Reset the session first (clear any existing cart)
-      console.log('🔄 Resetting FastSpring session...');
       fastspring.builder.reset();
 
       // Build session object with account (buyerReference) and products
@@ -245,16 +123,27 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
       }
 
       // Push the complete session data at once
-      console.log('📤 Pushing session data to FastSpring:', JSON.stringify(sessionData, null, 2));
       fastspring.builder.push(sessionData);
 
       // Small delay to ensure session is ready (FastSpring needs a moment to process)
       await new Promise(resolve => setTimeout(resolve, 200));
 
       // Open the popup checkout
-      console.log('🛒 Opening FastSpring checkout popup...');
       fastspring.builder.checkout();
-      console.log('✅ Checkout popup opened - waiting for order.complete event...');
+      
+      // Set a timeout to reset button state if popup closes without event
+      // (some browsers/popup blockers might prevent events from firing)
+      setTimeout(() => {
+        // Check if popup is still open by checking if button is still in creating state
+        // If it is, the popup likely closed without firing events
+        if (isCreating) {
+          setIsCreating(false);
+          // Reload page after a delay to check if subscription was created via webhook
+          setTimeout(() => {
+            window.location.reload();
+          }, 3000);
+        }
+      }, 60000); // 60 second timeout
 
     } catch (error) {
       console.error('Error opening FastSpring checkout:', error);

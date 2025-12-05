@@ -34,6 +34,7 @@ model User {
   entries                 JournalEntry[]
   sessions                Session[]
   dailyUsage              DailyUsage[]
+  pendingCheckout         PendingCheckout?
   activeCharacter         Character?     @relation("ActiveCharacter", fields: [activeCharacterId], references: [id])
 }
 
@@ -150,6 +151,15 @@ model DailyUsage {
 
   @@unique([userId, date])
   @@index([userId, date])
+}
+
+model PendingCheckout {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
 }
 
 model PageView {

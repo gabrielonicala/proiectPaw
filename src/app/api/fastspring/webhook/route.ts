@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import crypto from 'crypto';
+import { getPendingCheckoutUser, clearPendingCheckout } from '@/lib/fastspring-checkout';
 
 // Validate webhook secret
 const webhookSecret = process.env.FASTSPRING_WEBHOOK_SECRET;
@@ -202,13 +203,13 @@ export async function POST(request: NextRequest) {
             }
           }
           
-          // FALLBACK 2: Check if subscription already linked (client-side linking may have happened)
+          // FALLBACK 2: Check if subscription already linked
           if (!user && subscriptionId) {
             user = await db.user.findFirst({
               where: { subscriptionId: subscriptionId }
             });
             if (user) {
-              console.log('✅ Found user by subscriptionId (client-side linking already happened):', subscriptionId);
+              console.log('✅ Found user by subscriptionId:', subscriptionId);
               // Store account ID for future webhook matching
               if (accountId && !user.fastspringAccountId) {
                 await db.user.update({
@@ -217,6 +218,33 @@ export async function POST(request: NextRequest) {
                 });
                 console.log('✅ Stored FastSpring account ID for future matching:', accountId);
               }
+            }
+          }
+          
+          // FALLBACK 3: Use pending checkout mapping (for first-time checkouts)
+          if (!user && accountId) {
+            try {
+              const pendingUserId = await getPendingCheckoutUser();
+              
+              if (pendingUserId) {
+                user = await db.user.findUnique({
+                  where: { id: pendingUserId }
+                });
+                
+                if (user) {
+                  console.log('✅ Found user by pending checkout:', pendingUserId);
+                  // Store account ID and link subscription
+                  await db.user.update({
+                    where: { id: user.id },
+                    data: { fastspringAccountId: accountId }
+                  });
+                  // Clear the pending checkout
+                  await clearPendingCheckout(pendingUserId);
+                  console.log('✅ Stored FastSpring account ID and cleared pending checkout');
+                }
+              }
+            } catch (error) {
+              console.error('Error checking pending checkouts:', error);
             }
           }
           
@@ -239,6 +267,8 @@ export async function POST(request: NextRequest) {
                 ...(accountId ? { fastspringAccountId: accountId } : {})
               },
             });
+            // Clear pending checkout after successful linking
+            await clearPendingCheckout(user.id);
             console.log('✅ Order completed - subscription linked for user:', user.id, 'plan:', billingCycle);
           } else {
             // FALLBACK: If we have account ID but no user, this means client-side linking hasn't happened yet
@@ -311,7 +341,7 @@ export async function POST(request: NextRequest) {
             }
           }
           
-          // FALLBACK 2: Find by subscription ID (from order.completed event or client-side linking)
+          // FALLBACK 2: Find by subscription ID
           if (!user) {
             user = await db.user.findFirst({
               where: { subscriptionId: subscriptionId }
@@ -329,7 +359,34 @@ export async function POST(request: NextRequest) {
             }
           }
           
-          // FALLBACK 3: If we have account ID but no user, try fetching order details
+          // FALLBACK 3: Use pending checkout mapping (for first-time checkouts)
+          if (!user && accountId) {
+            try {
+              const pendingUserId = await getPendingCheckoutUser();
+              
+              if (pendingUserId) {
+                user = await db.user.findUnique({
+                  where: { id: pendingUserId }
+                });
+                
+                if (user) {
+                  console.log('✅ Found user by pending checkout:', pendingUserId);
+                  // Store account ID
+                  await db.user.update({
+                    where: { id: user.id },
+                    data: { fastspringAccountId: accountId }
+                  });
+                  // Clear the pending checkout
+                  await clearPendingCheckout(pendingUserId);
+                  console.log('✅ Stored FastSpring account ID and cleared pending checkout');
+                }
+              }
+            } catch (error) {
+              console.error('Error checking pending checkouts:', error);
+            }
+          }
+          
+          // FALLBACK 4: If we have account ID but no user, try fetching order details
           // This might help if client-side linking hasn't completed yet
           if (!user && accountId && subscription.initialOrderId) {
             console.log('⚠️ User not found by account ID, attempting to fetch order details for:', subscription.initialOrderId);
@@ -427,9 +484,13 @@ export async function POST(request: NextRequest) {
                 subscriptionPlan: newStatus === 'free' ? 'free' : billingCycle,
                 subscriptionEndsAt: subscriptionEndsAt,
                 subscriptionId: subscriptionId, // Ensure subscription ID is stored
+                // Store account ID if we have it and user doesn't have it yet
+                ...(accountId && !user.fastspringAccountId ? { fastspringAccountId: accountId } : {}),
                 ...(newStatus === 'free' ? { characterSlots: 1 } : {}),
               },
             });
+            // Clear pending checkout after successful linking
+            await clearPendingCheckout(user.id);
             console.log('✅ Subscription updated for user:', user.id, 'status:', newStatus, 'plan:', billingCycle);
           } else {
             console.warn('⚠️ User not found for subscription:', subscriptionId, 'accountId:', accountId);
