@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     const prompt = createGeminiPrompt(sceneText, themeConfig, character, generatedChapter ? true : false);
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-image-preview",
+      model: "gemini-2.5-flash-image",
       contents: prompt,
     });
     
