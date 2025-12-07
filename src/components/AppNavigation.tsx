@@ -6,6 +6,7 @@ import { signOut } from 'next-auth/react';
 import { Calendar, User, RefreshCw, Gift } from 'lucide-react';
 import Button from './ui/Button';
 import { Character, Theme } from '@/types';
+import CreditBalance from './CreditBalance';
 
 interface AppNavigationProps {
   activeCharacter?: Character;
@@ -18,6 +19,8 @@ interface AppNavigationProps {
   showLogout?: boolean;
   theme?: Theme;
   userEmail?: string;
+  credits?: number;
+  isLowOnCredits?: boolean;
 }
 
 export default function AppNavigation({
@@ -30,7 +33,9 @@ export default function AppNavigation({
   onBack,
   showLogout = false,
   theme = 'obsidian-veil',
-  userEmail
+  userEmail,
+  credits = 0,
+  isLowOnCredits = false
 }: AppNavigationProps) {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -53,7 +58,7 @@ export default function AppNavigation({
       case 'calendar':
         return 'ADVENTURE CALENDAR';
       case 'tribute':
-        return 'REACH NEW LEVELS';
+        return ''; // Title moved to TributePage component
       case 'character-select':
         return 'SELECT A CHARACTER';
       default:
@@ -70,7 +75,7 @@ export default function AppNavigation({
       case 'calendar':
         return `${activeCharacter?.name || 'Adventurer'}'s journey through time`;
       case 'tribute':
-        return 'Unlock your potential';
+        return ''; // Subtitle moved to TributePage component
       case 'character-select':
         return 'Which path will you take?';
       default:
@@ -90,19 +95,23 @@ export default function AppNavigation({
       <div className="flex items-center gap-4">
         {currentPage === 'journal' ? (
           <>
-            <button 
-              onClick={onCharacterSwitch} 
-              className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button hidden md:flex"
-            >
-              SWITCH CHARACTER
-            </button>
-            <button 
-              onClick={onCharacterSwitch} 
-              className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button navbar-button-icon md:hidden"
-            >
-              <RefreshCw className="w-5 h-5" />
-            </button>
+            {/* Credit Balance - Moved to left */}
+            <CreditBalance 
+              credits={credits} 
+              isLow={isLowOnCredits}
+              onClick={onTributeView}
+            />
           </>
+        ) : currentPage === 'tribute' ? (
+          <div className="flex items-center gap-2">
+            {credits !== undefined && (
+              <CreditBalance
+                credits={credits}
+                isLow={isLowOnCredits}
+                onClick={onTributeView}
+              />
+            )}
+          </div>
         ) : (
           <div>
             <h1 className="font-pixel text-lg md:text-xl text-white mb-1">
@@ -115,64 +124,56 @@ export default function AppNavigation({
         )}
       </div>
 
-      {/* Center - Only for Journal Entry */}
+      {/* Center - Calendar and Profile for Journal Entry */}
       {currentPage === 'journal' && (
-        <div className="hidden lg:block">
-          {/* Empty div to maintain grid structure */}
-          {/* {activeCharacter && (
-            <p className="font-pixel text-lg text-white text-center">
-              <span className="text-yellow-300">Playing as </span>
-              {activeCharacter.name}
-            </p>
-          )} */}
+        <div className="hidden lg:flex items-center justify-center gap-10">
+          <button 
+            onClick={onCalendarView} 
+            className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button"
+          >
+            CALENDAR
+          </button>
+          <button 
+            onClick={onProfileView} 
+            className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button"
+          >
+            PROFILE
+          </button>
         </div>
       )}
 
       {/* Right Side */}
-      <div className="flex gap-10 justify-end">
+      <div className="flex gap-10 justify-end items-center">
         {currentPage === 'journal' ? (
-          // Journal Entry: Navigation with responsive text/icons
+          // Journal Entry: Switch character button and mobile navigation
           <>
-            {/* Show Tribute button only for specific email addresses */}
-            {(userEmail === 'gabrielonicala@gmail.com' || userEmail === 'contact@quillia.app') && (
-              <>
-                <button 
-                  onClick={onTributeView} 
-                  className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button hidden md:flex"
-                >
-                  TRIBUTE
-                </button>
-                <button 
-                  onClick={onTributeView} 
-                  className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button navbar-button-icon md:hidden"
-                >
-                  <Gift className="w-5 h-5" />
-                </button>
-              </>
-            )}
+            {/* Mobile: Calendar and Profile */}
+            <div className="flex gap-4 lg:hidden">
+              <button 
+                onClick={onCalendarView} 
+                className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button navbar-button-icon"
+              >
+                <Calendar className="w-5 h-5" />
+              </button>
+              <button 
+                onClick={onProfileView} 
+                className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button navbar-button-icon"
+              >
+                <User className="w-5 h-5" />
+              </button>
+            </div>
+            {/* Switch Character - Moved to right */}
             <button 
-              onClick={onCalendarView} 
+              onClick={onCharacterSwitch} 
               className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button hidden md:flex"
             >
-              CALENDAR
+              SWITCH CHARACTER
             </button>
             <button 
-              onClick={onCalendarView} 
+              onClick={onCharacterSwitch} 
               className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button navbar-button-icon md:hidden"
             >
-              <Calendar className="w-5 h-5" />
-            </button>
-            <button 
-              onClick={onProfileView} 
-              className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button hidden md:flex"
-            >
-              PROFILE
-            </button>
-            <button 
-              onClick={onProfileView} 
-              className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button navbar-button-icon md:hidden"
-            >
-              <User className="w-5 h-5" />
+              <RefreshCw className="w-5 h-5" />
             </button>
           </>
         ) : (

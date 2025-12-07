@@ -4,7 +4,9 @@ import { authOptions } from '@/lib/auth';
 import { saveEntryToDatabase, loadEntriesFromDatabase } from '@/lib/server-utils';
 import { createErrorResponse } from '@/lib/error-utils';
 import { validateUserSession } from '@/lib/auth';
-import { canCreateEntry, incrementDailyUsage } from '@/lib/daily-usage';
+// SUBSCRIPTION CODE - COMMENTED OUT FOR CREDITS MIGRATION
+// Credits are deducted during generation, so no need to check/deduct here
+// import { canCreateEntry, incrementDailyUsage } from '@/lib/daily-usage';
 import { db } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
@@ -108,28 +110,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const userTimezone = user.timezone || 'UTC';
-
-    // Check if user can create this type of entry (using new DailyUsage system)
-    // Pass full user object to check premium access properly
-    const type = outputType === 'text' ? 'chapters' : 'scenes';
-    const canCreate = await canCreateEntry(userId, type, userTimezone, {
-      subscriptionPlan: user.subscriptionPlan,
-      subscriptionStatus: user.subscriptionStatus,
-      subscriptionEndsAt: user.subscriptionEndsAt,
-    });
-
-    if (!canCreate.allowed) {
-      return NextResponse.json(
-        { 
-          error: `Daily limit reached. You've used all ${canCreate.limit} ${type} for today.`,
-          limitReached: true,
-          remaining: canCreate.remaining,
-          limit: canCreate.limit
-        },
-        { status: 403 }
-      );
-    }
+    // Credits are deducted during generation, so we just save the entry here
+    // No need to check limits or deduct credits again
 
     // Create the entry
     const entry = await saveEntryToDatabase({
@@ -142,9 +124,6 @@ export async function POST(request: NextRequest) {
       characterId,
       pastContext,
     });
-
-    // Increment daily usage counter (this is the key - tracks independently of entries)
-    await incrementDailyUsage(userId, type, userTimezone);
 
     return NextResponse.json({ entry });
   } catch (error) {

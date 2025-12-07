@@ -128,8 +128,12 @@ export async function getDailyUsageWithLimits(
 }
 
 /**
+ * SUBSCRIPTION CODE - COMMENTED OUT FOR CREDITS MIGRATION - DO NOT DELETE
+ * This function has been replaced with credit checks in src/lib/credits.ts
+ * 
  * Check if user can create more entries of a given type
  */
+/*
 export async function canCreateEntry(
   userId: string,
   type: 'chapters' | 'scenes',
@@ -166,6 +170,7 @@ export async function canCreateEntry(
     limit,
   };
 }
+*/
 
 /**
  * Clean up old daily usage records

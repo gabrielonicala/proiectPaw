@@ -15,6 +15,7 @@ import { themes } from '@/themes';
 import { migrateTheme } from '@/lib/theme-migration';
 import { getCachedImageUrl } from '@/lib/asset-cache';
 import { queueOfflineChange } from '@/lib/offline-sync';
+import { CHARACTER_SLOT_PRICE, CHARACTER_SLOT_PRODUCT_PATH } from '@/lib/credits';
 // import Footer from './Footer';
 
 interface CharacterSelectorProps {
@@ -26,6 +27,8 @@ interface CharacterSelectorProps {
   onCharacterUpdate: (character: Character) => void;
   onCharacterDelete: (characterId: string) => void;
   user: {
+    id: string;
+    email?: string | null;
     characterSlots: number;
   };
   // Triggered when user clicks upgrade; allows parent to show the Tribute view
@@ -50,6 +53,7 @@ export default function CharacterSelector({
   const [editingName, setEditingName] = useState<string | null>(null);
   const [tempName, setTempName] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [isPurchasingSlot, setIsPurchasingSlot] = useState(false);
   const nameEditRef = useRef<HTMLDivElement>(null);
   const inputContainerRef = useRef<HTMLDivElement>(null);
   const checkButtonRef = useRef<HTMLDivElement>(null);
@@ -167,6 +171,75 @@ export default function CharacterSelector({
   const handleAvatarCancel = () => {
     setShowAvatarBuilder(false);
     setEditingCharacter(null);
+  };
+
+  // Character slot purchase handler
+  const handlePurchaseCharacterSlot = async () => {
+    setIsPurchasingSlot(true);
+    try {
+      if (typeof window === 'undefined' || !(window as any).fastspring) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        if (!(window as any).fastspring) {
+          alert('FastSpring checkout is loading. Please try again in a moment.');
+          setIsPurchasingSlot(false);
+          return;
+        }
+      }
+
+      const fastspring = (window as any).fastspring;
+      
+      try {
+        await fetch('/api/fastspring/checkout/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+      } catch (error) {
+        console.error('Failed to notify backend of checkout start:', error);
+      }
+
+      const handlePopupClosed = () => {
+        setIsPurchasingSlot(false);
+        window.removeEventListener('fsc:popup.closed', handlePopupClosed);
+        window.removeEventListener('fsc:checkout.closed', handlePopupClosed);
+        window.removeEventListener('fsc:order.complete', handleOrderComplete);
+        // Refresh page to show new slot count
+        setTimeout(() => window.location.reload(), 2000);
+      };
+
+      const handleOrderComplete = () => {
+        handlePopupClosed();
+      };
+
+      window.addEventListener('fsc:popup.closed', handlePopupClosed);
+      window.addEventListener('fsc:checkout.closed', handlePopupClosed);
+      window.addEventListener('fsc:order.complete', handleOrderComplete);
+
+      fastspring.builder.reset();
+
+      const sessionData: any = {
+        account: {
+          buyerReference: user.id
+        },
+        products: [{
+          path: CHARACTER_SLOT_PRODUCT_PATH,
+          quantity: 1
+        }]
+      };
+
+      if (user.email) {
+        sessionData.paymentContact = { email: user.email };
+      }
+
+      fastspring.builder.push(sessionData);
+      await new Promise(resolve => setTimeout(resolve, 200));
+      fastspring.builder.checkout();
+
+    } catch (error) {
+      console.error('Error opening FastSpring checkout:', error);
+      alert('Failed to open checkout. Please try again.');
+      setIsPurchasingSlot(false);
+    }
   };
 
   const handleEditName = (character: Character) => {
@@ -604,8 +677,8 @@ export default function CharacterSelector({
             );
           })}
 
-          {/* Fill remaining slots up to 3 total */}
-          {Array.from({ length: Math.max(0, 3 - characters.length) }, (_, index) => {
+          {/* Fill remaining slots based on user's characterSlots */}
+          {Array.from({ length: Math.max(0, user.characterSlots - characters.length) }, (_, index) => {
             const slotIndex = characters.length + index;
             const canCreate = slotIndex < user.characterSlots;
             
@@ -616,66 +689,92 @@ export default function CharacterSelector({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: slotIndex * 0.1, duration: 0.5 }}
               >
-                {canCreate ? (
-                  // Available slot - show create new
-                  <Card
-                    hover
-                    onClick={onCreateNew}
-                    theme="obsidian-veil"
-                    className="cursor-pointer transition-all duration-200 hover:border-green-500 border-dashed border-2 border-gray-600 h-full"
-                  >
-                    <div className="flex items-center gap-4 p-4">
-                      {/* Plus Icon - Left Side */}
-                      <div className="flex-shrink-0 w-24 h-24 flex items-center justify-center">
-                        <div className="text-6xl text-gray-400">➕</div>
-                      </div>
-                      
-                      {/* Create Info - Right Side */}
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-pixel text-lg text-white mb-1">
-                          CREATE NEW
-                        </h3>
-                        <p className="font-pixel text-sm text-gray-300 mb-3">
-                          Start a new adventure
-                        </p>
-                        <div className="font-pixel text-xs text-green-400 bg-green-400/20 px-2 py-1 pixelated w-fit">
-                          AVAILABLE
-                        </div>
+                {/* Available slot - show create new */}
+                <Card
+                  hover
+                  onClick={onCreateNew}
+                  theme="obsidian-veil"
+                  className="cursor-pointer transition-all duration-200 hover:border-green-500 border-dashed border-2 border-gray-600 h-full"
+                >
+                  <div className="flex items-center gap-4 p-4">
+                    {/* Plus Icon - Left Side */}
+                    <div className="flex-shrink-0 w-24 h-24 flex items-center justify-center">
+                      <div className="text-6xl text-gray-400">➕</div>
+                    </div>
+                    
+                    {/* Create Info - Right Side */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-pixel text-lg text-white mb-1">
+                        CREATE NEW
+                      </h3>
+                      <p className="font-pixel text-sm text-gray-300 mb-3">
+                        Start a new adventure
+                      </p>
+                      <div className="font-pixel text-xs text-green-400 bg-green-400/20 px-2 py-1 pixelated w-fit">
+                        AVAILABLE
                       </div>
                     </div>
-                  </Card>
-                ) : (
-                  // Locked slot - show upgrade prompt
-                  <Card 
-                    theme="obsidian-veil" 
-                    className="border-2 border-gray-600 bg-gray-800/50 opacity-60 cursor-not-allowed h-full"
-                  >
-                    <div className="flex items-center gap-4 p-4">
-                      {/* Locked Icon - Left Side */}
-                      <div className="flex-shrink-0 w-32 h-40 flex items-center justify-center">
-                        <div className="text-6xl text-gray-400 bg-gray-800 pixelated w-full h-full flex items-center justify-center">
-                          🔒
-                        </div>
-                      </div>
-                      
-                      {/* Locked Info - Right Side */}
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-pixel text-lg text-gray-400 mb-1">
-                          LOCKED SLOT
-                        </h3>
-                        <p className="font-pixel text-sm text-gray-500 mb-3">
-                          Upgrade to unlock
-                        </p>
-                        <div className="font-pixel text-xs text-gray-500 bg-gray-600/20 px-2 py-1 pixelated w-fit">
-                          LOCKED
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                )}
+                  </div>
+                </Card>
               </motion.div>
             );
           })}
+
+          {/* Always show purchase slot button after all character slots */}
+          <motion.div
+            key="purchase-slot"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: (characters.length + Math.max(0, user.characterSlots - characters.length)) * 0.1, duration: 0.5 }}
+          >
+            <Card
+              hover
+              onClick={handlePurchaseCharacterSlot}
+              theme="obsidian-veil"
+              className="cursor-pointer transition-all duration-200 hover:border-yellow-500 border-dashed border-2 border-yellow-600 h-full"
+            >
+              <div className="flex items-center gap-2 -pl-6 -ml-4 pr-4 py-4">
+                {/* Purchase Icon - Left Side */}
+                <div className="flex-shrink-0 w-32 h-40 flex items-center justify-center">
+                  <div className="text-6xl text-yellow-400">🔓</div>
+                </div>
+                
+                {/* Purchase Info - Right Side - Matching character slot layout exactly */}
+                <div className="flex-1 min-w-0 flex-shrink-0">
+                  {/* Title - Same height as character name (line 587-589) */}
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-pixel text-lg text-white whitespace-nowrap">
+                      START A NEW JOURNEY
+                    </h3>
+                  </div>
+                  
+                  {/* Description - Same height as theme name (line 609) */}
+                  <p className="font-pixel text-sm text-gray-300 mb-2">
+                    Purchase a new character slot
+                  </p>
+                  
+                  {/* Empty description area to match spacing when character has no description (line 613-617) */}
+                  <div className="mb-3" style={{ minHeight: '0' }}></div>
+                  
+                  {/* Status and Actions section - matching character slot structure exactly (line 619-639) */}
+                  <div className="flex flex-col gap-2">
+                    {/* Status badge area - matching line 621 */}
+                    <div className="flex items-center gap-2">
+                      {/* Empty to match spacing */}
+                    </div>
+                    
+                    {/* Action Buttons area - matching line 638-639 */}
+                    <div className="flex gap-2">
+                      {/* Price - Same height as EDIT AVATAR button, but bigger */}
+                      <p className="font-pixel text-yellow-400" style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
+                        ${CHARACTER_SLOT_PRICE.toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
         </div>
 
         {/* Character Slots Info */}
@@ -686,31 +785,31 @@ export default function CharacterSelector({
           className="text-center"
         >
            <Card theme={activeCharacter?.theme || 'obsidian-veil'} className="max-w-md mx-auto">
-             <p className="font-pixel text-white">
-               Characters: <span className="font-pixel">{characters.length}/{user.characterSlots}</span>
-             </p>
-             {user.characterSlots < 3 && (
-               <div className="mt-2">
-                 <p className="font-pixel text-sm text-yellow-300">
-                   Unlock all character slots<br />
-                   and more with a weekly tribute!
-                 </p>
-                <Button 
-                  onClick={() => {
-                    if (typeof onUpgrade === 'function') {
-                      onUpgrade();
-                    } else {
-                      console.error('onUpgrade callback not provided');
-                    }
-                  }} 
-                  variant="primary" 
-                  className="mt-3 text-lg px-6 py-2 w-full"
-                  theme={activeCharacter?.theme || 'obsidian-veil'}
-                >
-                  REACH NEW LEVELS
-                </Button>
+             <div className="p-4">
+               <h3 className="font-pixel text-lg text-white mb-3">Character Slots</h3>
+               <div className="flex items-center justify-between mb-4">
+                 <div>
+                   <p className="font-pixel text-gray-300 text-sm">Current Slots</p>
+                   <p className="font-pixel text-white text-2xl">{user.characterSlots || 1}</p>
+                 </div>
+                 <div className="text-right">
+                   <p className="font-pixel text-gray-300 text-sm">Add Slot</p>
+                   <p className="font-pixel text-yellow-400 text-2xl">${CHARACTER_SLOT_PRICE.toFixed(2)}</p>
+                 </div>
                </div>
-             )}
+               <p className="font-pixel text-white text-sm mb-3">
+                 Characters: <span className="font-pixel">{characters.length}/{user.characterSlots}</span>
+               </p>
+               <Button 
+                 onClick={handlePurchaseCharacterSlot}
+                 disabled={isPurchasingSlot}
+                 variant="primary" 
+                 className="mt-3 text-lg px-6 py-2 w-full"
+                 theme={activeCharacter?.theme || 'obsidian-veil'}
+               >
+                 {isPurchasingSlot ? 'Processing...' : 'Add Character Slot'}
+               </Button>
+             </div>
            </Card>
         </motion.div>
       </div>

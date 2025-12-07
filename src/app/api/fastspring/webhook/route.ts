@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import crypto from 'crypto';
 import { getPendingCheckoutUser, clearPendingCheckout } from '@/lib/fastspring-checkout';
+import { 
+  CREDIT_PACKAGES, 
+  CHARACTER_SLOT_PRODUCT_PATH,
+  CHARACTER_SLOT_PRICE,
+  addCredits, 
+  addCharacterSlot,
+  markStarterKitPurchased 
+} from '@/lib/credits';
 
 // Validate webhook secret
 const webhookSecret = process.env.FASTSPRING_WEBHOOK_SECRET;
@@ -248,9 +256,72 @@ export async function POST(request: NextRequest) {
             }
           }
           
+          // Check if this is a credit purchase or character slot purchase (not a subscription)
+          const productPath = order.items?.[0]?.product || '';
+          const orderTotal = order.total || order.totalDisplay || 0;
+          const transactionId = order.id || order.reference || null;
+
+          // Check if it's a character slot purchase
+          if (productPath === CHARACTER_SLOT_PRODUCT_PATH && user) {
+            console.log('🎯 Processing character slot purchase for user:', user.id);
+            const result = await addCharacterSlot(
+              user.id,
+              transactionId,
+              typeof orderTotal === 'number' ? orderTotal : parseFloat(orderTotal) || CHARACTER_SLOT_PRICE,
+              { orderId: order.id, orderReference: order.reference }
+            );
+            if (result.success) {
+              console.log('✅ Character slot added. New slot count:', result.newSlotCount);
+            } else {
+              console.error('❌ Failed to add character slot:', result.error);
+            }
+            // Clear pending checkout
+            await clearPendingCheckout(user.id);
+            break;
+          }
+
+          // Check if it's a credit package purchase
+          const creditPackage = Object.values(CREDIT_PACKAGES).find(
+            pkg => pkg.productPath === productPath
+          );
+
+          if (creditPackage && user) {
+            console.log('🎯 Processing credit purchase for user:', user.id, 'package:', creditPackage.name);
+            
+            // Add credits
+            const result = await addCredits(
+              user.id,
+              creditPackage.inkVials,
+              creditPackage.name.toLowerCase().replace(/\s+/g, '-'),
+              transactionId,
+              typeof orderTotal === 'number' ? orderTotal : parseFloat(orderTotal) || creditPackage.price,
+              { 
+                orderId: order.id, 
+                orderReference: order.reference,
+                packageName: creditPackage.name
+              }
+            );
+
+            if (result.success) {
+              console.log('✅ Credits added. New balance:', result.newBalance);
+              
+              // If it's the Starter Kit, mark it as purchased
+              if (productPath === 'the-starter-kit') {
+                await markStarterKitPurchased(user.id);
+                console.log('✅ Starter Kit marked as purchased');
+              }
+            } else {
+              console.error('❌ Failed to add credits:', result.error);
+            }
+            
+            // Clear pending checkout
+            await clearPendingCheckout(user.id);
+            break;
+          }
+
+          // Handle subscription purchases (existing logic)
           if (user && subscriptionId) {
             // Determine billing cycle from product path
-            const productPath = order.items[0].product || '';
             let billingCycle = 'monthly';
             if (productPath.includes('weekly')) billingCycle = 'weekly';
             else if (productPath.includes('yearly')) billingCycle = 'yearly';
@@ -270,7 +341,7 @@ export async function POST(request: NextRequest) {
             // Clear pending checkout after successful linking
             await clearPendingCheckout(user.id);
             console.log('✅ Order completed - subscription linked for user:', user.id, 'plan:', billingCycle);
-          } else {
+          } else if (!creditPackage && productPath !== CHARACTER_SLOT_PRODUCT_PATH) {
             // FALLBACK: If we have account ID but no user, this means client-side linking hasn't happened yet
             // Log this clearly so we can diagnose the issue
             console.warn('⚠️ Could not link order - no user found');

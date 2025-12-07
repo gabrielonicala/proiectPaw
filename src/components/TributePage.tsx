@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 // import { useSession } from 'next-auth/react';
+import Image from 'next/image';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { motion } from 'framer-motion';
@@ -10,10 +11,16 @@ import AppNavigation from '@/components/AppNavigation';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import AlertModal from '@/components/AlertModal';
 import { User, Character, Theme } from '@/types';
+// SUBSCRIPTION CODE - COMMENTED OUT FOR CREDITS MIGRATION - Imports kept for commented-out UI code
 import { USE_SHARED_LIMITS, SUBSCRIPTION_LIMITS } from '@/lib/subscription-limits';
 import { migrateTheme } from '@/lib/theme-migration';
 import { themes } from '@/themes';
+// SUBSCRIPTION CODE - COMMENTED OUT FOR CREDITS MIGRATION - Imports kept for commented-out UI code
 import { isPaidPlan, hasPremiumAccess } from '@/lib/fastspring';
+import { CREDIT_PACKAGES, CHARACTER_SLOT_PRICE, CHARACTER_SLOT_PRODUCT_PATH, INK_VIAL_COSTS, LOW_CREDITS_THRESHOLD } from '@/lib/credits';
+import { useCredits } from '@/hooks/useCredits';
+import { useStarterKitEligibility } from '@/hooks/useStarterKitEligibility';
+import { setCachedCredits } from '@/lib/credits-cache';
 // import Footer from './Footer';
 
 interface SubscriptionData {
@@ -38,14 +45,27 @@ interface TributePageProps {
 }
 
 export default function TributePage({ user, activeCharacter, onBack }: TributePageProps) {
-  // const { data: session } = useSession();
+  // SUBSCRIPTION CODE - COMMENTED OUT FOR CREDITS MIGRATION - Variables kept for commented-out UI code
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isCreating, setIsCreating] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isCanceling, setIsCanceling] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedBillingCycle, setSelectedBillingCycle] = useState<'weekly' | 'monthly' | 'yearly'>('monthly');
   
+  // Credits system state
+  const [credits, setCredits] = useState<number>(user.credits || 150);
+  const [isLowOnCredits, setIsLowOnCredits] = useState(false);
+  const [starterKitEligible, setStarterKitEligible] = useState(false);
+  const [isPurchasing, setIsPurchasing] = useState<string | null>(null);
+  // Character slot purchase moved to CharacterSelector
+  // const [isPurchasingSlot, setIsPurchasingSlot] = useState(false);
+  
   // Modal states
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  // SUBSCRIPTION CODE - COMMENTED OUT FOR CREDITS MIGRATION
+  // const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const [alertConfig, setAlertConfig] = useState({
     title: '',
@@ -53,12 +73,38 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
     variant: 'info' as 'success' | 'error' | 'info'
   });
 
+  // Initialize cache from user object if available
+  useEffect(() => {
+    if (user?.credits !== undefined) {
+      setCachedCredits(user.id, {
+        credits: user.credits,
+        isLow: user.credits <= LOW_CREDITS_THRESHOLD,
+        hasPurchasedStarterKit: user.hasPurchasedStarterKit || false
+      });
+    }
+  }, [user?.id, user?.credits, user?.hasPurchasedStarterKit]);
+
+  // Fetch credit balance and starter kit eligibility with caching
+  const { credits: cachedCredits, isLow: cachedIsLow } = useCredits();
+  const { eligible: cachedEligible } = useStarterKitEligibility();
+  
+  useEffect(() => {
+    setCredits(cachedCredits);
+    setIsLowOnCredits(cachedIsLow);
+    setStarterKitEligible(cachedEligible);
+  }, [cachedCredits, cachedIsLow, cachedEligible]);
+
+  // SUBSCRIPTION CODE - COMMENTED OUT FOR CREDITS MIGRATION
+  /*
   useEffect(() => {
     // Use user data directly instead of calling API
     const hasActiveSubscription = hasPremiumAccess(user);
     setSubscription({ hasSubscription: hasActiveSubscription });
   }, [user]);
+  */
 
+  // SUBSCRIPTION CODE - COMMENTED OUT FOR CREDITS MIGRATION
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleCreateSubscription = async () => {
     setIsCreating(true);
     try {
@@ -162,10 +208,97 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
     return paths[billingCycle];
   }
 
+  // Credit purchase handler
+  const handlePurchaseCredits = async (packageKey: keyof typeof CREDIT_PACKAGES) => {
+    setIsPurchasing(packageKey);
+    try {
+      // Check if FastSpring API is loaded
+      if (typeof window === 'undefined' || !(window as any).fastspring) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        if (!(window as any).fastspring) {
+          alert('FastSpring checkout is loading. Please try again in a moment.');
+          setIsPurchasing(null);
+          return;
+        }
+      }
+
+      const fastspring = (window as any).fastspring;
+      const packageInfo = CREDIT_PACKAGES[packageKey];
+      
+      // Notify backend that checkout is starting
+      try {
+        await fetch('/api/fastspring/checkout/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+      } catch (error) {
+        console.error('Failed to notify backend of checkout start:', error);
+      }
+
+      const handlePopupClosed = () => {
+        setIsPurchasing(null);
+        window.removeEventListener('fsc:popup.closed', handlePopupClosed);
+        window.removeEventListener('fsc:checkout.closed', handlePopupClosed);
+        window.removeEventListener('fsc:order.complete', handleOrderComplete);
+        // Refresh credits after purchase
+        setTimeout(() => {
+          fetch('/api/credits/balance')
+            .then(res => res.json())
+            .then(data => {
+              setCredits(data.credits);
+              setIsLowOnCredits(data.isLow);
+            });
+        }, 2000);
+      };
+
+      const handleOrderComplete = () => {
+        handlePopupClosed();
+      };
+
+      window.addEventListener('fsc:popup.closed', handlePopupClosed);
+      window.addEventListener('fsc:checkout.closed', handlePopupClosed);
+      window.addEventListener('fsc:order.complete', handleOrderComplete);
+
+      fastspring.builder.reset();
+
+      const sessionData: any = {
+        account: {
+          buyerReference: user.id
+        },
+        products: [{
+          path: packageInfo.productPath,
+          quantity: 1
+        }]
+      };
+
+      if (user.email) {
+        sessionData.paymentContact = { email: user.email };
+      }
+
+      fastspring.builder.push(sessionData);
+      await new Promise(resolve => setTimeout(resolve, 200));
+      fastspring.builder.checkout();
+
+    } catch (error) {
+      console.error('Error opening FastSpring checkout:', error);
+      alert('Failed to open checkout. Please try again.');
+      setIsPurchasing(null);
+    }
+  };
+
+  // Character slot purchase handler - moved to CharacterSelector
+  // const handlePurchaseCharacterSlot = async () => { ... }
+
+  // SUBSCRIPTION CODE - COMMENTED OUT FOR CREDITS MIGRATION
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleCancelSubscription = () => {
     setShowCancelConfirm(true);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const confirmCancelSubscription = async () => {
     setShowCancelConfirm(false);
     setIsCanceling(true);
@@ -325,6 +458,8 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
           currentPage="tribute"
           onBack={onBack}
           theme={activeCharacter.theme}
+          credits={credits}
+          isLowOnCredits={isLowOnCredits}
         />
 
         <motion.div
@@ -348,17 +483,19 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
               ease: "easeInOut"
             }}
           >
-            TRIBUTE
+            REACH NEW LEVELS
           </motion.h1>
           <motion.p 
             className="font-pixel text-lg text-yellow-300"
             animate={migrateTheme(activeCharacter.theme) === 'echoes-of-dawn' ? { opacity: [0.7, 1, 0.7] } : {}}
             transition={{ duration: 3, repeat: Infinity }}
           >
-            Break through the limits and unleash your adventure spirit!
+            Unlock your potential
           </motion.p>
         </motion.div>
 
+        {/* SUBSCRIPTION CODE - COMMENTED OUT FOR CREDITS MIGRATION - DO NOT DELETE */}
+        {false && (
         <div className="grid md:grid-cols-2 gap-3 sm:gap-4 md:gap-6 mb-8 w-full max-w-full overflow-hidden">
           {/* Free Plan */}
           <motion.div
@@ -547,11 +684,153 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
             </Card>
           </motion.div>
         </div>
+        )}
+
+        {/* Credit Packages - Responsive Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+          {/* Starter Kit - only show if eligible */}
+          {starterKitEligible && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="h-full flex relative"
+            >
+              <span className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10 bg-yellow-400 text-white px-3 py-1.5 text-xs font-pixel rounded border-2 border-black whitespace-nowrap">
+                ONE TIME OFFER
+              </span>
+              <Card theme={activeCharacter.theme} effect="glow" className="h-full w-full flex flex-col border-4 border-yellow-400">
+                <div className="p-4 md:p-6 flex flex-col flex-grow">
+                  {/* Pack Title - Centered at Top */}
+                  <div className="mb-3 flex justify-center">
+                    <h3 className="font-pixel text-xs md:text-sm text-white whitespace-nowrap">
+                      {CREDIT_PACKAGES['starter-kit'].name}
+                    </h3>
+                  </div>
+                  
+                  {/* Logo, Price, and Vials - Horizontal Layout */}
+                  <div className="flex items-center gap-3 mb-3 flex-shrink-0">
+                    {/* Pack Logo - Left Side */}
+                    <div className="flex-shrink-0 -ml-4">
+                      <Image
+                        src="/starterKit.png"
+                        alt="Starter Kit"
+                        width={120}
+                        height={120}
+                        className="object-contain"
+                      />
+                    </div>
+                    {/* Price and Vials - Right Side */}
+                    <div className="flex-1 flex flex-col justify-center -ml-4">
+                      <div className="text-2xl md:text-3xl font-bold text-yellow-400 mb-3">
+                        ${CREDIT_PACKAGES['starter-kit'].price.toFixed(2)}
+                      </div>
+                      <div className="text-base md:text-lg text-gray-300 whitespace-nowrap">
+                        {CREDIT_PACKAGES['starter-kit'].inkVials.toLocaleString()} Ink Vials
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-base text-white mb-4 flex-grow flex items-center">
+                    <p className="text-center leading-relaxed">{CREDIT_PACKAGES['starter-kit'].description}</p>
+                  </div>
+                  <button
+                    onClick={() => handlePurchaseCredits('starter-kit')}
+                    disabled={isPurchasing === 'starter-kit'}
+                    className="w-full font-pixel text-white bg-yellow-400 hover:bg-yellow-500 active:bg-yellow-600 border-2 border-yellow-400 px-4 py-2 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm mt-auto"
+                  >
+                    {isPurchasing === 'starter-kit' ? 'Processing...' : 'Purchase'}
+                  </button>
+                </div>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* Regular Credit Packages */}
+          {Object.entries(CREDIT_PACKAGES).filter(([key]) => key !== 'starter-kit').map(([key, pkg], index) => (
+            <motion.div
+              key={key}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 + index * 0.1 }}
+              className="h-full flex relative"
+            >
+              {key === 'chroniclers-kit' && (
+                <span className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10 bg-yellow-400 text-white px-3 py-1.5 text-xs font-pixel rounded border-2 border-black whitespace-nowrap">
+                  POPULAR
+                </span>
+              )}
+              <Card theme={activeCharacter.theme} effect={key === 'chroniclers-kit' ? 'glow' : 'vintage'} className="h-full w-full flex flex-col">
+                <div className="p-4 md:p-6 flex flex-col flex-grow">
+                  {/* Pack Title - Centered at Top */}
+                  <div className="mb-3 flex justify-center">
+                    <h3 className="font-pixel text-xs md:text-sm text-white whitespace-nowrap">{pkg.name}</h3>
+                  </div>
+                  
+                  {/* Logo, Price, and Vials - Horizontal Layout */}
+                  <div className="flex items-center gap-3 mb-3 flex-shrink-0">
+                    {/* Pack Logo - Left Side */}
+                    <div className="flex-shrink-0 -ml-4">
+                      {key === 'novice-sack' && (
+                        <Image
+                          src="/noviceSack.png"
+                          alt="Novice Sack"
+                          width={120}
+                          height={120}
+                          className="object-contain"
+                        />
+                      )}
+                      {key === 'chroniclers-kit' && (
+                        <Image
+                          src="/chroniclersKit.png"
+                          alt="Chronicler's Kit"
+                          width={120}
+                          height={120}
+                          className="object-contain"
+                        />
+                      )}
+                      {key === 'worldbuilders-chest' && (
+                        <Image
+                          src="/worldbuildersChest.png"
+                          alt="Worldbuilder's Chest"
+                          width={120}
+                          height={120}
+                          className="object-contain"
+                        />
+                      )}
+                    </div>
+                    {/* Price and Vials - Right Side */}
+                    <div className="flex-1 flex flex-col justify-center -ml-4">
+                      <div className="text-2xl md:text-3xl font-bold text-yellow-400 mb-3">
+                        ${pkg.price.toFixed(2)}
+                      </div>
+                      <div className="text-base md:text-lg text-gray-300 whitespace-nowrap">
+                        {pkg.inkVials.toLocaleString()} Ink Vials
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-base text-white mb-4 flex-grow flex items-center">
+                    <p className="text-center leading-relaxed">{pkg.description}</p>
+                  </div>
+                  <button
+                    onClick={() => handlePurchaseCredits(key as keyof typeof CREDIT_PACKAGES)}
+                    disabled={isPurchasing === key}
+                    className="w-full font-pixel text-white bg-yellow-400 hover:bg-yellow-500 active:bg-yellow-600 border-2 border-yellow-400 px-4 py-2 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm mt-auto"
+                  >
+                    {isPurchasing === key ? 'Processing...' : 'Purchase'}
+                  </button>
+                </div>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Character Slots Section - Moved to CharacterSelector */}
       </div>
       </div>
       {/* <Footer /> */}
       
-      {/* Custom Modals */}
+      {/* SUBSCRIPTION CODE - COMMENTED OUT FOR CREDITS MIGRATION */}
+      {/* 
       <ConfirmationModal
         isOpen={showCancelConfirm}
         onClose={() => setShowCancelConfirm(false)}
@@ -564,6 +843,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
         theme={activeCharacter?.theme || 'obsidian-veil'}
         isLoading={isCanceling}
       />
+      */}
       
       <AlertModal
         isOpen={showAlert}

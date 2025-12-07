@@ -29,12 +29,15 @@ model User {
   subscriptionEndsAt      DateTime?
   fastspringAccountId     String?        @unique
   timezone                String?        @default("UTC")
+  credits                 Int            @default(150)
+  hasPurchasedStarterKit  Boolean        @default(false)
   accounts                Account[]
   characters              Character[]
   entries                 JournalEntry[]
   sessions                Session[]
   dailyUsage              DailyUsage[]
   pendingCheckout         PendingCheckout?
+  creditPurchases         CreditPurchase[]
   activeCharacter         Character?     @relation("ActiveCharacter", fields: [activeCharacterId], references: [id])
 }
 
@@ -160,6 +163,22 @@ model PendingCheckout {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([createdAt])
+}
+
+model CreditPurchase {
+  id            String   @id @default(cuid())
+  userId        String
+  packageName   String
+  inkVials       Int
+  price         Decimal  @db.Decimal(10, 2)
+  transactionId String?
+  metadata      Json?    // Store additional details like FastSpring order data
+  purchasedAt   DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([transactionId])
+  @@index([purchasedAt])
 }
 
 model PageView {

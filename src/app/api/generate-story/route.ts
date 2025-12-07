@@ -4,7 +4,7 @@ import { ThemeConfig } from '@/types';
 import { getCharacterMemoryForStory, createStoryPromptWithMemory, updateCharacterMemory } from '@/lib/character-memory';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { canCreateEntry } from '@/lib/subscription-limits';
+import { canAffordEntry, deductCredits } from '@/lib/credits';
 import { db } from '@/lib/db';
 
 const openai = new OpenAI({
@@ -19,26 +19,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get user subscription info for rate limiting
-    const user = await db.user.findUnique({
-      where: { id: session.user.id },
-      select: { subscriptionPlan: true }
-    });
-
-
     const { originalText, themeConfig, outputType, pastContext, character } = await request.json();
 
-    // Check subscription limits for story generation
-    const limitCheck = await canCreateEntry(session.user.id, character.id, 'text');
-    if (!limitCheck.allowed) {
+    // Validate required fields
+    if (!originalText || !themeConfig) {
+      return NextResponse.json(
+        { error: 'Missing required fields: originalText and themeConfig are required' },
+        { status: 400 }
+      );
+    }
+
+    if (!character || !character.id) {
+      return NextResponse.json(
+        { error: 'Missing character data: character.id is required' },
+        { status: 400 }
+      );
+    }
+
+    // Check if user has enough credits for story generation
+    const creditCheck = await canAffordEntry(session.user.id, 'text');
+    if (!creditCheck.allowed) {
       return NextResponse.json(
         { 
-          error: 'Daily limit exceeded', 
-          message: limitCheck.reason,
-          usage: limitCheck.usage,
-          limit: limitCheck.limit
+          error: 'Insufficient credits', 
+          message: creditCheck.reason,
+          currentCredits: creditCheck.currentCredits,
+          requiredCredits: creditCheck.requiredCredits
         }, 
-        { status: 429 }
+        { status: 403 }
       );
     }
 
@@ -296,18 +304,33 @@ Return exactly this JSON shape:
       worldStateUpdate
     });
 
+    // Deduct credits after successful generation
+    const deductResult = await deductCredits(session.user.id, 'text');
+    if (!deductResult.success) {
+      console.error('Failed to deduct credits after story generation:', deductResult.error);
+      // Continue anyway - the story was already generated
+    }
+
     return NextResponse.json({
       success: true,
       reimaginedText: storyText,
       outputType,
       theme: themeConfig.id,
-      worldStateUpdate
+      worldStateUpdate,
+      remainingCredits: deductResult.remainingCredits
     });
 
   } catch (error) {
     console.error('OpenAI API error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to generate story';
+    const errorDetails = error instanceof Error ? error.stack : String(error);
+    console.error('Error details:', errorDetails);
     return NextResponse.json(
-      { error: 'Failed to generate story' },
+      { 
+        error: 'Failed to generate story',
+        message: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? errorDetails : undefined
+      },
       { status: 500 }
     );
   }

@@ -236,13 +236,40 @@ export async function generateReimaginedText(
     });
 
     if (!response.ok) {
-      throw new Error(`API request failed: ${response.status}`);
+      let errorData: any = {};
+      try {
+        const text = await response.text();
+        if (text) {
+          errorData = JSON.parse(text);
+        }
+      } catch (e) {
+        // If parsing fails, use empty object
+        console.error('Failed to parse error response:', e);
+      }
+      
+      // Log the full error for debugging
+      console.error('API Error Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorData,
+        url: response.url
+      });
+      
+      const errorMessage = errorData.message || errorData.error || `API request failed: ${response.status} ${response.statusText}`;
+      const error = new Error(errorMessage);
+      (error as any).response = { data: errorData, status: response.status };
+      (error as any).data = errorData;
+      (error as any).status = response.status;
+      throw error;
     }
 
     const data = await response.json();
     
     if (!data.success) {
-      throw new Error(data.error || 'Failed to generate story');
+      const error = new Error(data.error || 'Failed to generate story');
+      (error as any).response = { data };
+      (error as any).data = data;
+      throw error;
     }
 
     return data.reimaginedText;
@@ -357,7 +384,11 @@ export async function generateImageGemini(
     });
 
     if (!response.ok) {
-      throw new Error('Failed to generate image with Gemini');
+      const errorData = await response.json().catch(() => ({}));
+      const error = new Error(errorData.message || errorData.error || 'Failed to generate image with Gemini');
+      (error as any).response = { data: errorData };
+      (error as any).data = errorData;
+      throw error;
     }
 
     const data = await response.json();

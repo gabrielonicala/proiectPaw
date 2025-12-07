@@ -108,10 +108,11 @@ export default function Input({
         </div>
         {showCharCount && (
           <div className="text-sm">
-            <div className="flex justify-between items-center">
-              <span className="font-pixel text-yellow-400">
+            <div className="flex justify-end items-center">
+              {/* Minimum length warning commented out - red button is clear enough */}
+              {/* <span className="font-pixel text-yellow-400">
                 {minLength && value.length < minLength ? `Minimum ${minLength} ${charCountLabel}` : ''}
-              </span>
+              </span> */}
               <span 
                 className="font-pixel"
                 style={{ color: getCharCountColor() }}
@@ -144,10 +145,11 @@ export default function Input({
       />
       {showCharCount && (
         <div className="text-sm">
-          <div className="flex justify-between items-center">
-            <span className="font-pixel text-yellow-400">
+          <div className="flex justify-end items-center">
+            {/* Minimum length warning commented out - red button is clear enough */}
+            {/* <span className="font-pixel text-yellow-400">
               {minLength && value.length < minLength ? `Minimum <span className="font-pixel">${minLength}</span> ${charCountLabel}` : ''}
-            </span>
+            </span> */}
             <span 
               className="font-pixel"
               style={{ color: getCharCountColor() }}

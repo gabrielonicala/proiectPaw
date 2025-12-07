@@ -10,7 +10,8 @@ export interface CharacterAccessInfo {
 }
 
 /**
- * Get character access information for a user based on their subscription
+ * Get character access information for a user based on their character slots (Credits System)
+ * All characters up to the user's characterSlots limit are accessible
  */
 export async function getCharacterAccess(userId: string): Promise<CharacterAccessInfo> {
   try {
@@ -61,59 +62,28 @@ export async function getCharacterAccess(userId: string): Promise<CharacterAcces
       characterCount: user.characters.length
     });
 
-    // Determine character access based on subscription
-    // Check if user has premium access (active subscription OR cancelled but still in grace period)
-    const isActiveSubscription = hasPremiumAccess(user);
-    
-    // Premium users: all characters accessible
-    // Free users: only current active character accessible
-    const totalAllowed = isActiveSubscription ? user.characters.length : 1;
+    // CREDITS SYSTEM: Character access is based on character slots, not subscription
+    // All characters up to the user's characterSlots limit are accessible
+    const totalAllowed = user.characterSlots;
 
-    console.log('Access calculation:', {
-      isActiveSubscription,
-      totalAllowed,
-      characterSlots: user.characterSlots
+    console.log('Access calculation (Credits System):', {
+      characterSlots: user.characterSlots,
+      totalCharacters: user.characters.length,
+      totalAllowed
     });
 
-    // Split characters into accessible and locked
-    let accessibleCharacters: any[] = [];
-    let lockedCharacters: any[] = [];
+    // Split characters into accessible and locked based on character slots
+    // First N characters (where N = characterSlots) are accessible
+    // Any characters beyond that are locked
+    const accessibleCharacters = user.characters.slice(0, user.characterSlots);
+    const lockedCharacters = user.characters.slice(user.characterSlots);
     
-    if (isActiveSubscription) {
-      // Premium users: all characters accessible
-      accessibleCharacters = user.characters;
-      lockedCharacters = [];
-    } else {
-      // Free users: only current active character accessible
-      console.log('🔍 Free user character access logic:', {
-        activeCharacterId: user.activeCharacterId,
-        characterIds: user.characters.map(c => ({ id: c.id, name: c.name }))
-      });
-      
-      if (user.activeCharacterId) {
-        const activeChar = user.characters.find(char => char.id === user.activeCharacterId);
-        console.log('🔍 Looking for active character:', {
-          activeCharacterId: user.activeCharacterId,
-          found: activeChar ? { id: activeChar.id, name: activeChar.name } : null
-        });
-        
-        if (activeChar) {
-          accessibleCharacters = [activeChar];
-          lockedCharacters = user.characters.filter(char => char.id !== user.activeCharacterId);
-          console.log('✅ Found active character, making it accessible:', activeChar.name);
-        } else {
-          // Fallback: first character if active character not found
-          accessibleCharacters = user.characters.slice(0, 1);
-          lockedCharacters = user.characters.slice(1);
-          console.log('⚠️ Active character not found in characters array, using first character:', accessibleCharacters[0]?.name);
-        }
-      } else {
-        // No active character: first character accessible
-        accessibleCharacters = user.characters.slice(0, 1);
-        lockedCharacters = user.characters.slice(1);
-        console.log('⚠️ No active character ID, using first character:', accessibleCharacters[0]?.name);
-      }
-    }
+    console.log('Character split:', {
+      accessibleCount: accessibleCharacters.length,
+      lockedCount: lockedCharacters.length,
+      accessibleCharacters: accessibleCharacters.map(c => ({ id: c.id, name: c.name })),
+      lockedCharacters: lockedCharacters.map(c => ({ id: c.id, name: c.name }))
+    });
 
     console.log('Character split:', {
       accessibleCount: accessibleCharacters.length,

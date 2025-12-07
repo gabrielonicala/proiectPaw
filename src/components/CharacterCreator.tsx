@@ -221,7 +221,7 @@ export default function CharacterCreator({ user, onCharacterCreate, onBack, curr
                 You&apos;ve reached your character limit ({user.characterSlots} slots)
               </p>
               <p className="font-pixel text-sm text-yellow-300 mb-4">
-                Upgrade to Tribute plan to unlock 3 character slots and experience different themes!
+                Purchase additional character slots to create more characters and experience different themes!
               </p>
               <div className="flex gap-2">
                 <Button onClick={onBack} variant="secondary" theme="obsidian-veil">
@@ -238,7 +238,7 @@ export default function CharacterCreator({ user, onCharacterCreate, onBack, curr
                   variant="primary" 
                   theme="obsidian-veil"
                 >
-                  UPGRADE NOW
+                  PURCHASE SLOT
                 </Button>
               </div>
             </Card>

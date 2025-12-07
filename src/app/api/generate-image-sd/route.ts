@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { canCreateEntry } from '@/lib/subscription-limits';
+import { canAffordEntry, deductCredits } from '@/lib/credits';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,17 +14,17 @@ export async function POST(request: NextRequest) {
 
     const { originalText, themeConfig, character } = await request.json();
 
-    // Check subscription limits for image generation
-    const limitCheck = await canCreateEntry(session.user.id, character.id, 'image');
-    if (!limitCheck.allowed) {
+    // Check if user has enough credits for image generation
+    const creditCheck = await canAffordEntry(session.user.id, 'image');
+    if (!creditCheck.allowed) {
       return NextResponse.json(
         { 
-          error: 'Daily limit exceeded', 
-          message: limitCheck.reason,
-          usage: limitCheck.usage,
-          limit: limitCheck.limit
+          error: 'Insufficient credits', 
+          message: creditCheck.reason,
+          currentCredits: creditCheck.currentCredits,
+          requiredCredits: creditCheck.requiredCredits
         }, 
-        { status: 429 }
+        { status: 403 }
       );
     }
 
@@ -43,7 +43,17 @@ export async function POST(request: NextRequest) {
     // Call Replicate API for Stable Diffusion XL
     const imageUrl = await generateSDImage(imagePrompt);
 
-    return NextResponse.json({ imageUrl });
+    // Deduct credits after successful generation
+    const deductResult = await deductCredits(session.user.id, 'image');
+    if (!deductResult.success) {
+      console.error('Failed to deduct credits after image generation:', deductResult.error);
+      // Continue anyway - the image was already generated
+    }
+
+    return NextResponse.json({ 
+      imageUrl,
+      remainingCredits: deductResult.remainingCredits
+    });
   } catch (error) {
     console.error('Stable Diffusion generation error:', error);
     return NextResponse.json(

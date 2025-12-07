@@ -121,9 +121,10 @@ export async function POST(request: NextRequest) {
 
     if (existingCharacters >= user.characterSlots) {
       return NextResponse.json({ 
-        error: 'Character slot limit reached. Upgrade to create more characters.',
+        error: 'Character slot limit reached. Purchase additional character slots to create more characters.',
         currentSlots: user.characterSlots,
-        currentCharacters: existingCharacters
+        currentCharacters: existingCharacters,
+        canPurchaseSlots: true
       }, { status: 403 });
     }
 

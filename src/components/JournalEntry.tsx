@@ -14,8 +14,12 @@ import { generateReimaginedText, generateImage, generateImageSD, generateImageGe
 import { fetchWithAutoLogout } from '@/lib/auto-logout';
 import { migrateTheme } from '@/lib/theme-migration';
 import { getImageProvider, getReferenceImages } from '@/lib/image-generation-config';
-import { useDailyUsage } from '@/hooks/useDailyUsage';
-import QuotaCountdown from './QuotaCountdown';
+// SUBSCRIPTION CODE - COMMENTED OUT FOR CREDITS MIGRATION
+// import { useDailyUsage } from '@/hooks/useDailyUsage';
+// import QuotaCountdown from './QuotaCountdown';
+import { INK_VIAL_COSTS, LOW_CREDITS_THRESHOLD } from '@/lib/credits';
+import { useCredits } from '@/hooks/useCredits';
+import { setCachedCredits } from '@/lib/credits-cache';
 // import Footer from './Footer';
 
 interface JournalEntryProps {
@@ -78,8 +82,32 @@ export default function JournalEntry({
   const [imageProvider, setImageProvider] = useState<string>('');
   const loadingSetupRef = useRef(false);
 
+  // Credits system
+  const [credits, setCredits] = useState<number>(user.credits || 150);
+  const [isLowOnCredits, setIsLowOnCredits] = useState(false);
+  const [creditsError, setCreditsError] = useState<string | null>(null);
+
+  // SUBSCRIPTION CODE - COMMENTED OUT FOR CREDITS MIGRATION
   // Daily usage data
-  const { usageData, isLoading: usageLoading, refreshUsage } = useDailyUsage(activeCharacter?.id);
+  // const { usageData, isLoading: usageLoading, refreshUsage } = useDailyUsage(activeCharacter?.id);
+
+  // Initialize cache from user object if available
+  useEffect(() => {
+    if (user?.credits !== undefined) {
+      setCachedCredits(user.id, {
+        credits: user.credits,
+        isLow: user.credits <= LOW_CREDITS_THRESHOLD,
+        hasPurchasedStarterKit: user.hasPurchasedStarterKit || false
+      });
+    }
+  }, [user?.id, user?.credits, user?.hasPurchasedStarterKit]);
+
+  // Fetch credit balance with caching
+  const { credits: cachedCredits, isLow: cachedIsLow, updateCredits: updateCachedCredits } = useCredits();
+  useEffect(() => {
+    setCredits(cachedCredits);
+    setIsLowOnCredits(cachedIsLow);
+  }, [cachedCredits, cachedIsLow]);
 
   // Modal state management
   useEffect(() => {
@@ -248,6 +276,14 @@ export default function JournalEntry({
       return;
     }
 
+    // Check if user has enough credits
+    const requiredCredits = selectedOutput === 'text' ? INK_VIAL_COSTS.CHAPTER : INK_VIAL_COSTS.SCENE;
+    if (credits < requiredCredits) {
+      setCreditsError(`Not enough Ink Vials. You need ${requiredCredits} but only have ${credits}.`);
+      return;
+    }
+    setCreditsError(null);
+
     setIsGenerating(true);
     setGeneratedContent('');
     setImageError(false);
@@ -343,8 +379,21 @@ export default function JournalEntry({
           setShowModal(true);
           setIsGenerating(false);
           
+          // Refresh credit balance after generation (update cache immediately)
+          const creditsResponse = await fetch('/api/credits/balance');
+          if (creditsResponse.ok) {
+            const creditsData = await creditsResponse.json();
+            setCredits(creditsData.credits);
+            setIsLowOnCredits(creditsData.isLow);
+            // Update cache with fresh data
+            if (updateCachedCredits) {
+              updateCachedCredits(creditsData.credits);
+            }
+          }
+          
+          // SUBSCRIPTION CODE - COMMENTED OUT FOR CREDITS MIGRATION
           // Refresh daily usage data
-          refreshUsage();
+          // refreshUsage();
           
           // Refresh character data to get updated stats and level
           if (onCharacterUpdate) {
@@ -375,8 +424,27 @@ export default function JournalEntry({
         setShowModal(true);
         setIsGenerating(false);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating content:', error);
+      
+      // Handle insufficient credits error
+      if (error?.status === 403 || error?.message?.includes('Insufficient credits') || error?.message?.includes('Not enough')) {
+        const errorData = error.response?.data || error.data || {};
+        const errorMessage = errorData.message || error.message || 'Not enough Ink Vials to generate this content.';
+        setCreditsError(errorMessage);
+        // Refresh credits to get current balance
+        const creditsResponse = await fetch('/api/credits/balance');
+        if (creditsResponse.ok) {
+          const creditsData = await creditsResponse.json();
+          setCredits(creditsData.credits);
+          setIsLowOnCredits(creditsData.isLow);
+        }
+      } else {
+        // Handle other errors
+        const errorMessage = error?.message || error?.response?.data?.message || error?.data?.message || 'Failed to generate content. Please try again.';
+        alert(errorMessage);
+      }
+      
       setIsGenerating(false);
     }
   };
@@ -504,6 +572,8 @@ export default function JournalEntry({
           onTributeView={onTributeView}
           theme={migrateTheme(activeCharacter.theme) as Theme}
           userEmail={user.email}
+          credits={credits}
+          isLowOnCredits={isLowOnCredits}
         />
 
         {/* Main Header */}
@@ -511,10 +581,10 @@ export default function JournalEntry({
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="text-center mb-4"
+          className="text-center pt-2 mb-4"
         >
           <motion.h1 
-            className="font-pixel text-lg md:text-xl text-white mb-2"
+            className="font-pixel text-lg md:text-xl text-white mt-4 mb-2"
             animate={{
               textShadow: migrateTheme(activeCharacter.theme) === 'neon-ashes' 
                 ? ["0 0 10px #00FFFF, 0 0 20px #00FFFF", "0 0 20px #00FFFF, 0 0 30px #00FFFF"]
@@ -693,41 +763,47 @@ export default function JournalEntry({
                       {/* <h3 className="font-pixel text-yellow-400 text-xl">What happened today?</h3> */}
                       <h3 className="font-pixel text-yellow-400 text-xl">Today&apos;s story?</h3>
                       <div className="mt-2">
+                        {/* SUBSCRIPTION CODE - COMMENTED OUT FOR CREDITS MIGRATION */}
+                        {false && (
                         <div className="text-center">
                           <div className="flex justify-start text-sm gap-2">
                             <span className="font-pixel text-white">📖 <span>
-                              {usageLoading ? (
+                              {/* usageLoading ? (
                                 <span className="loading-dots">•••</span>
                               ) : usageData ? (
                                 `${usageData.usage.chapters.used}/${usageData.usage.chapters.limit || '?'}`
                               ) : (
                                 '•••'
-                              )}
+                              ) */}
                             </span></span>
                             <span className="font-pixel text-white">🖼️ <span>
-                              {usageLoading ? (
+                              {/* usageLoading ? (
                                 <span className="loading-dots">•••</span>
                               ) : usageData ? (
                                 `${usageData.usage.scenes.used}/${usageData.usage.scenes.limit || '?'}`
                               ) : (
                                 '•••'
-                              )}
+                              ) */}
                             </span></span>
                           </div>
                         </div>
+                        )}
                       </div>
                     </div>
+                    {/* SUBSCRIPTION CODE - COMMENTED OUT FOR CREDITS MIGRATION */}
+                    {false && (
                     <div className="text-right">
                       <div className="font-pixel text-white text-sm">
-                        {usageLoading ? (
+                        {/* usageLoading ? (
                           <span>REFRESH IN <span className="loading-dots">•••</span></span>
                         ) : usageData ? (
                           <QuotaCountdown theme={migrateTheme(activeCharacter.theme)} nextResetAt={usageData.nextResetAt} />
                         ) : (
                           <span>REFRESH IN <span className="loading-dots">•••</span></span>
-                        )}
+                        ) */}
                       </div>
                     </div>
+                    )}
                   </div>
                   
                 <div className="relative">
@@ -759,11 +835,12 @@ export default function JournalEntry({
                     <div className="absolute top-1 right-1 text-purple-400 text-sm">✨</div>
                     <h3 className="font-pixel text-sm text-white mb-3 text-center">
                       <span className="mr-2">🎨</span>
-                      What do you want to create today?
+                      What do you want to create?
                     </h3>
                     <div className="flex gap-2 w-full">
                     {outputTypes.map((output) => {
                       const isSelected = selectedOutput === output.value;
+                      const cost = output.value === 'text' ? INK_VIAL_COSTS.CHAPTER : INK_VIAL_COSTS.SCENE;
                       return (
                         <Button
                           key={output.value}
@@ -781,7 +858,7 @@ export default function JournalEntry({
                             })
                           }}
                         >
-                          {output.emoji} {output.label}
+                          {output.emoji} {output.label} ({cost} Vials)
                         </Button>
                       );
                     })}
@@ -793,16 +870,26 @@ export default function JournalEntry({
                 {/* Create Adventure Button with Visual Flair */}
                 <div className="relative">
                   <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-gradient-to-r from-yellow-400 to-orange-400 pixelated"></div>
+                {/* Credit error message */}
+                {creditsError && (
+                  <div className="mb-4 p-3 bg-red-900/50 border-2 border-red-500 rounded-lg">
+                    <p className="font-pixel text-red-300 text-sm mb-2">{creditsError}</p>
+                    <button
+                      onClick={onTributeView}
+                      className="font-pixel text-white bg-yellow-400 hover:bg-yellow-500 px-4 py-2 rounded border-2 border-yellow-400 text-sm"
+                    >
+                      Purchase Ink Vials
+                    </button>
+                  </div>
+                )}
                 <Button
                   onClick={handleGenerate}
                   disabled={
                     entryText.length < 80 ||
                     !entryText.trim() || 
                     isGenerating || 
-                    (usageData ? (
-                      (selectedOutput === 'text' && usageData.usage.chapters.remaining <= 0) ||
-                      (selectedOutput === 'image' && usageData.usage.scenes.remaining <= 0)
-                    ) : false)
+                    (selectedOutput === 'text' && credits < INK_VIAL_COSTS.CHAPTER) ||
+                    (selectedOutput === 'image' && credits < INK_VIAL_COSTS.SCENE)
                   }
                   variant="primary"
                   size="lg"
@@ -814,15 +901,16 @@ export default function JournalEntry({
                         background: 'linear-gradient(to bottom, #ef4444, #dc2626)',
                         borderColor: '#dc2626',
                         color: '#ffffff',
+                      } : (selectedOutput === 'text' && credits < INK_VIAL_COSTS.CHAPTER) || (selectedOutput === 'image' && credits < INK_VIAL_COSTS.SCENE) ? {
+                        background: 'linear-gradient(to bottom, #f97316, #ea580c)',
+                        borderColor: '#ea580c',
+                        color: '#ffffff',
                       } : {})
                     }}
                 >
                     <span className="relative z-10 flex items-center justify-center">
                       <motion.span 
-                        key={`${selectedOutput}-${isGenerating ? 'generating' : entryText.length < 80 ? 'minimum' : (usageData && (
-                          (selectedOutput === 'text' && usageData.usage.chapters.remaining <= 0) ||
-                          (selectedOutput === 'image' && usageData.usage.scenes.remaining <= 0)
-                        )) ? 'limit' : 'normal'}`}
+                        key={`${selectedOutput}-${isGenerating ? 'generating' : entryText.length < 80 ? 'minimum' : ((selectedOutput === 'text' && credits < INK_VIAL_COSTS.CHAPTER) || (selectedOutput === 'image' && credits < INK_VIAL_COSTS.SCENE)) ? 'limit' : 'normal'}`}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.3, ease: "easeInOut" }}
@@ -832,19 +920,14 @@ export default function JournalEntry({
                           ? (selectedOutput === 'text' ? 'WRITING...' : 'PAINTING...')
                           : entryText.length < 80
                           ? 'MINIMUM 80 CHARACTERS'
-                          : (usageData && (
-                              (selectedOutput === 'text' && usageData.usage.chapters.remaining <= 0) ||
-                              (selectedOutput === 'image' && usageData.usage.scenes.remaining <= 0)
-                            ))
-                          ? 'DAILY LIMIT REACHED'
+                          : (selectedOutput === 'text' && credits < INK_VIAL_COSTS.CHAPTER) ||
+                            (selectedOutput === 'image' && credits < INK_VIAL_COSTS.SCENE)
+                          ? 'NOT ENOUGH INK VIALS'
                           : selectedOutput === 'text' ? 'WRITE CHAPTER' : 'PAINT SCENE'
                         }
                       </motion.span>
                     </span>
-                    {!isGenerating && entryText.length >= 80 && !(usageData && (
-                      (selectedOutput === 'text' && usageData.usage.chapters.remaining <= 0) ||
-                      (selectedOutput === 'image' && usageData.usage.scenes.remaining <= 0)
-                    )) && (
+                    {!isGenerating && entryText.length >= 80 && !((selectedOutput === 'text' && credits < INK_VIAL_COSTS.CHAPTER) || (selectedOutput === 'image' && credits < INK_VIAL_COSTS.SCENE)) && (
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 animate-pulse"></div>
                     )}
                 </Button>
