@@ -483,14 +483,18 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
               ease: "easeInOut"
             }}
           >
-            REACH NEW LEVELS
+            {/* OLD SUBSCRIPTION MESSAGES - COMMENTED OUT FOR CREDITS MIGRATION */}
+            {/* REACH NEW LEVELS */}
+            REFILL YOUR INK
           </motion.h1>
           <motion.p 
             className="font-pixel text-lg text-yellow-300"
             animate={migrateTheme(activeCharacter.theme) === 'echoes-of-dawn' ? { opacity: [0.7, 1, 0.7] } : {}}
             transition={{ duration: 3, repeat: Infinity }}
           >
-            Unlock your potential
+            {/* OLD SUBSCRIPTION MESSAGES - COMMENTED OUT FOR CREDITS MIGRATION */}
+            {/* Unlock your potential */}
+            Keep your creative well flowing!
           </motion.p>
         </motion.div>
 
@@ -687,7 +691,12 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
         )}
 
         {/* Credit Packages - Responsive Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+        <div 
+          className="grid gap-4 md:gap-6 mb-8"
+          style={{ 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))'
+          }}
+        >
           {/* Starter Kit - only show if eligible */}
           {starterKitEligible && (
             <motion.div
@@ -708,10 +717,10 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
                     </h3>
                   </div>
                   
-                  {/* Logo, Price, and Vials - Horizontal Layout */}
-                  <div className="flex items-center gap-3 mb-3 flex-shrink-0">
+                  {/* Logo, Price, and Vials - Horizontal Layout, Centered */}
+                  <div className="flex items-center gap-3 mb-3 flex-shrink-0 justify-center">
                     {/* Pack Logo - Left Side */}
-                    <div className="flex-shrink-0 -ml-4">
+                    <div className="flex-shrink-0">
                       <Image
                         src="/starterKit.png"
                         alt="Starter Kit"
@@ -721,7 +730,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
                       />
                     </div>
                     {/* Price and Vials - Right Side */}
-                    <div className="flex-1 flex flex-col justify-center -ml-4">
+                    <div className="flex flex-col justify-center">
                       <div className="text-2xl md:text-3xl font-bold text-yellow-400 mb-3">
                         ${CREDIT_PACKAGES['starter-kit'].price.toFixed(2)}
                       </div>
@@ -766,10 +775,10 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
                     <h3 className="font-pixel text-xs md:text-sm text-white whitespace-nowrap">{pkg.name}</h3>
                   </div>
                   
-                  {/* Logo, Price, and Vials - Horizontal Layout */}
-                  <div className="flex items-center gap-3 mb-3 flex-shrink-0">
+                  {/* Logo, Price, and Vials - Horizontal Layout, Centered */}
+                  <div className="flex items-center gap-3 mb-3 flex-shrink-0 justify-center">
                     {/* Pack Logo - Left Side */}
-                    <div className="flex-shrink-0 -ml-4">
+                    <div className="flex-shrink-0">
                       {key === 'novice-sack' && (
                         <Image
                           src="/noviceSack.png"
@@ -799,7 +808,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
                       )}
                     </div>
                     {/* Price and Vials - Right Side */}
-                    <div className="flex-1 flex flex-col justify-center -ml-4">
+                    <div className="flex flex-col justify-center">
                       <div className="text-2xl md:text-3xl font-bold text-yellow-400 mb-3">
                         ${pkg.price.toFixed(2)}
                       </div>

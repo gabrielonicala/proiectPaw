@@ -89,7 +89,7 @@ export default function AppNavigation({
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className={`flex ${currentPage === 'journal' ? 'lg:grid lg:grid-cols-3' : ''} justify-between ${currentPage === 'journal' ? 'lg:justify-stretch' : ''} items-center mt-2 mb-6`}
+      className="flex justify-between items-center mt-2 mb-6"
     >
       {/* Left Side */}
       <div className="flex items-center gap-4">
@@ -124,45 +124,40 @@ export default function AppNavigation({
         )}
       </div>
 
-      {/* Center - Calendar and Profile for Journal Entry */}
-      {currentPage === 'journal' && (
-        <div className="hidden lg:flex items-center justify-center gap-10">
-          <button 
-            onClick={onCalendarView} 
-            className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button"
-          >
-            CALENDAR
-          </button>
-          <button 
-            onClick={onProfileView} 
-            className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button"
-          >
-            PROFILE
-          </button>
-        </div>
-      )}
-
       {/* Right Side */}
-      <div className="flex gap-10 justify-end items-center">
+      <div className="flex gap-6 md:gap-10 justify-end items-center">
         {currentPage === 'journal' ? (
-          // Journal Entry: Switch character button and mobile navigation
+          // Journal Entry: All navigation buttons on the right
           <>
-            {/* Mobile: Calendar and Profile */}
-            <div className="flex gap-4 lg:hidden">
-              <button 
-                onClick={onCalendarView} 
-                className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button navbar-button-icon"
-              >
-                <Calendar className="w-5 h-5" />
-              </button>
-              <button 
-                onClick={onProfileView} 
-                className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button navbar-button-icon"
-              >
-                <User className="w-5 h-5" />
-              </button>
-            </div>
-            {/* Switch Character - Moved to right */}
+            {/* Calendar - Desktop text, Mobile icon */}
+            <button 
+              onClick={onCalendarView} 
+              className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button hidden md:flex"
+            >
+              CALENDAR
+            </button>
+            <button 
+              onClick={onCalendarView} 
+              className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button navbar-button-icon md:hidden"
+            >
+              <Calendar className="w-5 h-5" />
+            </button>
+            
+            {/* Profile - Desktop text, Mobile icon */}
+            <button 
+              onClick={onProfileView} 
+              className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button hidden md:flex"
+            >
+              PROFILE
+            </button>
+            <button 
+              onClick={onProfileView} 
+              className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button navbar-button-icon md:hidden"
+            >
+              <User className="w-5 h-5" />
+            </button>
+            
+            {/* Switch Character - Desktop text, Mobile icon */}
             <button 
               onClick={onCharacterSwitch} 
               className="font-pixel text-white bg-transparent border-none cursor-pointer navbar-button hidden md:flex"

@@ -20,14 +20,14 @@ export const CREDIT_PACKAGES = {
     price: 4.99,
     inkVials: 400,
     productPath: 'the-novice-sack',
-    description: 'A humble leather pouch, filled with shimmering ink essence, crafted by wandering artisans. Ideal for quick quests and fleeting moments of inspiration that strike like lightning across a stormy sky.',
+    description: 'A humble leather pouch, filled with a modest amount of shimmering ink essence. Ideal for quick quests and fleeting moments of inspiration that strike like lightning across a stormy sky.',
   },
   'chroniclers-kit': {
     name: "Chronicler's Kit",
     price: 11.99,
     inkVials: 1200,
     productPath: 'the-chronicler-s-kit',
-    description: 'The chosen vessel of master storytellers, containing enough mystical ink to weave countless narratives. For those who dedicate their soul to preserving the legends of ages past and future.',
+    description: 'The chosen vessel of master storytellers, containing enough mystical ink to weave an abundance of narratives. For those who dedicate their soul to preserving the legends of ages past and future.',
   },
   'worldbuilders-chest': {
     name: "Worldbuilder's Chest",

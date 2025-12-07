@@ -733,52 +733,35 @@ export default function CharacterSelector({
               theme="obsidian-veil"
               className="cursor-pointer transition-all duration-200 hover:border-yellow-500 border-dashed border-2 border-yellow-600 h-full"
             >
-              <div className="flex items-center gap-2 -pl-6 -ml-4 pr-4 py-4">
-                {/* Purchase Icon - Left Side */}
-                <div className="flex-shrink-0 w-32 h-40 flex items-center justify-center">
-                  <div className="text-6xl text-yellow-400">🔓</div>
+              <div className="flex flex-col items-center justify-center pt-2 pb-2 p-6 text-center">
+                {/* Title at the top, centered */}
+                <h3 className="font-pixel text-3xl text-white mb-4 whitespace-nowrap">
+                  EMBARK ON A NEW JOURNEY
+                </h3>
+                
+                {/* Plus icon */}
+                <div className="flex items-center justify-center mb-4">
+                  <div className="w-16 h-16 bg-gray-800 flex items-center justify-center pixelated">
+                    <div className="text-3xl text-yellow-400">➕</div>
+                  </div>
                 </div>
                 
-                {/* Purchase Info - Right Side - Matching character slot layout exactly */}
-                <div className="flex-1 min-w-0 flex-shrink-0">
-                  {/* Title - Same height as character name (line 587-589) */}
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-pixel text-lg text-white whitespace-nowrap">
-                      START A NEW JOURNEY
-                    </h3>
-                  </div>
-                  
-                  {/* Description - Same height as theme name (line 609) */}
-                  <p className="font-pixel text-sm text-gray-300 mb-2">
-                    Purchase a new character slot
-                  </p>
-                  
-                  {/* Empty description area to match spacing when character has no description (line 613-617) */}
-                  <div className="mb-3" style={{ minHeight: '0' }}></div>
-                  
-                  {/* Status and Actions section - matching character slot structure exactly (line 619-639) */}
-                  <div className="flex flex-col gap-2">
-                    {/* Status badge area - matching line 621 */}
-                    <div className="flex items-center gap-2">
-                      {/* Empty to match spacing */}
-                    </div>
-                    
-                    {/* Action Buttons area - matching line 638-639 */}
-                    <div className="flex gap-2">
-                      {/* Price - Same height as EDIT AVATAR button, but bigger */}
-                      <p className="font-pixel text-yellow-400" style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
-                        ${CHARACTER_SLOT_PRICE.toFixed(2)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                {/* Description */}
+                <p className="font-pixel text-sm text-gray-300 mb-4 whitespace-nowrap">
+                  Get a new character slot
+                </p>
+                
+                {/* Price */}
+                <p className="font-pixel text-yellow-400" style={{ fontSize: '1.3rem', fontWeight: 'bold' }}>
+                  ${CHARACTER_SLOT_PRICE.toFixed(2)}
+                </p>
               </div>
             </Card>
           </motion.div>
         </div>
 
         {/* Character Slots Info */}
-        <motion.div
+        {/* <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.5 }}
@@ -811,7 +794,7 @@ export default function CharacterSelector({
                </Button>
              </div>
            </Card>
-        </motion.div>
+        </motion.div> */}
       </div>
 
       {/* Avatar Builder Modal */}

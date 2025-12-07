@@ -56,7 +56,7 @@ export default function CreditBalance({ credits, isLow, onClick }: CreditBalance
         style={{
           paddingTop: '4px',
           position: 'relative',
-          fontSize: '1.625rem' // 18px - slightly bigger than text-base (16px)
+          fontSize: '1.425rem' // 18px - slightly bigger than text-base (16px)
         }}
       >
         {credits}

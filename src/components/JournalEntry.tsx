@@ -47,8 +47,8 @@ import UnifiedEntryModal from './UnifiedEntryModal';
 const REFERENCE_IMAGES = getReferenceImages();
 
 const outputTypes: { value: OutputType; label: string; emoji: string }[] = [
-  { value: 'text', label: 'Chapter', emoji: '📖' },
-  { value: 'image', label: 'Scene', emoji: '🖼️' },
+  { value: 'text', label: 'CHAPTER', emoji: '📖' },
+  { value: 'image', label: 'SCENE', emoji: '🖼️' },
   // { value: 'coming-soon', label: 'Episode', emoji: '🎬' } // Coming Soon placeholder - commented out for now
 ];
 
@@ -576,12 +576,14 @@ export default function JournalEntry({
           isLowOnCredits={isLowOnCredits}
         />
 
-        {/* Main Header */}
+        {/* Main Header - ORIGINAL PLACEMENT (commented out for reference, can be uncommented to revert) */}
+        {/* Main Header - ORIGINAL PLACEMENT (hidden - remove style to activate) */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
           className="text-center pt-2 mb-4"
+          style={{ display: 'none' }}
         >
           <motion.h1 
             className="font-pixel text-lg md:text-xl text-white mt-4 mb-2"
@@ -614,7 +616,7 @@ export default function JournalEntry({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="w-full"
+          className="w-full pt-2"
         >
           <Card className="h-full rounded-xl" theme={migrateTheme(activeCharacter.theme) as Theme} effect="vintage">
             
@@ -759,9 +761,34 @@ export default function JournalEntry({
                 <div className="relative">
                   {/* Input Labels - What happened today? and Today's Quota */}
                   <div className="flex justify-between items-center mb-2">
-                    <div className="flex flex-col">
+                    <div className="flex flex-col w-full pt-2 pb-2">
                       {/* <h3 className="font-pixel text-yellow-400 text-xl">What happened today?</h3> */}
-                      <h3 className="font-pixel text-yellow-400 text-xl">Today&apos;s story?</h3>
+                      {/* <h3 className="font-pixel text-yellow-400 text-xl">Today&apos;s story?</h3> */}
+                      {/* NEW PLACEMENT (currently active) */}
+                      <motion.h1 
+                        className="font-pixel text-lg md:text-xl text-white mb-2 text-center"
+                        animate={{
+                          textShadow: migrateTheme(activeCharacter.theme) === 'neon-ashes' 
+                            ? ["0 0 10px #00FFFF, 0 0 20px #00FFFF", "0 0 20px #00FFFF, 0 0 30px #00FFFF"]
+                            : migrateTheme(activeCharacter.theme) === 'blazeheart-saga'
+                            ? ["0 0 10px #FF6B35, 0 0 20px #FF6B35", "0 0 20px #FF6B35, 0 0 30px #FF6B35"]
+                            : ["0 0 10px #fff, 0 0 20px #fff", "0 0 20px #fff, 0 0 30px #fff"]
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: "easeInOut"
+                        }}
+                      >
+                        JOURNAL ENTRY
+                      </motion.h1>
+                      <motion.p 
+                        className="font-pixel text-lg text-yellow-300 text-center"
+                        animate={migrateTheme(activeCharacter.theme) === 'echoes-of-dawn' ? { opacity: [0.7, 1, 0.7] } : {}}
+                        transition={{ duration: 3, repeat: Infinity }}
+                      >
+                        Tell us about your day, {activeCharacter.name}
+                      </motion.p>
                       <div className="mt-2">
                         {/* SUBSCRIPTION CODE - COMMENTED OUT FOR CREDITS MIGRATION */}
                         {false && (
@@ -834,8 +861,8 @@ export default function JournalEntry({
                   <div className="relative p-3 bg-black/20 border border-white/10 pixelated rounded-lg w-full">
                     <div className="absolute top-1 right-1 text-purple-400 text-sm">✨</div>
                     <h3 className="font-pixel text-sm text-white mb-3 text-center">
-                      <span className="mr-2">🎨</span>
-                      What do you want to create?
+                      {/* <span className="mr-2">🎨</span> */}
+                      WHAT DO YOU WISH TO CREATE?
                     </h3>
                     <div className="flex gap-2 w-full">
                     {outputTypes.map((output) => {
@@ -858,7 +885,25 @@ export default function JournalEntry({
                             })
                           }}
                         >
-                          {output.emoji} {output.label} ({cost} Vials)
+                          <span className="flex items-center justify-center w-full text-xs sm:text-sm md:text-base" style={{ gap: '0.25rem' }}>
+                            <span>{/* {output.emoji} */} {output.label}</span>
+                            <span>
+                              (<span style={{ marginLeft: '5px' }}>{cost}</span>
+                              <Image
+                                src="/inkLogo.png"
+                                alt="Ink Vials"
+                                width={16}
+                                height={16}
+                                className="inline-block w-6 h-6 align-middle -mt-0.5"
+                                style={{
+                                  filter: 'drop-shadow(0 0 4px rgba(139, 92, 246, 0.7)) drop-shadow(0 0 2px rgba(59, 130, 246, 0.5))',
+                                  verticalAlign: 'middle',
+                                  marginLeft: '0px',
+                                  marginRight: '-3px'
+                                }}
+                              />)
+                            </span>
+                          </span>
                         </Button>
                       );
                     })}
