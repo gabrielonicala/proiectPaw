@@ -3,14 +3,27 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 
+const ADMIN_EMAILS = ['admin@quillia.app', 'gabrielonicala@gmail.com'];
+
 interface CreditBalanceProps {
   credits: number;
   isLow: boolean;
   onClick?: () => void;
+  userEmail?: string;
 }
 
-export default function CreditBalance({ credits, isLow, onClick }: CreditBalanceProps) {
+export default function CreditBalance({ credits, isLow, onClick, userEmail }: CreditBalanceProps) {
   const [isFlashing, setIsFlashing] = useState(false);
+  
+  // Check if user is admin
+  const isAdmin = userEmail && ADMIN_EMAILS.includes(userEmail);
+  
+  // Only allow clicking if user is admin
+  const handleClick = () => {
+    if (isAdmin && onClick) {
+      onClick();
+    }
+  };
 
   useEffect(() => {
     if (isLow) {
@@ -26,10 +39,10 @@ export default function CreditBalance({ credits, isLow, onClick }: CreditBalance
 
   return (
     <button
-      onClick={onClick}
-      className={`font-pixel text-white bg-transparent border-none cursor-pointer flex items-center justify-center gap-1.5 ${
+      onClick={handleClick}
+      className={`font-pixel text-white bg-transparent border-none flex items-center justify-center gap-1.5 ${
         isLow ? 'animate-pulse' : ''
-      }`}
+      } ${isAdmin ? 'cursor-pointer' : 'cursor-default'}`}
       style={{
         color: isFlashing ? '#ef4444' : '#ffffff',
         display: 'flex',

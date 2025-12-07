@@ -59,6 +59,8 @@ export async function GET() {
         subscriptionStatus: true,
         subscriptionId: true,
         subscriptionEndsAt: true,
+        credits: true,
+        hasPurchasedStarterKit: true,
         createdAt: true,
         activeCharacter: {
           select: {
@@ -151,6 +153,8 @@ export async function GET() {
       subscriptionStatus: (user.subscriptionStatus as 'free' | 'active' | 'canceled' | 'past_due' | 'inactive') || undefined,
       subscriptionId: user.subscriptionId || undefined,
       subscriptionEndsAt: user.subscriptionEndsAt || undefined,
+      credits: user.credits ?? undefined,
+      hasPurchasedStarterKit: user.hasPurchasedStarterKit ?? undefined,
       timezone: user.timezone || undefined,
       createdAt: user.createdAt,
       characters: charactersWithParsedAvatars,

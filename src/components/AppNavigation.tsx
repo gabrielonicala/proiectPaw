@@ -100,6 +100,7 @@ export default function AppNavigation({
               credits={credits} 
               isLow={isLowOnCredits}
               onClick={onTributeView}
+              userEmail={userEmail}
             />
           </>
         ) : currentPage === 'tribute' ? (
@@ -109,6 +110,7 @@ export default function AppNavigation({
                 credits={credits}
                 isLow={isLowOnCredits}
                 onClick={onTributeView}
+                userEmail={userEmail}
               />
             )}
           </div>

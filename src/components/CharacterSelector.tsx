@@ -18,6 +18,8 @@ import { queueOfflineChange } from '@/lib/offline-sync';
 import { CHARACTER_SLOT_PRICE, CHARACTER_SLOT_PRODUCT_PATH } from '@/lib/credits';
 // import Footer from './Footer';
 
+const ADMIN_EMAILS = ['admin@quillia.app', 'gabrielonicala@gmail.com'];
+
 interface CharacterSelectorProps {
   characters: Character[];
   activeCharacter: Character | null;
@@ -696,18 +698,40 @@ export default function CharacterSelector({
                   theme="obsidian-veil"
                   className="cursor-pointer transition-all duration-200 hover:border-green-500 border-dashed border-2 border-gray-600 h-full"
                 >
-                  <div className="flex items-center gap-4 p-4">
+                  <div 
+                    className="flex items-center pt-4 mt-8"
+                    style={{
+                      gap: '1rem', // Horizontal gap between icon and text (16px)
+                      padding: '1rem' // Card padding (16px)
+                    }}
+                  >
                     {/* Plus Icon - Left Side */}
-                    <div className="flex-shrink-0 w-24 h-24 flex items-center justify-center">
+                    <div 
+                      className="flex-shrink-0 flex items-center justify-center"
+                      style={{
+                        width: '6rem', // Icon container width (96px)
+                        height: '6rem' // Icon container height (96px)
+                      }}
+                    >
                       <div className="text-6xl text-gray-400">➕</div>
                     </div>
                     
                     {/* Create Info - Right Side */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-pixel text-lg text-white mb-1">
+                      <h3 
+                        className="font-pixel text-lg text-white"
+                        style={{
+                          marginBottom: '0.25rem' // Space below "CREATE NEW" (4px)
+                        }}
+                      >
                         CREATE NEW
                       </h3>
-                      <p className="font-pixel text-sm text-gray-300 mb-3">
+                      <p 
+                        className="font-pixel text-sm text-gray-300"
+                        style={{
+                          marginBottom: '0.75rem' // Space below "Start a new adventure" (12px)
+                        }}
+                      >
                         Start a new adventure
                       </p>
                       <div className="font-pixel text-xs text-green-400 bg-green-400/20 px-2 py-1 pixelated w-fit">
@@ -720,44 +744,46 @@ export default function CharacterSelector({
             );
           })}
 
-          {/* Always show purchase slot button after all character slots */}
-          <motion.div
-            key="purchase-slot"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: (characters.length + Math.max(0, user.characterSlots - characters.length)) * 0.1, duration: 0.5 }}
-          >
-            <Card
-              hover
-              onClick={handlePurchaseCharacterSlot}
-              theme="obsidian-veil"
-              className="cursor-pointer transition-all duration-200 hover:border-yellow-500 border-dashed border-2 border-yellow-600 h-full"
+          {/* Always show purchase slot button after all character slots - Only for admin accounts */}
+          {user.email && ADMIN_EMAILS.includes(user.email) && (
+            <motion.div
+              key="purchase-slot"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: (characters.length + Math.max(0, user.characterSlots - characters.length)) * 0.1, duration: 0.5 }}
             >
-              <div className="flex flex-col items-center justify-center pt-2 pb-2 p-6 text-center">
-                {/* Title at the top, centered */}
-                <h3 className="font-pixel text-3xl text-white mb-4 whitespace-nowrap">
-                  EMBARK ON A NEW JOURNEY
-                </h3>
-                
-                {/* Plus icon */}
-                <div className="flex items-center justify-center mb-4">
-                  <div className="w-16 h-16 bg-gray-800 flex items-center justify-center pixelated">
-                    <div className="text-3xl text-yellow-400">➕</div>
+              <Card
+                hover
+                onClick={handlePurchaseCharacterSlot}
+                theme="obsidian-veil"
+                className="cursor-pointer transition-all duration-200 hover:border-yellow-500 border-dashed border-2 border-yellow-600 h-full"
+              >
+                <div className="flex flex-col items-center justify-center pt-2 pb-2 p-6 text-center">
+                  {/* Title at the top, centered */}
+                  <h3 className="font-pixel text-3xl text-white mb-4 whitespace-nowrap">
+                    EMBARK ON A NEW JOURNEY
+                  </h3>
+                  
+                  {/* Plus icon */}
+                  <div className="flex items-center justify-center mb-4">
+                    <div className="w-16 h-16 bg-gray-800 flex items-center justify-center pixelated">
+                      <div className="text-3xl text-yellow-400">➕</div>
+                    </div>
                   </div>
+                  
+                  {/* Description */}
+                  <p className="font-pixel text-sm text-gray-300 mb-4 whitespace-nowrap">
+                    Get a new character slot
+                  </p>
+                  
+                  {/* Price */}
+                  <p className="font-pixel text-yellow-400" style={{ fontSize: '1.3rem', fontWeight: 'bold' }}>
+                    ${CHARACTER_SLOT_PRICE.toFixed(2)}
+                  </p>
                 </div>
-                
-                {/* Description */}
-                <p className="font-pixel text-sm text-gray-300 mb-4 whitespace-nowrap">
-                  Get a new character slot
-                </p>
-                
-                {/* Price */}
-                <p className="font-pixel text-yellow-400" style={{ fontSize: '1.3rem', fontWeight: 'bold' }}>
-                  ${CHARACTER_SLOT_PRICE.toFixed(2)}
-                </p>
-              </div>
-            </Card>
-          </motion.div>
+              </Card>
+            </motion.div>
+          )}
         </div>
 
         {/* Character Slots Info */}

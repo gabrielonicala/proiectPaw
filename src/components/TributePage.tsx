@@ -17,7 +17,7 @@ import { migrateTheme } from '@/lib/theme-migration';
 import { themes } from '@/themes';
 // SUBSCRIPTION CODE - COMMENTED OUT FOR CREDITS MIGRATION - Imports kept for commented-out UI code
 import { isPaidPlan, hasPremiumAccess } from '@/lib/fastspring';
-import { CREDIT_PACKAGES, CHARACTER_SLOT_PRICE, CHARACTER_SLOT_PRODUCT_PATH, INK_VIAL_COSTS, LOW_CREDITS_THRESHOLD } from '@/lib/credits';
+import { CREDIT_PACKAGES, CHARACTER_SLOT_PRICE, CHARACTER_SLOT_PRODUCT_PATH, INK_VIAL_COSTS, LOW_CREDITS_THRESHOLD, STARTER_KIT_ELIGIBILITY_DAYS } from '@/lib/credits';
 import { useCredits } from '@/hooks/useCredits';
 import { useStarterKitEligibility } from '@/hooks/useStarterKitEligibility';
 import { setCachedCredits } from '@/lib/credits-cache';
@@ -58,7 +58,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
   // Credits system state
   const [credits, setCredits] = useState<number>(user.credits || 150);
   const [isLowOnCredits, setIsLowOnCredits] = useState(false);
-  const [starterKitEligible, setStarterKitEligible] = useState(false);
+  
   const [isPurchasing, setIsPurchasing] = useState<string | null>(null);
   // Character slot purchase moved to CharacterSelector
   // const [isPurchasingSlot, setIsPurchasingSlot] = useState(false);
@@ -88,11 +88,29 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
   const { credits: cachedCredits, isLow: cachedIsLow } = useCredits();
   const { eligible: cachedEligible } = useStarterKitEligibility();
   
+  // Calculate starter kit eligibility directly from user data (prevents flash)
+  // Only use hook value as fallback if user data is incomplete
+  const starterKitEligible = useMemo(() => {
+    // If we have complete user data, calculate from it immediately
+    if (user?.hasPurchasedStarterKit !== undefined && user?.createdAt) {
+      // If already purchased, not eligible
+      if (user.hasPurchasedStarterKit) {
+        return false;
+      }
+      // Check if within eligibility window (30 days)
+      const daysSinceCreation = Math.floor(
+        (Date.now() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60 * 24)
+      );
+      return daysSinceCreation <= STARTER_KIT_ELIGIBILITY_DAYS;
+    }
+    // Fallback to hook value if user data incomplete
+    return cachedEligible;
+  }, [user?.hasPurchasedStarterKit, user?.createdAt, cachedEligible]);
+  
   useEffect(() => {
     setCredits(cachedCredits);
     setIsLowOnCredits(cachedIsLow);
-    setStarterKitEligible(cachedEligible);
-  }, [cachedCredits, cachedIsLow, cachedEligible]);
+  }, [cachedCredits, cachedIsLow]);
 
   // SUBSCRIPTION CODE - COMMENTED OUT FOR CREDITS MIGRATION
   /*
@@ -466,7 +484,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-8"
+          className="text-center mb-8 -mt-4"
         >
           <motion.h1 
             className="font-pixel text-lg md:text-xl text-white mb-4"
