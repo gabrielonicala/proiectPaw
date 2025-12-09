@@ -228,13 +228,19 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
 
   // Credit purchase handler
   const handlePurchaseCredits = async (packageKey: keyof typeof CREDIT_PACKAGES) => {
+    console.log('🛒 [CREDITS] Starting purchase for package:', packageKey);
     setIsPurchasing(packageKey);
+    const creditsBeforePurchase = credits; // Capture for comparison
+    const pollingIntervals: NodeJS.Timeout[] = [];
+    const timeouts: NodeJS.Timeout[] = [];
+    
     try {
       // Check if FastSpring API is loaded
       if (typeof window === 'undefined' || !(window as any).fastspring) {
         await new Promise(resolve => setTimeout(resolve, 500));
         
         if (!(window as any).fastspring) {
+          console.error('❌ [CREDITS] FastSpring not loaded');
           alert('FastSpring checkout is loading. Please try again in a moment.');
           setIsPurchasing(null);
           return;
@@ -244,28 +250,97 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
       const fastspring = (window as any).fastspring;
       const packageInfo = CREDIT_PACKAGES[packageKey];
       
+      console.log('🛒 [CREDITS] FastSpring loaded, notifying backend...');
       // Notify backend that checkout is starting
       try {
         await fetch('/api/fastspring/checkout/start', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
         });
+        console.log('✅ [CREDITS] Backend notified of checkout start');
       } catch (error) {
-        console.error('Failed to notify backend of checkout start:', error);
+        console.error('❌ [CREDITS] Failed to notify backend of checkout start:', error);
       }
+      
+      // Cleanup function
+      const cleanup = () => {
+        console.log('🧹 [CREDITS] Cleaning up polling and timeouts...');
+        pollingIntervals.forEach(interval => clearInterval(interval));
+        timeouts.forEach(timeout => clearTimeout(timeout));
+        pollingIntervals.length = 0;
+        timeouts.length = 0;
+      };
+      
+      // Track if we're still purchasing (using a flag that persists)
+      let isStillPurchasing = true;
+      
+      // Start constant polling for credits every 4 seconds while purchase is in progress
+      console.log('🔄 [CREDITS] Starting constant polling (every 4s)...');
+      const interval = setInterval(async () => {
+        if (!isStillPurchasing) {
+          console.log('🔄 [CREDITS] Purchase completed, stopping polling');
+          cleanup();
+          return;
+        }
+        
+        console.log('🔄 [CREDITS] Polling credits...');
+        try {
+          const response = await fetch('/api/credits/balance');
+          if (response.ok) {
+            const data = await response.json();
+            const newCredits = data.credits;
+            console.log(`💰 [CREDITS] Current balance: ${newCredits} (was ${creditsBeforePurchase})`);
+            
+            // If credits increased, purchase likely completed
+            if (newCredits > creditsBeforePurchase) {
+              console.log('✅ [CREDITS] Credits increased! Purchase completed via polling');
+              isStillPurchasing = false;
+              setIsPurchasing(null);
+              setCredits(newCredits);
+              setIsLowOnCredits(data.isLow);
+              window.dispatchEvent(new CustomEvent('credits:purchase'));
+              cleanup();
+            }
+          }
+        } catch (error) {
+          console.error('❌ [CREDITS] Error during polling:', error);
+        }
+      }, 4000); // Poll every 4 seconds
+      pollingIntervals.push(interval);
+      
+      // Force reset button after 60 seconds (safety net)
+      const forceReset = setTimeout(() => {
+        console.log('⏰ [CREDITS] Force resetting button after 60s timeout');
+        if (isPurchasing === packageKey) {
+          setIsPurchasing(null);
+        }
+        cleanup();
+      }, 60000);
+      timeouts.push(forceReset);
 
       const handleOrderComplete = () => {
-        console.log('Order completed for package:', packageKey);
+        console.log('✅ [CREDITS] fsc:order.complete event fired for package:', packageKey);
+        console.log('🔄 [CREDITS] Checkout finished - resetting button and cleaning up...');
+        
+        // Mark as no longer purchasing
+        isStillPurchasing = false;
+        
+        // Clean up polling and timeouts
+        cleanup();
+        
         // Reset button state immediately when order completes
         setIsPurchasing(null);
+        console.log('✅ [CREDITS] Button state reset to null');
         
         // Remove all event listeners
         window.removeEventListener('fsc:popup.closed', handlePopupClosed);
         window.removeEventListener('fsc:checkout.closed', handlePopupClosed);
         window.removeEventListener('fsc:order.complete', handleOrderComplete);
+        console.log('🧹 [CREDITS] Event listeners removed');
         
         // Refresh credits after purchase (trigger event-driven cache invalidation)
         const refreshCredits = () => {
+          console.log('🔄 [CREDITS] Refreshing credits...');
           // Dispatch event to invalidate cache
           window.dispatchEvent(new CustomEvent('credits:purchase'));
           
@@ -273,10 +348,11 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
           fetch('/api/credits/balance')
             .then(res => res.json())
             .then(data => {
+              console.log(`💰 [CREDITS] Updated balance: ${data.credits}`);
               setCredits(data.credits);
               setIsLowOnCredits(data.isLow);
             })
-            .catch(err => console.error('Error refreshing credits:', err));
+            .catch(err => console.error('❌ [CREDITS] Error refreshing credits:', err));
         };
         
         // First refresh attempt after 2 seconds
@@ -286,37 +362,55 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
       };
 
       const handlePopupClosed = () => {
-        console.log('Popup closed for package:', packageKey);
+        console.log('🚪 [CREDITS] Popup closed for package:', packageKey);
+        console.log('🔄 [CREDITS] Checkout popup finished - setting up delayed checks...');
+        
         // Remove event listeners first to prevent double-firing
         window.removeEventListener('fsc:popup.closed', handlePopupClosed);
         window.removeEventListener('fsc:checkout.closed', handlePopupClosed);
         window.removeEventListener('fsc:order.complete', handleOrderComplete);
+        console.log('🧹 [CREDITS] Event listeners removed from popup close handler');
+        
+        // Also mark as potentially no longer purchasing (polling will verify)
+        // Don't set isStillPurchasing = false here, let polling detect it
         
         // If popup closed, check if order completed by checking credits after a delay
         // This handles cases where order completes but event doesn't fire
         const refreshCreditsAfterClose = () => {
+          console.log('🔄 [CREDITS] Checking credits after popup close...');
           // Always check credits and reset button state
           // This ensures the button doesn't get stuck even if events don't fire properly
           fetch('/api/credits/balance')
             .then(res => res.json())
             .then(data => {
               const newCredits = data.credits;
-              // Reset button state regardless - if order completed, credits will have increased
+              console.log(`💰 [CREDITS] Balance after popup close: ${newCredits} (was ${creditsBeforePurchase})`);
+              
+              // Always reset button state - if order completed, credits will have increased
               // If order didn't complete, we still want to reset the button
               setIsPurchasing(null);
+              console.log('✅ [CREDITS] Button state reset after popup close');
               
               // Update credits if they changed
-              if (newCredits !== credits) {
+              if (newCredits !== creditsBeforePurchase) {
+                console.log('✅ [CREDITS] Credits changed, updating state');
                 setCredits(newCredits);
                 setIsLowOnCredits(data.isLow);
                 // Dispatch event to invalidate cache
                 window.dispatchEvent(new CustomEvent('credits:purchase'));
+                
+                // Stop polling if credits increased
+                isStillPurchasing = false;
+                cleanup();
+              } else {
+                console.log('💰 [CREDITS] Credits unchanged, but button reset (checkout finished)');
               }
             })
             .catch(err => {
-              console.error('Error checking credits after popup close:', err);
+              console.error('❌ [CREDITS] Error checking credits after popup close:', err);
               // Always reset button state on error to prevent it from being stuck
               setIsPurchasing(null);
+              console.log('✅ [CREDITS] Button state reset on error');
             });
         };
         
@@ -326,9 +420,11 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
         setTimeout(refreshCreditsAfterClose, 5500);
       };
 
+      console.log('👂 [CREDITS] Setting up FastSpring event listeners...');
       window.addEventListener('fsc:popup.closed', handlePopupClosed);
       window.addEventListener('fsc:checkout.closed', handlePopupClosed);
       window.addEventListener('fsc:order.complete', handleOrderComplete);
+      console.log('✅ [CREDITS] Event listeners registered');
 
       fastspring.builder.reset();
 
@@ -348,7 +444,9 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
 
       fastspring.builder.push(sessionData);
       await new Promise(resolve => setTimeout(resolve, 200));
+      console.log('🛒 [CREDITS] Opening FastSpring checkout popup...');
       fastspring.builder.checkout();
+      console.log('✅ [CREDITS] Checkout popup opened');
 
     } catch (error) {
       console.error('Error opening FastSpring checkout:', error);

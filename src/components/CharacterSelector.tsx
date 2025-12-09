@@ -180,13 +180,28 @@ export default function CharacterSelector({
 
   // Character slot purchase handler
   const handlePurchaseCharacterSlot = async () => {
+    console.log('🛒 [SLOTS] Starting character slot purchase');
     setIsPurchasingSlot(true);
     const slotsBeforePurchase = user.characterSlots; // Capture current slots for comparison
+    const pollingIntervals: NodeJS.Timeout[] = [];
+    const timeouts: NodeJS.Timeout[] = [];
+    let isStillPurchasing = true;
+    
+    // Cleanup function
+    const cleanup = () => {
+      console.log('🧹 [SLOTS] Cleaning up polling and timeouts...');
+      pollingIntervals.forEach(interval => clearInterval(interval));
+      timeouts.forEach(timeout => clearTimeout(timeout));
+      pollingIntervals.length = 0;
+      timeouts.length = 0;
+    };
+    
     try {
       if (typeof window === 'undefined' || !(window as any).fastspring) {
         await new Promise(resolve => setTimeout(resolve, 500));
         
         if (!(window as any).fastspring) {
+          console.error('❌ [SLOTS] FastSpring not loaded');
           alert('FastSpring checkout is loading. Please try again in a moment.');
           setIsPurchasingSlot(false);
           return;
@@ -195,21 +210,69 @@ export default function CharacterSelector({
 
       const fastspring = (window as any).fastspring;
       
+      console.log('🛒 [SLOTS] FastSpring loaded, notifying backend...');
       try {
         await fetch('/api/fastspring/checkout/start', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
         });
+        console.log('✅ [SLOTS] Backend notified of checkout start');
       } catch (error) {
-        console.error('Failed to notify backend of checkout start:', error);
+        console.error('❌ [SLOTS] Failed to notify backend of checkout start:', error);
       }
+      
+      // Start constant polling for character slots every 5 seconds while purchase is in progress
+      console.log('🔄 [SLOTS] Starting constant polling (every 5s)...');
+      const interval = setInterval(async () => {
+        if (!isStillPurchasing) {
+          console.log('🔄 [SLOTS] Purchase completed, stopping polling');
+          cleanup();
+          return;
+        }
+        
+        console.log('🔄 [SLOTS] Polling character slots...');
+        try {
+          const response = await fetch('/api/user/preferences');
+          if (response.ok) {
+            const data = await response.json();
+            const updatedUser = data.user;
+            const newSlots = updatedUser?.characterSlots || 0;
+            console.log(`💰 [SLOTS] Current slots: ${newSlots} (was ${slotsBeforePurchase})`);
+            
+            // If slots increased, purchase likely completed
+            if (newSlots > slotsBeforePurchase) {
+              console.log('✅ [SLOTS] Character slots increased! Purchase completed via polling');
+              isStillPurchasing = false;
+              setIsPurchasingSlot(false);
+              if (onUserRefresh) {
+                await onUserRefresh();
+              }
+              cleanup();
+            }
+          }
+        } catch (error) {
+          console.error('❌ [SLOTS] Error during polling:', error);
+        }
+      }, 5000); // Poll every 5 seconds
+      pollingIntervals.push(interval);
+      
+      // Force reset button after 60 seconds (safety net)
+      const forceReset = setTimeout(() => {
+        console.log('⏰ [SLOTS] Force resetting button after 60s timeout');
+        isStillPurchasing = false;
+        setIsPurchasingSlot(false);
+        cleanup();
+      }, 60000);
+      timeouts.push(forceReset);
 
       const handlePopupClosed = async () => {
-        console.log('Character slot popup closed');
+        console.log('🚪 [SLOTS] Popup closed');
+        console.log('🔄 [SLOTS] Checkout popup finished - setting up delayed checks...');
         // Remove event listeners first to prevent double-firing
         window.removeEventListener('fsc:popup.closed', handlePopupClosed);
         window.removeEventListener('fsc:checkout.closed', handlePopupClosed);
         window.removeEventListener('fsc:order.complete', handleOrderComplete);
+        console.log('🧹 [SLOTS] Event listeners removed from popup close handler');
         
         // If popup closed, check if order completed by checking user data after a delay
         // This handles cases where order completes but event doesn't fire
@@ -264,19 +327,30 @@ export default function CharacterSelector({
       };
 
       const handleOrderComplete = async () => {
-        console.log('Character slot order completed');
+        console.log('✅ [SLOTS] fsc:order.complete event fired');
+        console.log('🔄 [SLOTS] Checkout finished - resetting button and cleaning up...');
+        
+        // Mark as no longer purchasing
+        isStillPurchasing = false;
+        
+        // Clean up polling and timeouts
+        cleanup();
+        
         // Reset button state immediately
         setIsPurchasingSlot(false);
+        console.log('✅ [SLOTS] Button state reset to false');
         
         // Remove all event listeners
         window.removeEventListener('fsc:popup.closed', handlePopupClosed);
         window.removeEventListener('fsc:checkout.closed', handlePopupClosed);
         window.removeEventListener('fsc:order.complete', handleOrderComplete);
+        console.log('🧹 [SLOTS] Event listeners removed');
         
         // Refresh user data to get updated slots
         // Try immediately first (webhook might process quickly), then retry if needed
         if (onUserRefresh) {
           const refreshWithRetry = async (attempt: number = 1) => {
+            console.log(`🔄 [SLOTS] Refreshing user data (attempt ${attempt})...`);
             try {
               await onUserRefresh();
               
@@ -285,28 +359,31 @@ export default function CharacterSelector({
               if (response.ok) {
                 const data = await response.json();
                 const updatedUser = data.user;
+                const newSlots = updatedUser?.characterSlots || 0;
+                console.log(`💰 [SLOTS] Current slots: ${newSlots} (was ${slotsBeforePurchase})`);
                 
                 // If slots increased, we're done
-                if (updatedUser && updatedUser.characterSlots > slotsBeforePurchase) {
-                  console.log('Character slots updated successfully');
+                if (updatedUser && newSlots > slotsBeforePurchase) {
+                  console.log('✅ [SLOTS] Character slots updated successfully');
                   return;
                 }
               }
               
               // If slots didn't increase yet and we haven't retried too many times, retry
               if (attempt < 3) {
-                console.log(`Slots not updated yet, retrying (attempt ${attempt + 1})...`);
+                console.log(`🔄 [SLOTS] Slots not updated yet, retrying (attempt ${attempt + 1})...`);
                 setTimeout(() => refreshWithRetry(attempt + 1), 2000);
               } else {
-                console.log('Slots may not have updated after multiple attempts');
+                console.log('⚠️ [SLOTS] Slots may not have updated after multiple attempts');
               }
             } catch (error) {
-              console.error(`Error refreshing user data (attempt ${attempt}):`, error);
+              console.error(`❌ [SLOTS] Error refreshing user data (attempt ${attempt}):`, error);
               // Retry on error
               if (attempt < 3) {
                 setTimeout(() => refreshWithRetry(attempt + 1), 2000);
               } else {
                 // Final fallback to page reload
+                console.log('🔄 [SLOTS] Final fallback: reloading page');
                 window.location.reload();
               }
             }
@@ -318,13 +395,16 @@ export default function CharacterSelector({
           setTimeout(() => refreshWithRetry(2), 2500);
         } else {
           // Fallback to page reload if no refresh callback
+          console.log('⚠️ [SLOTS] No refresh callback, reloading page');
           setTimeout(() => window.location.reload(), 2000);
         }
       };
 
+      console.log('👂 [SLOTS] Setting up FastSpring event listeners...');
       window.addEventListener('fsc:popup.closed', handlePopupClosed);
       window.addEventListener('fsc:checkout.closed', handlePopupClosed);
       window.addEventListener('fsc:order.complete', handleOrderComplete);
+      console.log('✅ [SLOTS] Event listeners registered');
 
       fastspring.builder.reset();
 
@@ -344,7 +424,9 @@ export default function CharacterSelector({
 
       fastspring.builder.push(sessionData);
       await new Promise(resolve => setTimeout(resolve, 200));
+      console.log('🛒 [SLOTS] Opening FastSpring checkout popup...');
       fastspring.builder.checkout();
+      console.log('✅ [SLOTS] Checkout popup opened');
 
     } catch (error) {
       console.error('Error opening FastSpring checkout:', error);
