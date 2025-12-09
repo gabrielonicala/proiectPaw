@@ -93,3 +93,11 @@ export function clearCreditsCache(userId?: string): void {
   }
 }
 
+/**
+ * Invalidate cache for a user (force refresh on next fetch)
+ * This is event-driven cache invalidation - call when credits might have changed
+ */
+export function invalidateCreditsCache(userId: string): void {
+  creditsCache.delete(userId);
+}
+

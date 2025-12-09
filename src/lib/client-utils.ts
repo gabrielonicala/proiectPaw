@@ -218,7 +218,8 @@ export async function generateReimaginedText(
   originalText: string, 
   themeConfig: ThemeConfig,
   pastContext: string[] = [],
-  character?: { appearance: string; pronouns: string; customPronouns?: string }
+  character?: { appearance: string; pronouns: string; customPronouns?: string },
+  skipCreditDeduction?: boolean
 ): Promise<string> {
   try {
     const response = await fetch('/api/generate-story', {
@@ -231,7 +232,8 @@ export async function generateReimaginedText(
         themeConfig,
         outputType: 'text',
         pastContext,
-        character
+        character,
+        skipCreditDeduction
       }),
     });
 

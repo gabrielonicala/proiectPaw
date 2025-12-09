@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { originalText, themeConfig, outputType, pastContext, character } = await request.json();
+    const { originalText, themeConfig, outputType, pastContext, character, skipCreditDeduction } = await request.json();
 
     // Validate required fields
     if (!originalText || !themeConfig) {
@@ -36,18 +36,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user has enough credits for story generation
-    const creditCheck = await canAffordEntry(session.user.id, 'text');
-    if (!creditCheck.allowed) {
-      return NextResponse.json(
-        { 
-          error: 'Insufficient credits', 
-          message: creditCheck.reason,
-          currentCredits: creditCheck.currentCredits,
-          requiredCredits: creditCheck.requiredCredits
-        }, 
-        { status: 403 }
-      );
+    // Check if user has enough credits for story generation (unless skipping deduction)
+    if (!skipCreditDeduction) {
+      const creditCheck = await canAffordEntry(session.user.id, 'text');
+      if (!creditCheck.allowed) {
+        return NextResponse.json(
+          { 
+            error: 'Insufficient credits', 
+            message: creditCheck.reason,
+            currentCredits: creditCheck.currentCredits,
+            requiredCredits: creditCheck.requiredCredits
+          }, 
+          { status: 403 }
+        );
+      }
     }
 
     if (!process.env.OPENAI_API_KEY) {
@@ -304,11 +306,24 @@ Return exactly this JSON shape:
       worldStateUpdate
     });
 
-    // Deduct credits after successful generation
-    const deductResult = await deductCredits(session.user.id, 'text');
-    if (!deductResult.success) {
-      console.error('Failed to deduct credits after story generation:', deductResult.error);
-      // Continue anyway - the story was already generated
+    // Deduct credits after successful generation (unless skipping)
+    let deductResult: { success: boolean; remainingCredits: number; error?: string };
+    if (!skipCreditDeduction) {
+      deductResult = await deductCredits(session.user.id, 'text');
+      if (!deductResult.success && deductResult.error) {
+        console.error('Failed to deduct credits after story generation:', deductResult.error);
+        // Continue anyway - the story was already generated
+      }
+    } else {
+      // Get current credits for response (without deducting)
+      const user = await db.user.findUnique({
+        where: { id: session.user.id },
+        select: { credits: true }
+      });
+      deductResult = {
+        success: true,
+        remainingCredits: user?.credits || 0
+      };
     }
 
     return NextResponse.json({

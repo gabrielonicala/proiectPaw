@@ -35,6 +35,8 @@ interface CharacterSelectorProps {
   };
   // Triggered when user clicks upgrade; allows parent to show the Tribute view
   onUpgrade?: () => void;
+  // Callback to refresh user data (for updating character slots after purchase)
+  onUserRefresh?: () => Promise<void>;
 }
 
 export default function CharacterSelector({ 
@@ -46,7 +48,8 @@ export default function CharacterSelector({
   onCharacterUpdate,
   onCharacterDelete,
   user,
-  onUpgrade
+  onUpgrade,
+  onUserRefresh
 }: CharacterSelectorProps) {
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
@@ -200,17 +203,46 @@ export default function CharacterSelector({
         console.error('Failed to notify backend of checkout start:', error);
       }
 
-      const handlePopupClosed = () => {
+      const handlePopupClosed = async () => {
         setIsPurchasingSlot(false);
         window.removeEventListener('fsc:popup.closed', handlePopupClosed);
         window.removeEventListener('fsc:checkout.closed', handlePopupClosed);
         window.removeEventListener('fsc:order.complete', handleOrderComplete);
-        // Refresh page to show new slot count
-        setTimeout(() => window.location.reload(), 2000);
+        
+        // Refresh user data to show new slot count (state update instead of page reload)
+        if (onUserRefresh) {
+          try {
+            // Wait a bit for webhook to process
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            await onUserRefresh();
+          } catch (error) {
+            console.error('Error refreshing user data after slot purchase:', error);
+            // Fallback to page reload if refresh fails
+            window.location.reload();
+          }
+        } else {
+          // Fallback to page reload if no refresh callback provided
+          setTimeout(() => window.location.reload(), 2000);
+        }
       };
 
-      const handleOrderComplete = () => {
-        handlePopupClosed();
+      const handleOrderComplete = async () => {
+        // Order completed - refresh user data to get updated slots
+        if (onUserRefresh) {
+          try {
+            // Wait a bit for webhook to process
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            await onUserRefresh();
+            setIsPurchasingSlot(false);
+          } catch (error) {
+            console.error('Error refreshing user data after order completion:', error);
+            setIsPurchasingSlot(false);
+            // Fallback to page reload if refresh fails
+            window.location.reload();
+          }
+        } else {
+          handlePopupClosed();
+        }
       };
 
       window.addEventListener('fsc:popup.closed', handlePopupClosed);

@@ -259,8 +259,12 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
         window.removeEventListener('fsc:popup.closed', handlePopupClosed);
         window.removeEventListener('fsc:checkout.closed', handlePopupClosed);
         window.removeEventListener('fsc:order.complete', handleOrderComplete);
-        // Refresh credits after purchase
+        // Refresh credits after purchase (trigger event-driven cache invalidation)
         setTimeout(() => {
+          // Dispatch event to invalidate cache
+          window.dispatchEvent(new CustomEvent('credits:purchase'));
+          
+          // Also fetch fresh data
           fetch('/api/credits/balance')
             .then(res => res.json())
             .then(data => {

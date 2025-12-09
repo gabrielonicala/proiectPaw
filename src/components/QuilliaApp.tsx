@@ -21,6 +21,7 @@ import { User, Character, Theme, Avatar } from '@/types';
 import { fetchWithAutoLogout, shouldAutoLogout } from '@/lib/auto-logout';
 import { queueOfflineChange } from '@/lib/offline-sync';
 import { loadUserPreferences, loadUser, saveUser } from '@/lib/client-utils';
+import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
 
 type AppState = 'intro' | 'character-select' | 'character-create' | 'journal' | 'calendar' | 'profile' | 'tribute';
 
@@ -175,6 +176,22 @@ export default function QuilliaApp() {
 
     loadUserData();
   }, [session]);
+
+  // Real-time updates for credits and character slots
+  useRealtimeUpdates({
+    enabled: !!session?.user,
+    onCreditsUpdate: (credits, isLow) => {
+      // Credits updated via real-time - could update state if needed
+      // The useCredits hook will handle this via polling/events
+      console.log('Real-time credits update:', credits, isLow);
+    },
+    onSlotsUpdate: (slots) => {
+      // Character slots updated via real-time
+      if (user) {
+        setUser({ ...user, characterSlots: slots });
+      }
+    }
+  });
 
   const handlePageTransition = (newState: AppState, delay: number = 300) => {
     setTimeout(() => {
@@ -436,6 +453,47 @@ export default function QuilliaApp() {
     }
   };
 
+  // Function to refresh user data (for updating character slots, credits, etc.)
+  const handleUserRefresh = async () => {
+    try {
+      const dbUser = await loadUserPreferences();
+      if (dbUser && dbUser.id === (session as unknown as { user: { id: string } }).user.id) {
+        // Load characters with lock status
+        try {
+          if (!navigator.onLine) {
+            const localUser = loadUser();
+            if (localUser && localUser.characters) {
+              dbUser.characters = localUser.characters;
+            } else {
+              dbUser.characters = [];
+            }
+          } else {
+            const charactersResponse = await fetchWithAutoLogout('/api/characters');
+            if (charactersResponse.ok) {
+              const charactersData = await charactersResponse.json();
+              dbUser.characters = charactersData.characters || [];
+            }
+          }
+        } catch (error) {
+          console.error('Error loading characters during refresh:', error);
+          dbUser.characters = [];
+        }
+
+        // Update state with fresh data
+        setUser(dbUser);
+        
+        // Update active character if it still exists
+        if (dbUser.activeCharacter) {
+          setActiveCharacter(dbUser.activeCharacter);
+          setCurrentTheme(dbUser.activeCharacter.theme);
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+      throw error; // Re-throw so caller can handle it
+    }
+  };
+
   // Show intro screen while loading user data
   if (isLoading) {
     return <IntroScreen onStart={() => {}} theme={loadingTheme} isLoading={true} />;
@@ -500,6 +558,7 @@ export default function QuilliaApp() {
               onCharacterDelete={handleCharacterDelete}
               user={user}
               onUpgrade={() => handlePageTransition('tribute')}
+              onUserRefresh={handleUserRefresh}
             />
           </motion.div>
         )}

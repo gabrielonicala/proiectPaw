@@ -307,8 +307,9 @@ export default function JournalEntry({
           break;
       case 'image':
         // First generate the chapter to ensure image and story are aligned
+        // Skip credit deduction here since we'll only charge for the image (80 credits)
         console.log('📖 Generating chapter first for image alignment...');
-        generatedChapter = await generateReimaginedText(entryText, themeConfig, pastContext, activeCharacter);
+        generatedChapter = await generateReimaginedText(entryText, themeConfig, pastContext, activeCharacter, true);
         console.log('✅ Chapter generated, now generating image...');
         
         // Use configured image generation provider
@@ -379,7 +380,11 @@ export default function JournalEntry({
           setShowModal(true);
           setIsGenerating(false);
           
-          // Refresh credit balance after generation (update cache immediately)
+          // Refresh credit balance after generation (trigger event-driven cache invalidation)
+          // Dispatch event to invalidate cache and trigger refresh
+          window.dispatchEvent(new CustomEvent('credits:deduct'));
+          
+          // Also fetch fresh data to ensure sync with server
           const creditsResponse = await fetch('/api/credits/balance');
           if (creditsResponse.ok) {
             const creditsData = await creditsResponse.json();
@@ -432,7 +437,8 @@ export default function JournalEntry({
         const errorData = error.response?.data || error.data || {};
         const errorMessage = errorData.message || error.message || 'Not enough Ink Vials to generate this content.';
         setCreditsError(errorMessage);
-        // Refresh credits to get current balance
+        // Refresh credits to get current balance (invalidate cache and fetch fresh)
+        window.dispatchEvent(new CustomEvent('credits:invalidate'));
         const creditsResponse = await fetch('/api/credits/balance');
         if (creditsResponse.ok) {
           const creditsData = await creditsResponse.json();
