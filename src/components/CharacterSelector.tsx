@@ -213,7 +213,7 @@ export default function CharacterSelector({
         
         // If popup closed, check if order completed by checking user data after a delay
         // This handles cases where order completes but event doesn't fire
-        setTimeout(async () => {
+        const refreshAfterClose = async () => {
           if (onUserRefresh) {
             try {
               // Check if slots increased by fetching fresh user data
@@ -255,7 +255,12 @@ export default function CharacterSelector({
             setIsPurchasingSlot(false);
             setTimeout(() => window.location.reload(), 2000);
           }
-        }, 3000);
+        };
+        
+        // First refresh attempt after 3 seconds
+        setTimeout(refreshAfterClose, 3000);
+        // Additional follow-up refresh after 5.5 seconds to catch slow webhooks
+        setTimeout(refreshAfterClose, 5500);
       };
 
       const handleOrderComplete = async () => {
@@ -309,6 +314,8 @@ export default function CharacterSelector({
           
           // Start refresh attempts - try immediately, then retry if needed
           refreshWithRetry(); // First attempt immediately
+          // Schedule an extra follow-up refresh a bit later to catch slow webhooks
+          setTimeout(() => refreshWithRetry(2), 2500);
         } else {
           // Fallback to page reload if no refresh callback
           setTimeout(() => window.location.reload(), 2000);

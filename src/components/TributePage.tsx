@@ -265,7 +265,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
         window.removeEventListener('fsc:order.complete', handleOrderComplete);
         
         // Refresh credits after purchase (trigger event-driven cache invalidation)
-        setTimeout(() => {
+        const refreshCredits = () => {
           // Dispatch event to invalidate cache
           window.dispatchEvent(new CustomEvent('credits:purchase'));
           
@@ -277,7 +277,12 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
               setIsLowOnCredits(data.isLow);
             })
             .catch(err => console.error('Error refreshing credits:', err));
-        }, 2000);
+        };
+        
+        // First refresh attempt after 2 seconds
+        setTimeout(refreshCredits, 2000);
+        // Additional follow-up refresh after 4.5 seconds to catch slow webhooks
+        setTimeout(refreshCredits, 4500);
       };
 
       const handlePopupClosed = () => {
@@ -289,7 +294,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
         
         // If popup closed, check if order completed by checking credits after a delay
         // This handles cases where order completes but event doesn't fire
-        setTimeout(() => {
+        const refreshCreditsAfterClose = () => {
           // Always check credits and reset button state
           // This ensures the button doesn't get stuck even if events don't fire properly
           fetch('/api/credits/balance')
@@ -313,7 +318,12 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
               // Always reset button state on error to prevent it from being stuck
               setIsPurchasing(null);
             });
-        }, 3000);
+        };
+        
+        // First refresh attempt after 3 seconds
+        setTimeout(refreshCreditsAfterClose, 3000);
+        // Additional follow-up refresh after 5.5 seconds to catch slow webhooks
+        setTimeout(refreshCreditsAfterClose, 5500);
       };
 
       window.addEventListener('fsc:popup.closed', handlePopupClosed);
