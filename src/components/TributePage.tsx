@@ -254,11 +254,16 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
         console.error('Failed to notify backend of checkout start:', error);
       }
 
-      const handlePopupClosed = () => {
+      const handleOrderComplete = () => {
+        console.log('Order completed for package:', packageKey);
+        // Reset button state immediately when order completes
         setIsPurchasing(null);
+        
+        // Remove all event listeners
         window.removeEventListener('fsc:popup.closed', handlePopupClosed);
         window.removeEventListener('fsc:checkout.closed', handlePopupClosed);
         window.removeEventListener('fsc:order.complete', handleOrderComplete);
+        
         // Refresh credits after purchase (trigger event-driven cache invalidation)
         setTimeout(() => {
           // Dispatch event to invalidate cache
@@ -270,12 +275,45 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
             .then(data => {
               setCredits(data.credits);
               setIsLowOnCredits(data.isLow);
-            });
+            })
+            .catch(err => console.error('Error refreshing credits:', err));
         }, 2000);
       };
 
-      const handleOrderComplete = () => {
-        handlePopupClosed();
+      const handlePopupClosed = () => {
+        console.log('Popup closed for package:', packageKey);
+        // Remove event listeners first to prevent double-firing
+        window.removeEventListener('fsc:popup.closed', handlePopupClosed);
+        window.removeEventListener('fsc:checkout.closed', handlePopupClosed);
+        window.removeEventListener('fsc:order.complete', handleOrderComplete);
+        
+        // If popup closed, check if order completed by checking credits after a delay
+        // This handles cases where order completes but event doesn't fire
+        setTimeout(() => {
+          // Always check credits and reset button state
+          // This ensures the button doesn't get stuck even if events don't fire properly
+          fetch('/api/credits/balance')
+            .then(res => res.json())
+            .then(data => {
+              const newCredits = data.credits;
+              // Reset button state regardless - if order completed, credits will have increased
+              // If order didn't complete, we still want to reset the button
+              setIsPurchasing(null);
+              
+              // Update credits if they changed
+              if (newCredits !== credits) {
+                setCredits(newCredits);
+                setIsLowOnCredits(data.isLow);
+                // Dispatch event to invalidate cache
+                window.dispatchEvent(new CustomEvent('credits:purchase'));
+              }
+            })
+            .catch(err => {
+              console.error('Error checking credits after popup close:', err);
+              // Always reset button state on error to prevent it from being stuck
+              setIsPurchasing(null);
+            });
+        }, 3000);
       };
 
       window.addEventListener('fsc:popup.closed', handlePopupClosed);

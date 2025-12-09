@@ -181,6 +181,7 @@ export default function CharacterSelector({
   // Character slot purchase handler
   const handlePurchaseCharacterSlot = async () => {
     setIsPurchasingSlot(true);
+    const slotsBeforePurchase = user.characterSlots; // Capture current slots for comparison
     try {
       if (typeof window === 'undefined' || !(window as any).fastspring) {
         await new Promise(resolve => setTimeout(resolve, 500));
@@ -204,44 +205,113 @@ export default function CharacterSelector({
       }
 
       const handlePopupClosed = async () => {
-        setIsPurchasingSlot(false);
+        console.log('Character slot popup closed');
+        // Remove event listeners first to prevent double-firing
         window.removeEventListener('fsc:popup.closed', handlePopupClosed);
         window.removeEventListener('fsc:checkout.closed', handlePopupClosed);
         window.removeEventListener('fsc:order.complete', handleOrderComplete);
         
-        // Refresh user data to show new slot count (state update instead of page reload)
-        if (onUserRefresh) {
-          try {
-            // Wait a bit for webhook to process
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            await onUserRefresh();
-          } catch (error) {
-            console.error('Error refreshing user data after slot purchase:', error);
-            // Fallback to page reload if refresh fails
-            window.location.reload();
+        // If popup closed, check if order completed by checking user data after a delay
+        // This handles cases where order completes but event doesn't fire
+        setTimeout(async () => {
+          if (onUserRefresh) {
+            try {
+              // Check if slots increased by fetching fresh user data
+              const response = await fetch('/api/user/preferences');
+              if (response.ok) {
+                const data = await response.json();
+                const updatedUser = data.user;
+                
+                // Always refresh to get latest data
+                await onUserRefresh();
+                setIsPurchasingSlot(false);
+                
+                // If slots increased, order completed successfully
+                if (updatedUser && updatedUser.characterSlots > slotsBeforePurchase) {
+                  console.log('Character slots increased, state refreshed');
+                } else {
+                  console.log('Popup closed, state refreshed (slots may not have increased yet)');
+                }
+              } else {
+                // If API call fails, just reset the button and try refresh
+                setIsPurchasingSlot(false);
+                await onUserRefresh();
+              }
+            } catch (error) {
+              console.error('Error checking slots after popup close:', error);
+              // Always reset button state on error to prevent it from being stuck
+              setIsPurchasingSlot(false);
+              // Try to refresh anyway
+              try {
+                await onUserRefresh();
+              } catch (refreshError) {
+                console.error('Error refreshing user data:', refreshError);
+                // Final fallback to page reload
+                window.location.reload();
+              }
+            }
+          } else {
+            // No refresh callback, just reset button and reload
+            setIsPurchasingSlot(false);
+            setTimeout(() => window.location.reload(), 2000);
           }
-        } else {
-          // Fallback to page reload if no refresh callback provided
-          setTimeout(() => window.location.reload(), 2000);
-        }
+        }, 3000);
       };
 
       const handleOrderComplete = async () => {
-        // Order completed - refresh user data to get updated slots
+        console.log('Character slot order completed');
+        // Reset button state immediately
+        setIsPurchasingSlot(false);
+        
+        // Remove all event listeners
+        window.removeEventListener('fsc:popup.closed', handlePopupClosed);
+        window.removeEventListener('fsc:checkout.closed', handlePopupClosed);
+        window.removeEventListener('fsc:order.complete', handleOrderComplete);
+        
+        // Refresh user data to get updated slots
+        // Try immediately first (webhook might process quickly), then retry if needed
         if (onUserRefresh) {
-          try {
-            // Wait a bit for webhook to process
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            await onUserRefresh();
-            setIsPurchasingSlot(false);
-          } catch (error) {
-            console.error('Error refreshing user data after order completion:', error);
-            setIsPurchasingSlot(false);
-            // Fallback to page reload if refresh fails
-            window.location.reload();
-          }
+          const refreshWithRetry = async (attempt: number = 1) => {
+            try {
+              await onUserRefresh();
+              
+              // Check if slots actually increased by fetching fresh data
+              const response = await fetch('/api/user/preferences');
+              if (response.ok) {
+                const data = await response.json();
+                const updatedUser = data.user;
+                
+                // If slots increased, we're done
+                if (updatedUser && updatedUser.characterSlots > slotsBeforePurchase) {
+                  console.log('Character slots updated successfully');
+                  return;
+                }
+              }
+              
+              // If slots didn't increase yet and we haven't retried too many times, retry
+              if (attempt < 3) {
+                console.log(`Slots not updated yet, retrying (attempt ${attempt + 1})...`);
+                setTimeout(() => refreshWithRetry(attempt + 1), 2000);
+              } else {
+                console.log('Slots may not have updated after multiple attempts');
+              }
+            } catch (error) {
+              console.error(`Error refreshing user data (attempt ${attempt}):`, error);
+              // Retry on error
+              if (attempt < 3) {
+                setTimeout(() => refreshWithRetry(attempt + 1), 2000);
+              } else {
+                // Final fallback to page reload
+                window.location.reload();
+              }
+            }
+          };
+          
+          // Start refresh attempts - try immediately, then retry if needed
+          refreshWithRetry(); // First attempt immediately
         } else {
-          handlePopupClosed();
+          // Fallback to page reload if no refresh callback
+          setTimeout(() => window.location.reload(), 2000);
         }
       };
 
