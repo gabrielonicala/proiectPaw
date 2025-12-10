@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
-import { getCachedCredits, setCachedCredits, updateCachedCredits, invalidateCreditsCache } from '@/lib/credits-cache';
+import { getCachedCredits, setCachedCredits, updateCachedCredits, invalidateCreditsCache, markPurchaseCompleted, hasRecentPurchase } from '@/lib/credits-cache';
 
 interface CreditsData {
   credits: number;
@@ -44,9 +44,8 @@ export function useCredits(options: UseCreditsOptions = {}) {
     }
     
     // Check cache first for instant display (unless forcing refresh)
-    // Only use cache if it's "fresh" (updated within last 10 seconds)
-    // This prevents showing stale data after purchases
-    if (!forceRefresh) {
+    // Skip cache if there was a recent purchase to avoid showing stale data
+    if (!forceRefresh && !hasRecentPurchase(userId)) {
       const cached = getCachedCredits(userId);
       if (cached) {
         const cacheAge = Date.now() - cached.lastUpdated;
@@ -63,6 +62,8 @@ export function useCredits(options: UseCreditsOptions = {}) {
           console.log(`[CREDITS] Cache is stale (${Math.round(cacheAge / 1000)}s old), waiting for fresh data`);
         }
       }
+    } else if (hasRecentPurchase(userId)) {
+      console.log('[CREDITS] Recent purchase detected, skipping cache to avoid stale data');
     }
 
     try {
@@ -163,6 +164,7 @@ export function useCredits(options: UseCreditsOptions = {}) {
 
     // Listen for credit-related events
     const handleCreditEvent = () => {
+      markPurchaseCompleted(userId);
       invalidateCreditsCache(userId);
       fetchCredits(true);
     };

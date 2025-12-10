@@ -20,7 +20,7 @@ import { isPaidPlan, hasPremiumAccess } from '@/lib/fastspring';
 import { CREDIT_PACKAGES, CHARACTER_SLOT_PRICE, CHARACTER_SLOT_PRODUCT_PATH, INK_VIAL_COSTS, LOW_CREDITS_THRESHOLD, STARTER_KIT_ELIGIBILITY_DAYS } from '@/lib/credits';
 import { useCredits } from '@/hooks/useCredits';
 import { useStarterKitEligibility } from '@/hooks/useStarterKitEligibility';
-import { setCachedCredits } from '@/lib/credits-cache';
+import { setCachedCredits, markPurchaseCompleted } from '@/lib/credits-cache';
 // import Footer from './Footer';
 
 interface SubscriptionData {
@@ -302,6 +302,9 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
                 setCredits(newCredits);
                 setIsLowOnCredits(data.isLow);
                 
+                // Mark purchase to prevent cache flash on navigation
+                markPurchaseCompleted(user.id);
+                
                 // Update cache immediately with fresh data
                 setCachedCredits(user.id, {
                   credits: newCredits,
@@ -385,6 +388,9 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
             console.log(`💰 [CREDITS] Updated balance: ${data.credits} (was ${creditsBeforePurchase})`);
             setCredits(data.credits);
             setIsLowOnCredits(data.isLow);
+            
+            // Mark purchase to prevent cache flash on navigation
+            markPurchaseCompleted(user.id);
             
             // Update cache immediately with fresh data to prevent stale cache on navigation
             setCachedCredits(user.id, {

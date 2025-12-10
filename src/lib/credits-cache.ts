@@ -15,8 +15,14 @@ interface CreditsCacheData {
 // Module-level cache keyed by userId
 const creditsCache = new Map<string, CreditsCacheData>();
 
+// Track when purchases happened (keyed by userId, value is timestamp)
+const lastPurchaseTime = new Map<string, number>();
+
 // Cache expiration time (5 minutes)
 const CACHE_EXPIRATION_MS = 5 * 60 * 1000;
+
+// Time window after purchase during which we should ignore cache (30 seconds)
+const PURCHASE_IGNORE_CACHE_MS = 30 * 1000;
 
 /**
  * Get cached credits data for a user
@@ -99,5 +105,34 @@ export function clearCreditsCache(userId?: string): void {
  */
 export function invalidateCreditsCache(userId: string): void {
   creditsCache.delete(userId);
+}
+
+/**
+ * Mark that a purchase was completed for a user
+ * This will cause the cache to be ignored for a short period
+ */
+export function markPurchaseCompleted(userId: string): void {
+  lastPurchaseTime.set(userId, Date.now());
+  // Also invalidate cache immediately
+  creditsCache.delete(userId);
+}
+
+/**
+ * Check if there was a recent purchase that should cause us to ignore cache
+ */
+export function hasRecentPurchase(userId: string): boolean {
+  const purchaseTime = lastPurchaseTime.get(userId);
+  if (!purchaseTime) {
+    return false;
+  }
+  
+  const timeSincePurchase = Date.now() - purchaseTime;
+  if (timeSincePurchase > PURCHASE_IGNORE_CACHE_MS) {
+    // Purchase was too long ago, clear the tracking
+    lastPurchaseTime.delete(userId);
+    return false;
+  }
+  
+  return true;
 }
 
