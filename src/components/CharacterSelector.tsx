@@ -271,6 +271,16 @@ export default function CharacterSelector({
       const handlePopupClosed = async () => {
         console.log('🚪 [SLOTS] Popup closed');
         console.log('🔄 [SLOTS] Checkout popup finished - setting up delayed checks...');
+        
+        // Log checkout completion server-side (fallback if order.complete didn't fire)
+        fetch('/api/fastspring/checkout/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            purchaseType: 'character-slot' 
+          })
+        }).catch(err => console.error('❌ [SLOTS] Failed to log checkout completion:', err));
+        
         // Remove event listeners first to prevent double-firing
         window.removeEventListener('fsc:popup.closed', handlePopupClosed);
         window.removeEventListener('fsc:checkout.closed', handlePopupClosed);
@@ -348,40 +358,6 @@ export default function CharacterSelector({
           refreshAfterClose(true);
         }, 5500);
         
-        // Also keep checking periodically until slots increase or we hit a max timeout
-        // This ensures overlay stays visible until slots actually update
-        let checkCount = 0;
-        const maxChecks = 10; // Check for up to 10 seconds (10 checks * 1s)
-        const keepChecking = setInterval(async () => {
-          checkCount++;
-          if (checkCount > maxChecks) {
-            clearInterval(keepChecking);
-            // Final fallback - hide overlay after max checks
-            setShowPurchaseOverlay(false);
-            console.log('⏰ [SLOTS] Max checks reached, hiding overlay');
-            return;
-          }
-          
-          try {
-            const response = await fetch('/api/user/preferences');
-            if (response.ok) {
-              const data = await response.json();
-              const updatedUser = data.user;
-              const newSlots = updatedUser?.characterSlots || 0;
-              
-              if (newSlots > slotsBeforePurchase) {
-                console.log('✅ [SLOTS] Slots increased during periodic check, hiding overlay');
-                setShowPurchaseOverlay(false);
-                clearInterval(keepChecking);
-              }
-            }
-          } catch (error) {
-            console.error('❌ [SLOTS] Error during periodic slot check:', error);
-          }
-        }, 1000); // Check every second
-        
-        // Store interval for cleanup if needed
-        pollingIntervals.push(keepChecking);
       };
 
       const handleOrderComplete = async () => {
@@ -463,25 +439,24 @@ export default function CharacterSelector({
           // Schedule an extra follow-up refresh a bit later to catch slow webhooks
           setTimeout(() => refreshWithRetry(2), 2500);
           // Hide overlay after final refresh completes (5.5s total) if slots still haven't increased
-          setTimeout(() => {
+          setTimeout(async () => {
             // Check one more time if slots increased
-            fetch('/api/user/preferences')
-              .then(res => res.json())
-              .then(data => {
-                const updatedUser = data.user;
-                const newSlots = updatedUser?.characterSlots || 0;
-                if (newSlots > slotsBeforePurchase) {
-                  console.log('✅ [SLOTS] Slots increased on final check, hiding overlay');
-                } else {
-                  console.log('⚠️ [SLOTS] Slots still not increased after 5.5s, hiding overlay anyway');
-                }
-                setShowPurchaseOverlay(false);
-                console.log('✅ [SLOTS] Loading overlay hidden after final refresh (5.5s)');
-              })
-              .catch(() => {
-                setShowPurchaseOverlay(false);
-                console.log('✅ [SLOTS] Loading overlay hidden after final refresh (5.5s) - error checking');
-              });
+            try {
+              const res = await fetch('/api/user/preferences');
+              const data = await res.json();
+              const updatedUser = data.user;
+              const newSlots = updatedUser?.characterSlots || 0;
+              if (newSlots > slotsBeforePurchase) {
+                console.log('✅ [SLOTS] Slots increased on final check, hiding overlay');
+              } else {
+                console.log('⚠️ [SLOTS] Slots still not increased after 5.5s, hiding overlay anyway');
+              }
+              setShowPurchaseOverlay(false);
+              console.log('✅ [SLOTS] Loading overlay hidden after final refresh (5.5s)');
+            } catch (err) {
+              setShowPurchaseOverlay(false);
+              console.log('✅ [SLOTS] Loading overlay hidden after final refresh (5.5s) - error checking');
+            }
           }, 5500);
         } else {
           // Fallback to page reload if no refresh callback

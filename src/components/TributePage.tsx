@@ -352,31 +352,47 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
         console.log('🧹 [CREDITS] Event listeners removed');
         
         // Refresh credits after purchase (trigger event-driven cache invalidation)
-        const refreshCredits = () => {
+        const refreshCredits = async () => {
           console.log('🔄 [CREDITS] Refreshing credits...');
           // Dispatch event to invalidate cache
           window.dispatchEvent(new CustomEvent('credits:purchase'));
           
           // Also fetch fresh data
-          fetch('/api/credits/balance')
-            .then(res => res.json())
-            .then(data => {
-              console.log(`💰 [CREDITS] Updated balance: ${data.credits}`);
-              setCredits(data.credits);
-              setIsLowOnCredits(data.isLow);
-            })
-            .catch(err => console.error('❌ [CREDITS] Error refreshing credits:', err));
+          try {
+            const res = await fetch('/api/credits/balance');
+            const data = await res.json();
+            console.log(`💰 [CREDITS] Updated balance: ${data.credits} (was ${creditsBeforePurchase})`);
+            setCredits(data.credits);
+            setIsLowOnCredits(data.isLow);
+            
+            // Hide overlay when credits actually increase
+            if (data.credits > creditsBeforePurchase) {
+              setShowPurchaseOverlay(false);
+              console.log('✅ [CREDITS] Credits increased, hiding overlay');
+              return true; // Indicate success
+            }
+            return false; // Credits not updated yet
+          } catch (err) {
+            console.error('❌ [CREDITS] Error refreshing credits:', err);
+            return false;
+          }
         };
         
         // First refresh attempt after 2 seconds
-        setTimeout(refreshCredits, 2000);
-        // Additional follow-up refresh after 4.5 seconds to catch slow webhooks
-        // Hide overlay after final refresh completes (4.5s total)
-        setTimeout(() => {
-          refreshCredits();
-          setShowPurchaseOverlay(false);
-          console.log('✅ [CREDITS] Loading overlay hidden after final refresh (4.5s)');
-        }, 4500);
+        setTimeout(async () => {
+          const updated = await refreshCredits();
+          if (!updated) {
+            // If not updated, try again after 4.5 seconds total
+            setTimeout(async () => {
+              const updated2 = await refreshCredits();
+              // Hide overlay after final refresh regardless (safety net)
+              if (!updated2) {
+                setShowPurchaseOverlay(false);
+                console.log('✅ [CREDITS] Loading overlay hidden after final refresh (4.5s) - credits may not have updated');
+              }
+            }, 2500); // 2s + 2.5s = 4.5s total
+          }
+        }, 2000);
         
         // Also hide overlay immediately if order completes (but keep it visible for a bit to show processing)
         // The 4.5s timeout above will handle the final hide
@@ -385,6 +401,16 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
       const handlePopupClosed = () => {
         console.log('🚪 [CREDITS] Popup closed for package:', packageKey);
         console.log('🔄 [CREDITS] Checkout popup finished - setting up delayed checks...');
+        
+        // Log checkout completion server-side (fallback if order.complete didn't fire)
+        fetch('/api/fastspring/checkout/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            packageKey, 
+            purchaseType: 'credits' 
+          })
+        }).catch(err => console.error('❌ [CREDITS] Failed to log checkout completion:', err));
         
         // Remove event listeners first to prevent double-firing
         window.removeEventListener('fsc:popup.closed', handlePopupClosed);
@@ -397,54 +423,51 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
         
         // If popup closed, check if order completed by checking credits after a delay
         // This handles cases where order completes but event doesn't fire
-        const refreshCreditsAfterClose = () => {
+        const refreshCreditsAfterClose = async (isFinal: boolean = false) => {
           console.log('🔄 [CREDITS] Checking credits after popup close...');
-          // Always check credits and reset button state
-          // This ensures the button doesn't get stuck even if events don't fire properly
-          fetch('/api/credits/balance')
-            .then(res => res.json())
-            .then(data => {
-              const newCredits = data.credits;
-              console.log(`💰 [CREDITS] Balance after popup close: ${newCredits} (was ${creditsBeforePurchase})`);
+          try {
+            const res = await fetch('/api/credits/balance');
+            const data = await res.json();
+            const newCredits = data.credits;
+            console.log(`💰 [CREDITS] Balance after popup close: ${newCredits} (was ${creditsBeforePurchase})`);
+            
+            // Always reset button state
+            setIsPurchasing(null);
+            console.log('✅ [CREDITS] Button state reset after popup close');
+            
+            // Update credits if they changed
+            if (newCredits > creditsBeforePurchase) {
+              console.log('✅ [CREDITS] Credits increased, updating state');
+              setCredits(newCredits);
+              setIsLowOnCredits(data.isLow);
+              // Dispatch event to invalidate cache
+              window.dispatchEvent(new CustomEvent('credits:purchase'));
               
-              // Always reset button state - if order completed, credits will have increased
-              // If order didn't complete, we still want to reset the button
-              setIsPurchasing(null);
-              console.log('✅ [CREDITS] Button state reset after popup close');
-              
-              // Update credits if they changed
-              if (newCredits !== creditsBeforePurchase) {
-                console.log('✅ [CREDITS] Credits changed, updating state');
-                setCredits(newCredits);
-                setIsLowOnCredits(data.isLow);
-                // Dispatch event to invalidate cache
-                window.dispatchEvent(new CustomEvent('credits:purchase'));
-                
-                // Stop polling if credits increased
-                isStillPurchasing = false;
-                setShowPurchaseOverlay(false); // Hide overlay when purchase detected
-                cleanup();
-              } else {
-                console.log('💰 [CREDITS] Credits unchanged, but button reset (checkout finished)');
+              // Stop polling if credits increased
+              isStillPurchasing = false;
+              setShowPurchaseOverlay(false); // Hide overlay when purchase detected
+              cleanup();
+            } else {
+              console.log('💰 [CREDITS] Credits unchanged, but button reset (checkout finished)');
+              // On final refresh, hide overlay even if credits haven't increased yet
+              if (isFinal) {
+                setShowPurchaseOverlay(false);
+                console.log('✅ [CREDITS] Final refresh complete, hiding overlay');
               }
-            })
-            .catch(err => {
-              console.error('❌ [CREDITS] Error checking credits after popup close:', err);
-              // Always reset button state on error to prevent it from being stuck
-              setIsPurchasing(null);
-              console.log('✅ [CREDITS] Button state reset on error');
-            });
+            }
+          } catch (err) {
+            console.error('❌ [CREDITS] Error checking credits after popup close:', err);
+            setIsPurchasing(null);
+            if (isFinal) {
+              setShowPurchaseOverlay(false);
+            }
+          }
         };
         
         // First refresh attempt after 3 seconds
-        setTimeout(refreshCreditsAfterClose, 3000);
+        setTimeout(() => refreshCreditsAfterClose(false), 3000);
         // Additional follow-up refresh after 5.5 seconds to catch slow webhooks
-        setTimeout(() => {
-          refreshCreditsAfterClose();
-          // Hide overlay after final refresh completes
-          setShowPurchaseOverlay(false);
-          console.log('✅ [CREDITS] Loading overlay hidden after popup close final refresh');
-        }, 5500);
+        setTimeout(() => refreshCreditsAfterClose(true), 5500);
       };
 
       console.log('👂 [CREDITS] Setting up FastSpring event listeners...');
