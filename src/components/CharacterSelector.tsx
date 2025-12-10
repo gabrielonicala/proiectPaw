@@ -430,6 +430,35 @@ export default function CharacterSelector({
       console.log('🛒 [SLOTS] Opening FastSpring checkout popup...');
       fastspring.builder.checkout();
       console.log('✅ [SLOTS] Checkout popup opened');
+      
+      // Watch for the close button and add click listener
+      const watchForCloseButton = () => {
+        const closeButton = document.getElementById('close-payment-modal');
+        if (closeButton) {
+          console.log('✅ [SLOTS] Close button found, adding click listener');
+          const handleCloseClick = () => {
+            console.log('🚪 [SLOTS] Close button clicked');
+            setIsPurchasingSlot(false);
+            setShowPurchaseOverlay(false);
+            closeButton.removeEventListener('click', handleCloseClick);
+          };
+          closeButton.addEventListener('click', handleCloseClick);
+          return true; // Found and set up
+        }
+        return false; // Not found yet
+      };
+      
+      // Try immediately, then poll if needed
+      if (!watchForCloseButton()) {
+        const closeButtonInterval = setInterval(() => {
+          if (watchForCloseButton()) {
+            clearInterval(closeButtonInterval);
+          }
+        }, 100); // Check every 100ms
+        
+        // Stop watching after 5 seconds (button should appear by then)
+        setTimeout(() => clearInterval(closeButtonInterval), 5000);
+      }
 
     } catch (error) {
       console.error('Error opening FastSpring checkout:', error);
