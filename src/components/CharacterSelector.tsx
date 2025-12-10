@@ -268,131 +268,43 @@ export default function CharacterSelector({
       }, 60000);
       timeouts.push(forceReset);
 
-      const handlePopupClosed = async () => {
-        console.log('🚪 [SLOTS] Popup closed');
-        console.log('🔄 [SLOTS] Checkout popup finished - setting up delayed checks...');
-        
-        // Log checkout completion server-side (fallback if order.complete didn't fire)
-        fetch('/api/fastspring/checkout/complete', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            purchaseType: 'character-slot' 
-          })
-        })
-        .then(res => {
-          if (!res.ok) {
-            console.error('❌ [SLOTS] Checkout completion log failed with status:', res.status);
-          } else {
-            console.log('✅ [SLOTS] Checkout completion logged successfully');
-          }
-        })
-        .catch(err => console.error('❌ [SLOTS] Failed to log checkout completion:', err));
-        
-        // Remove event listeners first to prevent double-firing
-        window.removeEventListener('fsc:popup.closed', handlePopupClosed);
-        window.removeEventListener('fsc:checkout.closed', handlePopupClosed);
-        window.removeEventListener('fsc:order.complete', handleOrderComplete);
-        console.log('🧹 [SLOTS] Event listeners removed from popup close handler');
-        
-        // If popup closed, check if order completed by checking user data after a delay
-        // This handles cases where order completes but event doesn't fire
-        const refreshAfterClose = async (isFinalRefresh: boolean = false) => {
+      // Shared refresh slots function (matching credit overlay pattern)
+      const refreshSlots = async () => {
+        console.log('🔄 [SLOTS] Refreshing slots...');
+        try {
+          // Refresh UI
           if (onUserRefresh) {
-            try {
-              // Check if slots increased by fetching fresh user data
-              const response = await fetch('/api/user/preferences');
-              if (response.ok) {
-                const data = await response.json();
-                const updatedUser = data.user;
-                
-                // Always refresh to get latest data
-                await onUserRefresh();
-                
-                // If slots increased, order completed successfully
-                if (updatedUser && updatedUser.characterSlots > slotsBeforePurchase) {
-                  console.log('✅ [SLOTS] Character slots increased, state refreshed');
-                  setIsPurchasingSlot(false);
-                  setShowPurchaseOverlay(false); // Hide overlay when purchase detected
-                  return;
-                } else {
-                  console.log('🔄 [SLOTS] Popup closed, state refreshed (slots may not have increased yet)');
-                  // Only reset button state on final refresh if slots still haven't increased
-                  if (isFinalRefresh) {
-                    setIsPurchasingSlot(false);
-                    setShowPurchaseOverlay(false);
-                    console.log('✅ [SLOTS] Final refresh complete, hiding overlay');
-                  }
-                }
-              } else {
-                // If API call fails, just reset the button and try refresh
-                if (isFinalRefresh) {
-                  setIsPurchasingSlot(false);
-                  setShowPurchaseOverlay(false);
-                }
-                await onUserRefresh();
-              }
-            } catch (error) {
-              console.error('Error checking slots after popup close:', error);
-              // On final refresh, always reset button state and hide overlay
-              if (isFinalRefresh) {
-                setIsPurchasingSlot(false);
-                setShowPurchaseOverlay(false);
-              }
-              // Try to refresh anyway
-              try {
-                await onUserRefresh();
-              } catch (refreshError) {
-                console.error('Error refreshing user data:', refreshError);
-                // Final fallback to page reload
-                window.location.reload();
-              }
-            }
-          } else {
-            // No refresh callback, just reset button and reload
-            if (isFinalRefresh) {
-              setIsPurchasingSlot(false);
-              setShowPurchaseOverlay(false);
-            }
-            setTimeout(() => window.location.reload(), 2000);
+            await onUserRefresh();
           }
-        };
-        
-        // Refresh slots after purchase (matching credit overlay pattern)
-        const refreshSlots = async () => {
-          console.log('🔄 [SLOTS] Refreshing slots...');
-          try {
-            // Refresh UI
-            if (onUserRefresh) {
-              await onUserRefresh();
-            }
+          
+          // Check if slots actually increased
+          const res = await fetch('/api/user/preferences');
+          const data = await res.json();
+          const updatedUser = data.user;
+          const newSlots = updatedUser?.characterSlots || 0;
+          console.log(`💰 [SLOTS] Updated slots: ${newSlots} (was ${slotsBeforePurchase})`);
+          
+          // Hide overlay when slots actually increase (after animations)
+          if (newSlots > slotsBeforePurchase) {
+            // Wait for animations to complete
+            const waitTime = 2000; // 2 seconds for React re-render + animations
+            console.log(`⏳ [SLOTS] Slots increased, waiting ${waitTime}ms for animations...`);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
             
-            // Check if slots actually increased
-            const res = await fetch('/api/user/preferences');
-            const data = await res.json();
-            const updatedUser = data.user;
-            const newSlots = updatedUser?.characterSlots || 0;
-            console.log(`💰 [SLOTS] Updated slots: ${newSlots} (was ${slotsBeforePurchase})`);
-            
-            // Hide overlay when slots actually increase (after animations)
-            if (newSlots > slotsBeforePurchase) {
-              // Wait for animations to complete
-              const waitTime = 2000; // 2 seconds for React re-render + animations
-              console.log(`⏳ [SLOTS] Slots increased, waiting ${waitTime}ms for animations...`);
-              await new Promise(resolve => setTimeout(resolve, waitTime));
-              
-              setShowPurchaseOverlay(false);
-              setIsPurchasingSlot(false);
-              console.log('✅ [SLOTS] Slots increased, hiding overlay after animations');
-              return true; // Indicate success
-            }
-            return false; // Slots not updated yet
-          } catch (err) {
-            console.error('❌ [SLOTS] Error refreshing slots:', err);
-            return false;
+            setShowPurchaseOverlay(false);
+            setIsPurchasingSlot(false);
+            console.log('✅ [SLOTS] Slots increased, hiding overlay after animations');
+            return true; // Indicate success
           }
-        };
-        
+          return false; // Slots not updated yet
+        } catch (err) {
+          console.error('❌ [SLOTS] Error refreshing slots:', err);
+          return false;
+        }
+      };
+
+      // Function to start refresh attempts (used by both handlers)
+      const startRefreshAttempts = () => {
         // First refresh attempt after 2 seconds (matching credit overlay)
         setTimeout(async () => {
           const updated = await refreshSlots();
@@ -401,6 +313,7 @@ export default function CharacterSelector({
             setTimeout(async () => {
               const updated2 = await refreshSlots();
               // Hide overlay after final refresh regardless (safety net)
+              // This handles the case where user closed checkout without purchasing
               if (!updated2) {
                 setShowPurchaseOverlay(false);
                 setIsPurchasingSlot(false);
@@ -409,7 +322,22 @@ export default function CharacterSelector({
             }, 2500); // 2s + 2.5s = 4.5s total
           }
         }, 2000);
+      };
+
+      const handlePopupClosed = async () => {
+        console.log('🚪 [SLOTS] Popup closed');
         
+        // Mark as no longer purchasing
+        isStillPurchasing = false;
+        
+        // Remove event listeners to prevent double-firing
+        window.removeEventListener('fsc:popup.closed', handlePopupClosed);
+        window.removeEventListener('fsc:checkout.closed', handlePopupClosed);
+        window.removeEventListener('fsc:order.complete', handleOrderComplete);
+        console.log('🧹 [SLOTS] Event listeners removed from popup close handler');
+        
+        // Start refresh attempts (will hide overlay if no purchase was made)
+        startRefreshAttempts();
       };
 
       const handleOrderComplete = async () => {
@@ -450,7 +378,8 @@ export default function CharacterSelector({
         window.removeEventListener('fsc:order.complete', handleOrderComplete);
         console.log('🧹 [SLOTS] Event listeners removed');
         
-        // Refresh logic is now handled in the refreshSlots function above (matching credit overlay pattern)
+        // Start refresh attempts (will hide overlay after animations when slots increase)
+        startRefreshAttempts();
       };
 
       console.log('👂 [SLOTS] Setting up FastSpring event listeners...');
