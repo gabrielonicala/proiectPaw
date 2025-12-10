@@ -275,6 +275,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
       
       // Track if we're still purchasing (using a flag that persists)
       let isStillPurchasing = true;
+      let orderCompleteFired = false; // Track if order.complete event fired
       
       // Start constant polling for credits every 4 seconds while purchase is in progress
       console.log('🔄 [CREDITS] Starting constant polling (every 4s)...');
@@ -323,6 +324,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
 
       const handleOrderComplete = () => {
         console.log('✅ [CREDITS] fsc:order.complete event fired for package:', packageKey);
+        orderCompleteFired = true; // Mark that order completed
         console.log('🔄 [CREDITS] Checkout finished - resetting button and cleaning up...');
         
         // Log checkout completion server-side
@@ -408,82 +410,26 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
 
       const handlePopupClosed = () => {
         console.log('🚪 [CREDITS] Popup closed for package:', packageKey);
-        console.log('🔄 [CREDITS] Checkout popup finished - setting up delayed checks...');
         
-        // Log checkout completion server-side (fallback if order.complete didn't fire)
-        fetch('/api/fastspring/checkout/complete', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            packageKey, 
-            purchaseType: 'credits' 
-          })
-        })
-        .then(res => {
-          if (!res.ok) {
-            console.error('❌ [CREDITS] Checkout completion log failed with status:', res.status);
-          } else {
-            console.log('✅ [CREDITS] Checkout completion logged successfully');
-          }
-        })
-        .catch(err => console.error('❌ [CREDITS] Failed to log checkout completion:', err));
-        
-        // Remove event listeners first to prevent double-firing
+        // Remove event listeners to prevent double-firing
         window.removeEventListener('fsc:popup.closed', handlePopupClosed);
         window.removeEventListener('fsc:checkout.closed', handlePopupClosed);
-        window.removeEventListener('fsc:order.complete', handleOrderComplete);
-        console.log('🧹 [CREDITS] Event listeners removed from popup close handler');
         
-        // Also mark as potentially no longer purchasing (polling will verify)
-        // Don't set isStillPurchasing = false here, let polling detect it
-        
-        // If popup closed, check if order completed by checking credits after a delay
-        // This handles cases where order completes but event doesn't fire
-        const refreshCreditsAfterClose = async (isFinal: boolean = false) => {
-          console.log('🔄 [CREDITS] Checking credits after popup close...');
-          try {
-            const res = await fetch('/api/credits/balance');
-            const data = await res.json();
-            const newCredits = data.credits;
-            console.log(`💰 [CREDITS] Balance after popup close: ${newCredits} (was ${creditsBeforePurchase})`);
-            
-            // Always reset button state
+        // Wait a short time to see if order.complete fires
+        // If it does, it will handle the overlay. If not, hide it.
+        setTimeout(() => {
+          // Remove order.complete listener after waiting
+          window.removeEventListener('fsc:order.complete', handleOrderComplete);
+          
+          // If order.complete didn't fire, hide overlay (user closed without purchasing)
+          if (!orderCompleteFired) {
             setIsPurchasing(null);
-            console.log('✅ [CREDITS] Button state reset after popup close');
-            
-            // Update credits if they changed
-            if (newCredits > creditsBeforePurchase) {
-              console.log('✅ [CREDITS] Credits increased, updating state');
-              setCredits(newCredits);
-              setIsLowOnCredits(data.isLow);
-              // Dispatch event to invalidate cache
-              window.dispatchEvent(new CustomEvent('credits:purchase'));
-              
-              // Stop polling if credits increased
-              isStillPurchasing = false;
-              setShowPurchaseOverlay(false); // Hide overlay when purchase detected
-              cleanup();
-            } else {
-              console.log('💰 [CREDITS] Credits unchanged, but button reset (checkout finished)');
-              // On final refresh, hide overlay even if credits haven't increased yet
-              if (isFinal) {
-                setShowPurchaseOverlay(false);
-                console.log('✅ [CREDITS] Final refresh complete, hiding overlay');
-              }
-            }
-          } catch (err) {
-            console.error('❌ [CREDITS] Error checking credits after popup close:', err);
-            setIsPurchasing(null);
-            if (isFinal) {
-              setShowPurchaseOverlay(false);
-            }
+            setShowPurchaseOverlay(false);
+            console.log('✅ [CREDITS] Overlay hidden after popup close (no purchase detected)');
+          } else {
+            console.log('✅ [CREDITS] Order completed, overlay will be handled by order.complete handler');
           }
-        };
-        
-        // First refresh attempt after 3 seconds
-        setTimeout(() => refreshCreditsAfterClose(false), 3000);
-        // Additional follow-up refresh after 5.5 seconds to catch slow webhooks
-        setTimeout(() => refreshCreditsAfterClose(true), 5500);
+        }, 1000); // Wait 1 second for order.complete to fire
       };
 
       console.log('👂 [CREDITS] Setting up FastSpring event listeners...');

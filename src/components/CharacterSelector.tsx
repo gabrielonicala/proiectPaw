@@ -188,6 +188,7 @@ export default function CharacterSelector({
     const pollingIntervals: NodeJS.Timeout[] = [];
     const timeouts: NodeJS.Timeout[] = [];
     let isStillPurchasing = true;
+    let orderCompleteFired = false; // Track if order.complete event fired
     
     // Cleanup function
     const cleanup = () => {
@@ -333,15 +334,28 @@ export default function CharacterSelector({
         // Remove event listeners to prevent double-firing
         window.removeEventListener('fsc:popup.closed', handlePopupClosed);
         window.removeEventListener('fsc:checkout.closed', handlePopupClosed);
-        window.removeEventListener('fsc:order.complete', handleOrderComplete);
-        console.log('🧹 [SLOTS] Event listeners removed from popup close handler');
         
-        // Start refresh attempts (will hide overlay if no purchase was made)
-        startRefreshAttempts();
+        // Wait a short time to see if order.complete fires
+        // If it does, it will handle the overlay. If not, hide it.
+        setTimeout(() => {
+          // Remove order.complete listener after waiting
+          window.removeEventListener('fsc:order.complete', handleOrderComplete);
+          
+          // If order.complete didn't fire, hide overlay (user closed without purchasing)
+          if (!orderCompleteFired) {
+            setIsPurchasingSlot(false);
+            setShowPurchaseOverlay(false);
+            console.log('✅ [SLOTS] Overlay hidden after popup close (no purchase detected)');
+          } else {
+            console.log('✅ [SLOTS] Order completed, overlay will be handled by order.complete handler');
+          }
+        }, 1000); // Wait 1 second for order.complete to fire
       };
 
       const handleOrderComplete = async () => {
         console.log('✅ [SLOTS] fsc:order.complete event fired');
+        orderCompleteFired = true; // Mark that order completed
+        
         console.log('🔄 [SLOTS] Checkout finished - resetting button and cleaning up...');
         
         // Log checkout completion server-side
