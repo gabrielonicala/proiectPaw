@@ -373,7 +373,7 @@ export default function CharacterSelector({
               const updatedUser = data.user;
               const newSlots = updatedUser?.characterSlots || 0;
               
-              // If slots increased in database, refresh GUI and wait for slot to appear
+              // If slots increased in database, refresh GUI and wait for animations
               if (newSlots > slotsBeforePurchase) {
                 console.log(`✅ [SLOTS] Slots increased in database (${newSlots} > ${slotsBeforePurchase}), updating GUI...`);
                 
@@ -382,84 +382,15 @@ export default function CharacterSelector({
                   await onUserRefresh();
                 }
                 
-                // Wait for React to re-render first
-                await new Promise(resolve => setTimeout(resolve, 200));
+                // Simple, reliable wait: React re-render + max animation delay + animation duration + buffer
+                // Max slot index could be 2 (3rd slot): delay = 200ms, duration = 500ms = 700ms total
+                // Add 500ms for React re-render + 500ms buffer = 1700ms total, round up to 2000ms for safety
+                const waitTime = 2000;
+                console.log(`⏳ [SLOTS] Waiting ${waitTime}ms for slot to render and animate...`);
+                await new Promise(resolve => setTimeout(resolve, waitTime));
                 
-                // Wait for the new slot element to appear and animation to complete
-                const waitForSlotToAppear = async () => {
-                  const expectedSlotCount = newSlots;
-                  const maxWaitTime = 20000; // 20 seconds max
-                  const startTime = Date.now();
-                  const checkInterval = 50; // Check every 50ms for more responsive detection
-                  
-                  return new Promise<boolean>((resolve) => {
-                    const checkForSlot = async () => {
-                      if (Date.now() - startTime > maxWaitTime) {
-                        console.log('⚠️ [SLOTS] Timeout waiting for slot, hiding overlay anyway');
-                        resolve(false);
-                        return;
-                      }
-                      
-                      // Find the grid container - try multiple selectors
-                      const gridContainer = document.querySelector('.grid.grid-cols-1') || 
-                                           document.querySelector('.grid') ||
-                                           document.querySelector('[class*="grid"]');
-                      
-                      if (gridContainer) {
-                        const gridItems = Array.from(gridContainer.children);
-                        const itemCount = gridItems.length;
-                        
-                        if (itemCount >= expectedSlotCount) {
-                          console.log(`✅ [SLOTS] Found ${itemCount} grid items (expected ${expectedSlotCount})`);
-                          
-                          // Find the last slot (should be the new one)
-                          const lastSlot = gridItems[itemCount - 1];
-                          if (lastSlot) {
-                            // Check if the element is actually visible (opacity > 0)
-                            const computedStyle = window.getComputedStyle(lastSlot);
-                            const opacity = parseFloat(computedStyle.opacity);
-                            
-                            // The slot should be fully visible (opacity = 1)
-                            if (opacity >= 0.99) {
-                              // Calculate animation time based on slot index
-                              const newSlotIndex = expectedSlotCount - 1;
-                              const animationDelay = newSlotIndex * 100; // in ms
-                              const animationDuration = 500; // in ms
-                              const totalAnimationTime = animationDelay + animationDuration;
-                              
-                              console.log(`⏳ [SLOTS] Slot found with opacity ${opacity}, waiting ${totalAnimationTime}ms for animation to complete`);
-                              
-                              // Wait for the full animation time
-                              setTimeout(() => {
-                                // Double-check the slot is still visible
-                                const finalStyle = window.getComputedStyle(lastSlot);
-                                const finalOpacity = parseFloat(finalStyle.opacity);
-                                console.log(`✅ [SLOTS] Animation complete, final opacity: ${finalOpacity}`);
-                                resolve(true);
-                              }, totalAnimationTime + 500); // Extra 500ms buffer
-                              return;
-                            } else {
-                              console.log(`🔄 [SLOTS] Slot found but opacity is ${opacity}, still animating...`);
-                            }
-                          }
-                        } else {
-                          console.log(`🔄 [SLOTS] Waiting for slot to appear... (found ${itemCount}, need ${expectedSlotCount})`);
-                        }
-                      }
-                      
-                      // Continue checking
-                      setTimeout(checkForSlot, checkInterval);
-                    };
-                    
-                    // Start checking
-                    checkForSlot();
-                  });
-                };
-                
-                await waitForSlotToAppear();
-                
-                // Hide overlay now that slot is fully visible
-                console.log('✅ [SLOTS] Slot fully visible, hiding overlay');
+                // Hide overlay
+                console.log('✅ [SLOTS] Hiding overlay after wait');
                 setShowPurchaseOverlay(false);
                 setIsPurchasingSlot(false);
                 clearInterval(keepChecking);
@@ -540,86 +471,15 @@ export default function CharacterSelector({
                 const newSlots = updatedUser?.characterSlots || 0;
                 console.log(`💰 [SLOTS] Current slots: ${newSlots} (was ${slotsBeforePurchase})`);
                 
-                // If slots increased, wait for the new slot to fully appear in the DOM
+                // If slots increased, wait for animations to complete
                 if (updatedUser && newSlots > slotsBeforePurchase) {
                   console.log('✅ [SLOTS] Character slots updated successfully');
                   
-                  // Wait for React to re-render first
-                  await new Promise(resolve => setTimeout(resolve, 200));
+                  // Simple, reliable wait: React re-render + max animation delay + animation duration + buffer
+                  const waitTime = 2000;
+                  console.log(`⏳ [SLOTS] Waiting ${waitTime}ms for slot to render and animate...`);
+                  await new Promise(resolve => setTimeout(resolve, waitTime));
                   
-                  // Wait for the new slot element to appear and animation to complete
-                  const waitForSlotToAppear = async () => {
-                    const expectedSlotCount = newSlots;
-                    const maxWaitTime = 20000; // 20 seconds max
-                    const startTime = Date.now();
-                    const checkInterval = 50; // Check every 50ms for more responsive detection
-                    
-                    return new Promise<boolean>((resolve) => {
-                      const checkForSlot = async () => {
-                        if (Date.now() - startTime > maxWaitTime) {
-                          console.log('⚠️ [SLOTS] Timeout waiting for slot, hiding overlay anyway');
-                          resolve(false);
-                          return;
-                        }
-                        
-                        // Find the grid container - try multiple selectors
-                        const gridContainer = document.querySelector('.grid.grid-cols-1') || 
-                                             document.querySelector('.grid') ||
-                                             document.querySelector('[class*="grid"]');
-                        
-                        if (gridContainer) {
-                          const gridItems = Array.from(gridContainer.children);
-                          const itemCount = gridItems.length;
-                          
-                          if (itemCount >= expectedSlotCount) {
-                            console.log(`✅ [SLOTS] Found ${itemCount} grid items (expected ${expectedSlotCount})`);
-                            
-                            // Find the last slot (should be the new one)
-                            const lastSlot = gridItems[itemCount - 1];
-                            if (lastSlot) {
-                              // Check if the element is actually visible (opacity > 0)
-                              const computedStyle = window.getComputedStyle(lastSlot);
-                              const opacity = parseFloat(computedStyle.opacity);
-                              const transform = computedStyle.transform;
-                              
-                              // The slot should be fully visible (opacity = 1) and in final position (y = 0)
-                              if (opacity >= 0.99) {
-                                // Calculate animation time based on slot index
-                                const newSlotIndex = expectedSlotCount - 1;
-                                const animationDelay = newSlotIndex * 100; // in ms
-                                const animationDuration = 500; // in ms
-                                const totalAnimationTime = animationDelay + animationDuration;
-                                
-                                console.log(`⏳ [SLOTS] Slot found with opacity ${opacity}, waiting ${totalAnimationTime}ms for animation to complete`);
-                                
-                                // Wait for the full animation time
-                                setTimeout(() => {
-                                  // Double-check the slot is still visible
-                                  const finalStyle = window.getComputedStyle(lastSlot);
-                                  const finalOpacity = parseFloat(finalStyle.opacity);
-                                  console.log(`✅ [SLOTS] Animation complete, final opacity: ${finalOpacity}`);
-                                  resolve(true);
-                                }, totalAnimationTime + 500); // Extra 500ms buffer
-                                return;
-                              } else {
-                                console.log(`🔄 [SLOTS] Slot found but opacity is ${opacity}, still animating...`);
-                              }
-                            }
-                          } else {
-                            console.log(`🔄 [SLOTS] Waiting for slot to appear... (found ${itemCount}, need ${expectedSlotCount})`);
-                          }
-                        }
-                        
-                        // Continue checking
-                        setTimeout(checkForSlot, checkInterval);
-                      };
-                      
-                      // Start checking
-                      checkForSlot();
-                    });
-                  };
-                  
-                  await waitForSlotToAppear();
                   setShowPurchaseOverlay(false); // Hide overlay when slot is fully visible
                   return;
                 }
