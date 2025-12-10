@@ -384,7 +384,7 @@ export default function CharacterSelector({
                 
                 // Wait a bit for React to re-render with the new state
                 // This ensures the user actually sees the updated slot count before overlay hides
-                await new Promise(resolve => setTimeout(resolve, 3300));
+                await new Promise(resolve => setTimeout(resolve, 5000));
                 
                 // Hide overlay now that both database and GUI are updated and rendered
                 console.log('✅ [SLOTS] GUI updated and rendered, hiding overlay');
@@ -468,9 +468,11 @@ export default function CharacterSelector({
                 const newSlots = updatedUser?.characterSlots || 0;
                 console.log(`💰 [SLOTS] Current slots: ${newSlots} (was ${slotsBeforePurchase})`);
                 
-                // If slots increased, we're done - hide overlay now
+                // If slots increased, wait for UI to render before hiding overlay
                 if (updatedUser && newSlots > slotsBeforePurchase) {
                   console.log('✅ [SLOTS] Character slots updated successfully');
+                  // Wait for React to re-render with the new slot visible
+                  await new Promise(resolve => setTimeout(resolve, 5000));
                   setShowPurchaseOverlay(false); // Hide overlay when slots actually increase
                   return;
                 }
