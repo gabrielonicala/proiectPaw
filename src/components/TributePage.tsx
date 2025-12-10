@@ -444,6 +444,95 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
       window.addEventListener('fsc:checkout.closed', handlePopupClosed);
       window.addEventListener('fsc:order.complete', handleOrderComplete);
       console.log('✅ [CREDITS] Event listeners registered');
+      
+      // Alternative detection: Watch for FastSpring iframe removal/hiding
+      const watchFastSpringIframe = () => {
+        const fastspringIframe = document.getElementById('fsc-popup-frame') || 
+                                 document.querySelector('iframe[id*="fsc"]') ||
+                                 document.querySelector('iframe[src*="fastspring"]') ||
+                                 document.querySelector('iframe[src*="onfastspring"]');
+        
+        if (fastspringIframe) {
+          console.log('🔍 [CREDITS] Found FastSpring iframe, watching for removal...');
+          
+          // Watch for iframe removal from DOM
+          const iframeObserver = new MutationObserver((mutations) => {
+            const stillExists = document.getElementById('fsc-popup-frame') || 
+                               document.querySelector('iframe[id*="fsc"]') ||
+                               document.querySelector('iframe[src*="fastspring"]') ||
+                               document.querySelector('iframe[src*="onfastspring"]');
+            
+            if (!stillExists) {
+              console.log('🔍 [CREDITS] FastSpring iframe removed from DOM - popup likely closed');
+              if (!orderCompleteFired && isPurchasing === packageKey) {
+                console.log('🚪 [CREDITS] Closing detected via iframe removal - hiding overlay');
+                setIsPurchasing(null);
+                setShowPurchaseOverlay(false);
+                iframeObserver.disconnect();
+              }
+            }
+          });
+          
+          // Watch the parent container for iframe removal
+          if (fastspringIframe.parentElement) {
+            iframeObserver.observe(fastspringIframe.parentElement, {
+              childList: true,
+              subtree: false
+            });
+          }
+          
+          // Also watch document body in case iframe is removed directly
+          iframeObserver.observe(document.body, {
+            childList: true,
+            subtree: true
+          });
+          
+          // Poll for iframe visibility/style changes
+          const iframeCheckInterval = setInterval(() => {
+            const currentIframe = document.getElementById('fsc-popup-frame') || 
+                                 document.querySelector('iframe[id*="fsc"]') ||
+                                 document.querySelector('iframe[src*="fastspring"]') ||
+                                 document.querySelector('iframe[src*="onfastspring"]');
+            
+            if (!currentIframe) {
+              console.log('🔍 [CREDITS] FastSpring iframe no longer exists - popup closed');
+              if (!orderCompleteFired && isPurchasing === packageKey) {
+                console.log('🚪 [CREDITS] Closing detected via iframe polling - hiding overlay');
+                setIsPurchasing(null);
+                setShowPurchaseOverlay(false);
+                clearInterval(iframeCheckInterval);
+                iframeObserver.disconnect();
+              }
+            } else {
+              // Check if iframe is hidden
+              const style = window.getComputedStyle(currentIframe);
+              if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
+                console.log('🔍 [CREDITS] FastSpring iframe is hidden - popup likely closed');
+                if (!orderCompleteFired && isPurchasing === packageKey) {
+                  console.log('🚪 [CREDITS] Closing detected via iframe visibility - hiding overlay');
+                  setIsPurchasing(null);
+                  setShowPurchaseOverlay(false);
+                  clearInterval(iframeCheckInterval);
+                  iframeObserver.disconnect();
+                }
+              }
+            }
+          }, 500); // Check every 500ms
+          
+          // Clean up after 60 seconds
+          setTimeout(() => {
+            clearInterval(iframeCheckInterval);
+            iframeObserver.disconnect();
+          }, 60000);
+        } else {
+          console.log('⚠️ [CREDITS] FastSpring iframe not found immediately, will retry...');
+          // Retry after a short delay
+          setTimeout(watchFastSpringIframe, 1000);
+        }
+      };
+      
+      // Start watching for iframe after a short delay
+      setTimeout(watchFastSpringIframe, 500);
 
       fastspring.builder.reset();
 
