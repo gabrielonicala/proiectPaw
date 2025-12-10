@@ -358,62 +358,57 @@ export default function CharacterSelector({
           }
         };
         
-        // Keep checking periodically until slots increase in the database AND GUI updates
-        // We check the API (source of truth) and refresh GUI, then hide overlay
-        let checkCount = 0;
-        const maxChecks = 15; // Check for up to 15 seconds (15 checks * 1s)
-        const keepChecking = setInterval(async () => {
-          checkCount++;
-          
+        // Refresh slots after purchase (matching credit overlay pattern)
+        const refreshSlots = async () => {
+          console.log('🔄 [SLOTS] Refreshing slots...');
           try {
-            // Check API for updated slots (database state)
-            const response = await fetch('/api/user/preferences');
-            if (response.ok) {
-              const data = await response.json();
-              const updatedUser = data.user;
-              const newSlots = updatedUser?.characterSlots || 0;
+            // Refresh UI
+            if (onUserRefresh) {
+              await onUserRefresh();
+            }
+            
+            // Check if slots actually increased
+            const res = await fetch('/api/user/preferences');
+            const data = await res.json();
+            const updatedUser = data.user;
+            const newSlots = updatedUser?.characterSlots || 0;
+            console.log(`💰 [SLOTS] Updated slots: ${newSlots} (was ${slotsBeforePurchase})`);
+            
+            // Hide overlay when slots actually increase (after animations)
+            if (newSlots > slotsBeforePurchase) {
+              // Wait for animations to complete
+              const waitTime = 2000; // 2 seconds for React re-render + animations
+              console.log(`⏳ [SLOTS] Slots increased, waiting ${waitTime}ms for animations...`);
+              await new Promise(resolve => setTimeout(resolve, waitTime));
               
-              // If slots increased in database, refresh GUI and wait for animations
-              if (newSlots > slotsBeforePurchase) {
-                console.log(`✅ [SLOTS] Slots increased in database (${newSlots} > ${slotsBeforePurchase}), updating GUI...`);
-                
-                // Update GUI state so user sees the change
-                if (onUserRefresh) {
-                  await onUserRefresh();
-                }
-                
-                // Simple, reliable wait: React re-render + max animation delay + animation duration + buffer
-                // Max slot index could be 2 (3rd slot): delay = 200ms, duration = 500ms = 700ms total
-                // Add 500ms for React re-render + 500ms buffer = 1700ms total, round up to 2000ms for safety
-                const waitTime = 2000;
-                console.log(`⏳ [SLOTS] Waiting ${waitTime}ms for slot to render and animate...`);
-                await new Promise(resolve => setTimeout(resolve, waitTime));
-                
-                // Hide overlay
-                console.log('✅ [SLOTS] Hiding overlay after wait');
+              setShowPurchaseOverlay(false);
+              setIsPurchasingSlot(false);
+              console.log('✅ [SLOTS] Slots increased, hiding overlay after animations');
+              return true; // Indicate success
+            }
+            return false; // Slots not updated yet
+          } catch (err) {
+            console.error('❌ [SLOTS] Error refreshing slots:', err);
+            return false;
+          }
+        };
+        
+        // First refresh attempt after 2 seconds (matching credit overlay)
+        setTimeout(async () => {
+          const updated = await refreshSlots();
+          if (!updated) {
+            // If not updated, try again after 4.5 seconds total
+            setTimeout(async () => {
+              const updated2 = await refreshSlots();
+              // Hide overlay after final refresh regardless (safety net)
+              if (!updated2) {
                 setShowPurchaseOverlay(false);
                 setIsPurchasingSlot(false);
-                clearInterval(keepChecking);
-                return;
-              } else {
-                console.log(`🔄 [SLOTS] Still waiting... Database slots: ${newSlots}, before: ${slotsBeforePurchase}`);
+                console.log('✅ [SLOTS] Loading overlay hidden after final refresh (4.5s) - slots may not have updated');
               }
-            }
-          } catch (error) {
-            console.error('❌ [SLOTS] Error during periodic slot check:', error);
+            }, 2500); // 2s + 2.5s = 4.5s total
           }
-          
-          // After max checks, hide overlay anyway (safety net)
-          if (checkCount >= maxChecks) {
-            console.log('⏰ [SLOTS] Max checks reached, hiding overlay');
-            setShowPurchaseOverlay(false);
-            setIsPurchasingSlot(false);
-            clearInterval(keepChecking);
-          }
-        }, 1000); // Check every second
-        
-        // Store interval for cleanup
-        pollingIntervals.push(keepChecking);
+        }, 2000);
         
       };
 
@@ -455,85 +450,7 @@ export default function CharacterSelector({
         window.removeEventListener('fsc:order.complete', handleOrderComplete);
         console.log('🧹 [SLOTS] Event listeners removed');
         
-        // Refresh user data to get updated slots
-        // Try immediately first (webhook might process quickly), then retry if needed
-        if (onUserRefresh) {
-          const refreshWithRetry = async (attempt: number = 1) => {
-            console.log(`🔄 [SLOTS] Refreshing user data (attempt ${attempt})...`);
-            try {
-              await onUserRefresh();
-              
-              // Check if slots actually increased by fetching fresh data
-              const response = await fetch('/api/user/preferences');
-              if (response.ok) {
-                const data = await response.json();
-                const updatedUser = data.user;
-                const newSlots = updatedUser?.characterSlots || 0;
-                console.log(`💰 [SLOTS] Current slots: ${newSlots} (was ${slotsBeforePurchase})`);
-                
-                // If slots increased, wait for animations to complete
-                if (updatedUser && newSlots > slotsBeforePurchase) {
-                  console.log('✅ [SLOTS] Character slots updated successfully');
-                  
-                  // Simple, reliable wait: React re-render + max animation delay + animation duration + buffer
-                  const waitTime = 2000;
-                  console.log(`⏳ [SLOTS] Waiting ${waitTime}ms for slot to render and animate...`);
-                  await new Promise(resolve => setTimeout(resolve, waitTime));
-                  
-                  setShowPurchaseOverlay(false); // Hide overlay when slot is fully visible
-                  return;
-                }
-              }
-              
-              // If slots didn't increase yet and we haven't retried too many times, retry
-              if (attempt < 3) {
-                console.log(`🔄 [SLOTS] Slots not updated yet, retrying (attempt ${attempt + 1})...`);
-                setTimeout(() => refreshWithRetry(attempt + 1), 2000);
-              } else {
-                console.log('⚠️ [SLOTS] Slots may not have updated after multiple attempts');
-              }
-            } catch (error) {
-              console.error(`❌ [SLOTS] Error refreshing user data (attempt ${attempt}):`, error);
-              // Retry on error
-              if (attempt < 3) {
-                setTimeout(() => refreshWithRetry(attempt + 1), 2000);
-              } else {
-                // Final fallback to page reload
-                console.log('🔄 [SLOTS] Final fallback: reloading page');
-                window.location.reload();
-              }
-            }
-          };
-          
-          // Start refresh attempts - try immediately, then retry if needed
-          refreshWithRetry(); // First attempt immediately
-          // Schedule an extra follow-up refresh a bit later to catch slow webhooks
-          setTimeout(() => refreshWithRetry(2), 2500);
-          // Hide overlay after final refresh completes (5.5s total) if slots still haven't increased
-          setTimeout(async () => {
-            // Check one more time if slots increased
-            try {
-              const res = await fetch('/api/user/preferences');
-              const data = await res.json();
-              const updatedUser = data.user;
-              const newSlots = updatedUser?.characterSlots || 0;
-              if (newSlots > slotsBeforePurchase) {
-                console.log('✅ [SLOTS] Slots increased on final check, hiding overlay');
-              } else {
-                console.log('⚠️ [SLOTS] Slots still not increased after 5.5s, hiding overlay anyway');
-              }
-              setShowPurchaseOverlay(false);
-              console.log('✅ [SLOTS] Loading overlay hidden after final refresh (5.5s)');
-            } catch (err) {
-              setShowPurchaseOverlay(false);
-              console.log('✅ [SLOTS] Loading overlay hidden after final refresh (5.5s) - error checking');
-            }
-          }, 5500);
-        } else {
-          // Fallback to page reload if no refresh callback
-          console.log('⚠️ [SLOTS] No refresh callback, reloading page');
-          setTimeout(() => window.location.reload(), 2000);
-        }
+        // Refresh logic is now handled in the refreshSlots function above (matching credit overlay pattern)
       };
 
       console.log('👂 [SLOTS] Setting up FastSpring event listeners...');
@@ -1106,9 +1023,14 @@ export default function CharacterSelector({
           {user.email && ADMIN_EMAILS.includes(user.email) && (
             <motion.div
               key="purchase-slot"
+              layout
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: (characters.length + Math.max(0, user.characterSlots - characters.length)) * 0.1, duration: 0.5 }}
+              transition={{ 
+                delay: (characters.length + Math.max(0, user.characterSlots - characters.length)) * 0.1, 
+                duration: 0.5,
+                layout: { duration: 0.5, ease: "easeInOut" }
+              }}
             >
               <Card
                 hover
