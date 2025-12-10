@@ -279,7 +279,15 @@ export default function CharacterSelector({
           body: JSON.stringify({ 
             purchaseType: 'character-slot' 
           })
-        }).catch(err => console.error('❌ [SLOTS] Failed to log checkout completion:', err));
+        })
+        .then(res => {
+          if (!res.ok) {
+            console.error('❌ [SLOTS] Checkout completion log failed with status:', res.status);
+          } else {
+            console.log('✅ [SLOTS] Checkout completion logged successfully');
+          }
+        })
+        .catch(err => console.error('❌ [SLOTS] Failed to log checkout completion:', err));
         
         // Remove event listeners first to prevent double-firing
         window.removeEventListener('fsc:popup.closed', handlePopupClosed);
@@ -350,13 +358,59 @@ export default function CharacterSelector({
           }
         };
         
-        // First refresh attempt after 3 seconds (don't hide overlay yet)
-        setTimeout(() => refreshAfterClose(false), 3000);
-        // Additional follow-up refresh after 5.5 seconds to catch slow webhooks
-        // This is the final refresh - hide overlay after it completes (only if slots haven't increased)
-        setTimeout(() => {
-          refreshAfterClose(true);
-        }, 5500);
+        // Keep checking periodically until slots increase in the database AND GUI updates
+        // We check the API (source of truth) and refresh GUI, then hide overlay
+        let checkCount = 0;
+        const maxChecks = 15; // Check for up to 15 seconds (15 checks * 1s)
+        const keepChecking = setInterval(async () => {
+          checkCount++;
+          
+          try {
+            // Check API for updated slots (database state)
+            const response = await fetch('/api/user/preferences');
+            if (response.ok) {
+              const data = await response.json();
+              const updatedUser = data.user;
+              const newSlots = updatedUser?.characterSlots || 0;
+              
+              // If slots increased in database, refresh GUI and hide overlay
+              if (newSlots > slotsBeforePurchase) {
+                console.log(`✅ [SLOTS] Slots increased in database (${newSlots} > ${slotsBeforePurchase}), updating GUI...`);
+                
+                // Update GUI state so user sees the change
+                if (onUserRefresh) {
+                  await onUserRefresh();
+                }
+                
+                // Wait a bit for React to re-render with the new state
+                // This ensures the user actually sees the updated slot count before overlay hides
+                await new Promise(resolve => setTimeout(resolve, 300));
+                
+                // Hide overlay now that both database and GUI are updated and rendered
+                console.log('✅ [SLOTS] GUI updated and rendered, hiding overlay');
+                setShowPurchaseOverlay(false);
+                setIsPurchasingSlot(false);
+                clearInterval(keepChecking);
+                return;
+              } else {
+                console.log(`🔄 [SLOTS] Still waiting... Database slots: ${newSlots}, before: ${slotsBeforePurchase}`);
+              }
+            }
+          } catch (error) {
+            console.error('❌ [SLOTS] Error during periodic slot check:', error);
+          }
+          
+          // After max checks, hide overlay anyway (safety net)
+          if (checkCount >= maxChecks) {
+            console.log('⏰ [SLOTS] Max checks reached, hiding overlay');
+            setShowPurchaseOverlay(false);
+            setIsPurchasingSlot(false);
+            clearInterval(keepChecking);
+          }
+        }, 1000); // Check every second
+        
+        // Store interval for cleanup
+        pollingIntervals.push(keepChecking);
         
       };
 
@@ -371,7 +425,15 @@ export default function CharacterSelector({
           body: JSON.stringify({ 
             purchaseType: 'character-slot' 
           })
-        }).catch(err => console.error('❌ [SLOTS] Failed to log checkout completion:', err));
+        })
+        .then(res => {
+          if (!res.ok) {
+            console.error('❌ [SLOTS] Checkout completion log failed with status:', res.status);
+          } else {
+            console.log('✅ [SLOTS] Checkout completion logged successfully');
+          }
+        })
+        .catch(err => console.error('❌ [SLOTS] Failed to log checkout completion:', err));
         
         // Mark as no longer purchasing
         isStillPurchasing = false;

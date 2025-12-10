@@ -333,7 +333,15 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
             packageKey, 
             purchaseType: 'credits' 
           })
-        }).catch(err => console.error('❌ [CREDITS] Failed to log checkout completion:', err));
+        })
+        .then(res => {
+          if (!res.ok) {
+            console.error('❌ [CREDITS] Checkout completion log failed with status:', res.status);
+          } else {
+            console.log('✅ [CREDITS] Checkout completion logged successfully');
+          }
+        })
+        .catch(err => console.error('❌ [CREDITS] Failed to log checkout completion:', err));
         
         // Mark as no longer purchasing
         isStillPurchasing = false;
@@ -410,7 +418,15 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
             packageKey, 
             purchaseType: 'credits' 
           })
-        }).catch(err => console.error('❌ [CREDITS] Failed to log checkout completion:', err));
+        })
+        .then(res => {
+          if (!res.ok) {
+            console.error('❌ [CREDITS] Checkout completion log failed with status:', res.status);
+          } else {
+            console.log('✅ [CREDITS] Checkout completion logged successfully');
+          }
+        })
+        .catch(err => console.error('❌ [CREDITS] Failed to log checkout completion:', err));
         
         // Remove event listeners first to prevent double-firing
         window.removeEventListener('fsc:popup.closed', handlePopupClosed);

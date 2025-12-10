@@ -272,6 +272,7 @@ export async function POST(request: NextRequest) {
             );
             if (result.success) {
               console.log('✅ Character slot added. New slot count:', result.newSlotCount);
+              console.log('✅ Checkout finished for user:', user.id, '- Type: character-slot');
             } else {
               console.error('❌ Failed to add character slot:', result.error);
             }
@@ -304,6 +305,7 @@ export async function POST(request: NextRequest) {
 
             if (result.success) {
               console.log('✅ Credits added. New balance:', result.newBalance);
+              console.log('✅ Checkout finished for user:', user.id, '- Type: credits, Package:', creditPackage.name);
               
               // If it's the Starter Kit, mark it as purchased
               if (productPath === 'the-starter-kit') {
