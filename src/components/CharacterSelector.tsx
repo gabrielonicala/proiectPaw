@@ -384,7 +384,7 @@ export default function CharacterSelector({
                 
                 // Wait a bit for React to re-render with the new state
                 // This ensures the user actually sees the updated slot count before overlay hides
-                await new Promise(resolve => setTimeout(resolve, 300));
+                await new Promise(resolve => setTimeout(resolve, 3300));
                 
                 // Hide overlay now that both database and GUI are updated and rendered
                 console.log('✅ [SLOTS] GUI updated and rendered, hiding overlay');
