@@ -431,42 +431,96 @@ export default function CharacterSelector({
       fastspring.builder.checkout();
       console.log('✅ [SLOTS] Checkout popup opened');
       
+      // Wait a bit longer for FastSpring to render the modal
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       // Watch for the close button and add click listener
       let closeButtonListenerAttached = false;
-      const attachCloseButtonListener = () => {
+      const attachCloseButtonListener = (targetDocument: Document = document) => {
         if (closeButtonListenerAttached) {
           console.log('⚠️ [SLOTS] Close button listener already attached, skipping');
           return true;
         }
         
+        // Debug: Log what we're searching for
+        console.log('🔍 [SLOTS] Searching for close button with ID: close-payment-modal in document:', targetDocument === document ? 'main' : 'other');
+        
         // Try multiple ways to find the button
-        let closeButton = document.getElementById('close-payment-modal');
+        let closeButton = targetDocument.getElementById('close-payment-modal');
+        console.log('🔍 [SLOTS] getElementById result:', closeButton);
+        
         if (!closeButton) {
           // Try querySelector as fallback
-          closeButton = document.querySelector('#close-payment-modal') as HTMLButtonElement;
+          closeButton = targetDocument.querySelector('#close-payment-modal') as HTMLButtonElement;
+          console.log('🔍 [SLOTS] querySelector("#close-payment-modal") result:', closeButton);
         }
         if (!closeButton) {
           // Try finding by class or other attributes
-          closeButton = document.querySelector('button[aria-label="Close"]') as HTMLButtonElement;
+          closeButton = targetDocument.querySelector('button[aria-label="Close"]') as HTMLButtonElement;
+          console.log('🔍 [SLOTS] querySelector("button[aria-label="Close"]") result:', closeButton);
+        }
+        if (!closeButton) {
+          // Try by class name
+          closeButton = targetDocument.querySelector('button.close') as HTMLButtonElement;
+          console.log('🔍 [SLOTS] querySelector("button.close") result:', closeButton);
         }
         if (!closeButton) {
           // Try finding in iframe if it exists
-          const iframes = document.querySelectorAll('iframe');
-          for (const iframe of iframes) {
+          const iframes = targetDocument.querySelectorAll('iframe');
+          console.log('🔍 [SLOTS] Found iframes:', iframes.length);
+          for (let i = 0; i < iframes.length; i++) {
+            const iframe = iframes[i];
+            console.log(`🔍 [SLOTS] Checking iframe ${i}:`, {
+              src: iframe.src,
+              id: iframe.id,
+              className: iframe.className
+            });
             try {
               const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
               if (iframeDoc) {
+                console.log(`🔍 [SLOTS] Can access iframe ${i} document`);
                 closeButton = iframeDoc.getElementById('close-payment-modal') as HTMLButtonElement;
                 if (closeButton) {
-                  console.log('✅ [SLOTS] Close button found in iframe');
+                  console.log('✅ [SLOTS] Close button found in iframe', i);
                   break;
+                } else {
+                  // Log all buttons in iframe for debugging
+                  const allButtons = iframeDoc.querySelectorAll('button');
+                  console.log(`🔍 [SLOTS] Iframe ${i} has ${allButtons.length} buttons:`, 
+                    Array.from(allButtons).map(btn => ({
+                      id: btn.id,
+                      className: btn.className,
+                      ariaLabel: btn.getAttribute('aria-label'),
+                      text: btn.textContent?.trim()
+                    }))
+                  );
                 }
               }
             } catch (e) {
               // Cross-origin iframe, can't access
-              console.log('⚠️ [SLOTS] Cannot access iframe content (cross-origin)');
+              console.log(`⚠️ [SLOTS] Cannot access iframe ${i} content (cross-origin):`, e);
             }
           }
+        }
+        
+        // Debug: Log all buttons with "close" in their ID, class, or aria-label
+        if (!closeButton) {
+          console.log('🔍 [SLOTS] Button not found, searching for any close-related buttons...');
+          const allButtons = targetDocument.querySelectorAll('button');
+          const closeRelatedButtons = Array.from(allButtons).filter(btn => 
+            btn.id?.toLowerCase().includes('close') ||
+            btn.className?.toLowerCase().includes('close') ||
+            btn.getAttribute('aria-label')?.toLowerCase().includes('close')
+          );
+          console.log('🔍 [SLOTS] Found close-related buttons:', closeRelatedButtons.length);
+          closeRelatedButtons.forEach((btn, idx) => {
+            console.log(`🔍 [SLOTS] Close button candidate ${idx}:`, {
+              id: btn.id,
+              className: btn.className,
+              ariaLabel: btn.getAttribute('aria-label'),
+              text: btn.textContent?.trim()
+            });
+          });
         }
         
         if (closeButton) {
@@ -496,16 +550,47 @@ export default function CharacterSelector({
         return false;
       };
       
-      // Try immediately
-      console.log('🔍 [SLOTS] Looking for close button immediately...');
-      if (!attachCloseButtonListener()) {
+      // Function to check for popup windows
+      const checkPopupWindows = () => {
+        try {
+          // Check if there are any popup windows (FastSpring might open a separate window)
+          // We can't directly enumerate windows, but we can check if the current window has a reference
+          // to a popup or if FastSpring stores it somewhere
+          const fastspringWindow = (window as any).fastspring?.popupWindow;
+          if (fastspringWindow && !fastspringWindow.closed) {
+            console.log('🔍 [SLOTS] Found FastSpring popup window, checking its document...');
+            try {
+              const popupDoc = fastspringWindow.document;
+              if (popupDoc && attachCloseButtonListener(popupDoc)) {
+                return true;
+              }
+            } catch (e) {
+              console.log('⚠️ [SLOTS] Cannot access popup window document:', e);
+            }
+          }
+        } catch (e) {
+          console.log('⚠️ [SLOTS] Error checking popup windows:', e);
+        }
+        return false;
+      };
+      
+      // Try immediately in main document
+      console.log('🔍 [SLOTS] Looking for close button immediately in main document...');
+      let found = attachCloseButtonListener();
+      
+      // Also check popup windows
+      if (!found) {
+        found = checkPopupWindows();
+      }
+      
+      if (!found) {
         console.log('⚠️ [SLOTS] Close button not found immediately, starting to watch...');
         
         // Use MutationObserver for better detection
         const observer = new MutationObserver((mutations) => {
           if (!closeButtonListenerAttached) {
             console.log('🔍 [SLOTS] DOM changed, checking for close button...');
-            if (attachCloseButtonListener()) {
+            if (attachCloseButtonListener() || checkPopupWindows()) {
               observer.disconnect();
               console.log('✅ [SLOTS] Close button found via MutationObserver, observer disconnected');
             }
@@ -522,7 +607,7 @@ export default function CharacterSelector({
         const closeButtonInterval = setInterval(() => {
           if (!closeButtonListenerAttached) {
             console.log('🔍 [SLOTS] Polling for close button...');
-            if (attachCloseButtonListener()) {
+            if (attachCloseButtonListener() || checkPopupWindows()) {
               clearInterval(closeButtonInterval);
               observer.disconnect();
               console.log('✅ [SLOTS] Close button found via polling, interval cleared');
