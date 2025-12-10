@@ -301,6 +301,13 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
                 setIsPurchasing(null);
                 setCredits(newCredits);
                 setIsLowOnCredits(data.isLow);
+                
+                // Update cache immediately with fresh data
+                setCachedCredits(user.id, {
+                  credits: newCredits,
+                  isLow: data.isLow
+                });
+                
                 window.dispatchEvent(new CustomEvent('credits:purchase'));
                 setShowPurchaseOverlay(false); // Hide overlay when purchase detected
                 cleanup();
@@ -373,11 +380,17 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
           
           // Also fetch fresh data
           try {
-            const res = await fetch('/api/credits/balance');
+            const res = await fetch('/api/credits/balance', { cache: 'no-cache' });
             const data = await res.json();
             console.log(`💰 [CREDITS] Updated balance: ${data.credits} (was ${creditsBeforePurchase})`);
             setCredits(data.credits);
             setIsLowOnCredits(data.isLow);
+            
+            // Update cache immediately with fresh data to prevent stale cache on navigation
+            setCachedCredits(user.id, {
+              credits: data.credits,
+              isLow: data.isLow
+            });
             
             // Hide overlay when credits actually increase
             if (data.credits > creditsBeforePurchase) {

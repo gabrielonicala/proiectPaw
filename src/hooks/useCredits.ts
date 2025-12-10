@@ -44,12 +44,24 @@ export function useCredits(options: UseCreditsOptions = {}) {
     }
     
     // Check cache first for instant display (unless forcing refresh)
+    // Only use cache if it's "fresh" (updated within last 10 seconds)
+    // This prevents showing stale data after purchases
     if (!forceRefresh) {
-    const cached = getCachedCredits(userId);
-    if (cached) {
-      setCredits({ credits: cached.credits, isLow: cached.isLow });
-      setIsLoading(false);
-      // Continue to fetch fresh data in background
+      const cached = getCachedCredits(userId);
+      if (cached) {
+        const cacheAge = Date.now() - cached.lastUpdated;
+        const FRESH_THRESHOLD_MS = 10 * 1000; // 10 seconds
+        
+        // Only use cache for immediate display if it's very fresh
+        // Otherwise, wait for API call to avoid showing stale data
+        if (cacheAge < FRESH_THRESHOLD_MS) {
+          setCredits({ credits: cached.credits, isLow: cached.isLow });
+          setIsLoading(false);
+          // Continue to fetch fresh data in background
+        } else {
+          // Cache is stale, don't show it - wait for API call
+          console.log(`[CREDITS] Cache is stale (${Math.round(cacheAge / 1000)}s old), waiting for fresh data`);
+        }
       }
     }
 
