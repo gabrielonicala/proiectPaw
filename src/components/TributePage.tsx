@@ -464,11 +464,25 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
             
             if (!stillExists) {
               console.log('🔍 [CREDITS] FastSpring iframe removed from DOM - popup likely closed');
+              console.log('🔍 [CREDITS] State check:', {
+                orderCompleteFired,
+                isPurchasing,
+                packageKey,
+                shouldHide: !orderCompleteFired && isPurchasing === packageKey
+              });
               if (!orderCompleteFired && isPurchasing === packageKey) {
-                console.log('🚪 [CREDITS] Closing detected via iframe removal - hiding overlay');
+                console.log('🚪🚪🚪 [CREDITS] Closing detected via iframe removal - FORCING overlay hide');
+                setIsPurchasing(null);
+                setShowPurchaseOverlay(false);
+                console.log('✅ [CREDITS] Overlay state updated - should be hidden now');
+                iframeObserver.disconnect();
+              } else if (!orderCompleteFired) {
+                console.log('🔧 [CREDITS] Force hiding overlay since iframe is gone and no order completed');
                 setIsPurchasing(null);
                 setShowPurchaseOverlay(false);
                 iframeObserver.disconnect();
+              } else {
+                console.log('⚠️ [CREDITS] Order completed, not hiding overlay');
               }
             }
           });
@@ -496,20 +510,53 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
             
             if (!currentIframe) {
               console.log('🔍 [CREDITS] FastSpring iframe no longer exists - popup closed');
+              console.log('🔍 [CREDITS] State check:', {
+                orderCompleteFired,
+                isPurchasing,
+                packageKey,
+                shouldHide: !orderCompleteFired && isPurchasing === packageKey
+              });
               if (!orderCompleteFired && isPurchasing === packageKey) {
-                console.log('🚪 [CREDITS] Closing detected via iframe polling - hiding overlay');
+                console.log('🚪🚪🚪 [CREDITS] Closing detected via iframe polling - FORCING overlay hide');
                 setIsPurchasing(null);
                 setShowPurchaseOverlay(false);
+                console.log('✅ [CREDITS] Overlay state updated - should be hidden now');
                 clearInterval(iframeCheckInterval);
                 iframeObserver.disconnect();
+              } else {
+                console.log('⚠️ [CREDITS] Condition not met for polling, overlay not hidden:', {
+                  orderCompleteFired,
+                  isPurchasing,
+                  packageKey
+                });
+                // Force hide anyway if popup is clearly closed (iframe gone)
+                if (!orderCompleteFired) {
+                  console.log('🔧 [CREDITS] Force hiding overlay since iframe is gone and no order completed');
+                  setIsPurchasing(null);
+                  setShowPurchaseOverlay(false);
+                  clearInterval(iframeCheckInterval);
+                  iframeObserver.disconnect();
+                }
               }
             } else {
               // Check if iframe is hidden
               const style = window.getComputedStyle(currentIframe);
               if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
                 console.log('🔍 [CREDITS] FastSpring iframe is hidden - popup likely closed');
+                console.log('🔍 [CREDITS] State check:', {
+                  orderCompleteFired,
+                  isPurchasing,
+                  packageKey,
+                  shouldHide: !orderCompleteFired && isPurchasing === packageKey
+                });
                 if (!orderCompleteFired && isPurchasing === packageKey) {
                   console.log('🚪 [CREDITS] Closing detected via iframe visibility - hiding overlay');
+                  setIsPurchasing(null);
+                  setShowPurchaseOverlay(false);
+                  clearInterval(iframeCheckInterval);
+                  iframeObserver.disconnect();
+                } else if (!orderCompleteFired) {
+                  console.log('🔧 [CREDITS] Force hiding overlay since iframe is hidden and no order completed');
                   setIsPurchasing(null);
                   setShowPurchaseOverlay(false);
                   clearInterval(iframeCheckInterval);

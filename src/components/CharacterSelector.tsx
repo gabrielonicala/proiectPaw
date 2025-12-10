@@ -428,11 +428,24 @@ export default function CharacterSelector({
             
             if (!stillExists) {
               console.log('🔍 [SLOTS] FastSpring iframe removed from DOM - popup likely closed');
+              console.log('🔍 [SLOTS] State check:', {
+                orderCompleteFired,
+                isStillPurchasing,
+                shouldHide: !orderCompleteFired && isStillPurchasing
+              });
               if (!orderCompleteFired && isStillPurchasing) {
-                console.log('🚪 [SLOTS] Closing detected via iframe removal - hiding overlay');
+                console.log('🚪🚪🚪 [SLOTS] Closing detected via iframe removal - FORCING overlay hide');
+                setIsPurchasingSlot(false);
+                setShowPurchaseOverlay(false);
+                console.log('✅ [SLOTS] Overlay state updated - should be hidden now');
+                iframeObserver.disconnect();
+              } else if (!orderCompleteFired) {
+                console.log('🔧 [SLOTS] Force hiding overlay since iframe is gone and no order completed');
                 setIsPurchasingSlot(false);
                 setShowPurchaseOverlay(false);
                 iframeObserver.disconnect();
+              } else {
+                console.log('⚠️ [SLOTS] Order completed, not hiding overlay');
               }
             }
           });
@@ -460,20 +473,45 @@ export default function CharacterSelector({
             
             if (!currentIframe) {
               console.log('🔍 [SLOTS] FastSpring iframe no longer exists - popup closed');
+              console.log('🔍 [SLOTS] State check:', {
+                orderCompleteFired,
+                isStillPurchasing,
+                shouldHide: !orderCompleteFired && isStillPurchasing
+              });
               if (!orderCompleteFired && isStillPurchasing) {
-                console.log('🚪 [SLOTS] Closing detected via iframe polling - hiding overlay');
+                console.log('🚪🚪🚪 [SLOTS] Closing detected via iframe polling - FORCING overlay hide');
+                setIsPurchasingSlot(false);
+                setShowPurchaseOverlay(false);
+                console.log('✅ [SLOTS] Overlay state updated - should be hidden now');
+                clearInterval(iframeCheckInterval);
+                iframeObserver.disconnect();
+              } else if (!orderCompleteFired) {
+                console.log('🔧 [SLOTS] Force hiding overlay since iframe is gone and no order completed');
                 setIsPurchasingSlot(false);
                 setShowPurchaseOverlay(false);
                 clearInterval(iframeCheckInterval);
                 iframeObserver.disconnect();
+              } else {
+                console.log('⚠️ [SLOTS] Order completed, not hiding overlay');
               }
             } else {
               // Check if iframe is hidden
               const style = window.getComputedStyle(currentIframe);
               if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
                 console.log('🔍 [SLOTS] FastSpring iframe is hidden - popup likely closed');
+                console.log('🔍 [SLOTS] State check:', {
+                  orderCompleteFired,
+                  isStillPurchasing,
+                  shouldHide: !orderCompleteFired && isStillPurchasing
+                });
                 if (!orderCompleteFired && isStillPurchasing) {
                   console.log('🚪 [SLOTS] Closing detected via iframe visibility - hiding overlay');
+                  setIsPurchasingSlot(false);
+                  setShowPurchaseOverlay(false);
+                  clearInterval(iframeCheckInterval);
+                  iframeObserver.disconnect();
+                } else if (!orderCompleteFired) {
+                  console.log('🔧 [SLOTS] Force hiding overlay since iframe is hidden and no order completed');
                   setIsPurchasingSlot(false);
                   setShowPurchaseOverlay(false);
                   clearInterval(iframeCheckInterval);
