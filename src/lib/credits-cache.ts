@@ -110,11 +110,13 @@ export function invalidateCreditsCache(userId: string): void {
 /**
  * Mark that a purchase was completed for a user
  * This will cause the cache to be ignored for a short period
+ * Note: We don't delete the cache here because it should be updated with the new value
+ * before this is called. We just mark the timestamp to skip cache on next navigation.
  */
 export function markPurchaseCompleted(userId: string): void {
   lastPurchaseTime.set(userId, Date.now());
-  // Also invalidate cache immediately
-  creditsCache.delete(userId);
+  // Don't delete cache - it should already be updated with the new value
+  // We just mark the timestamp so we know to use fresh data
 }
 
 /**
@@ -134,5 +136,23 @@ export function hasRecentPurchase(userId: string): boolean {
   }
   
   return true;
+}
+
+/**
+ * Check if cache was updated after the purchase (meaning it has the correct new value)
+ */
+export function isCacheUpdatedAfterPurchase(userId: string): boolean {
+  const purchaseTime = lastPurchaseTime.get(userId);
+  if (!purchaseTime) {
+    return false; // No purchase recorded
+  }
+  
+  const cached = creditsCache.get(userId);
+  if (!cached) {
+    return false; // No cache
+  }
+  
+  // Cache was updated after purchase - it has the correct value
+  return cached.lastUpdated >= purchaseTime;
 }
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
-import { getCachedCredits, setCachedCredits, updateCachedCredits, invalidateCreditsCache, markPurchaseCompleted, hasRecentPurchase } from '@/lib/credits-cache';
+import { getCachedCredits, setCachedCredits, updateCachedCredits, invalidateCreditsCache } from '@/lib/credits-cache';
 
 interface CreditsData {
   credits: number;
@@ -44,26 +44,13 @@ export function useCredits(options: UseCreditsOptions = {}) {
     }
     
     // Check cache first for instant display (unless forcing refresh)
-    // Skip cache if there was a recent purchase to avoid showing stale data
-    if (!forceRefresh && !hasRecentPurchase(userId)) {
+    if (!forceRefresh) {
       const cached = getCachedCredits(userId);
       if (cached) {
-        const cacheAge = Date.now() - cached.lastUpdated;
-        const FRESH_THRESHOLD_MS = 10 * 1000; // 10 seconds
-        
-        // Only use cache for immediate display if it's very fresh
-        // Otherwise, wait for API call to avoid showing stale data
-        if (cacheAge < FRESH_THRESHOLD_MS) {
-          setCredits({ credits: cached.credits, isLow: cached.isLow });
-          setIsLoading(false);
-          // Continue to fetch fresh data in background
-        } else {
-          // Cache is stale, don't show it - wait for API call
-          console.log(`[CREDITS] Cache is stale (${Math.round(cacheAge / 1000)}s old), waiting for fresh data`);
-        }
+        setCredits({ credits: cached.credits, isLow: cached.isLow });
+        setIsLoading(false);
+        // Continue to fetch fresh data in background
       }
-    } else if (hasRecentPurchase(userId)) {
-      console.log('[CREDITS] Recent purchase detected, skipping cache to avoid stale data');
     }
 
     try {
@@ -164,8 +151,7 @@ export function useCredits(options: UseCreditsOptions = {}) {
 
     // Listen for credit-related events
     const handleCreditEvent = () => {
-      markPurchaseCompleted(userId);
-      invalidateCreditsCache(userId);
+      // Cache should already be updated by TributePage, just refresh to verify
       fetchCredits(true);
     };
 

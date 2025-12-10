@@ -302,10 +302,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
                 setCredits(newCredits);
                 setIsLowOnCredits(data.isLow);
                 
-                // Mark purchase to prevent cache flash on navigation
-                markPurchaseCompleted(user.id);
-                
-                // Update cache immediately with fresh data
+                // Update cache immediately with new value
                 setCachedCredits(user.id, {
                   credits: newCredits,
                   isLow: data.isLow
@@ -389,10 +386,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
             setCredits(data.credits);
             setIsLowOnCredits(data.isLow);
             
-            // Mark purchase to prevent cache flash on navigation
-            markPurchaseCompleted(user.id);
-            
-            // Update cache immediately with fresh data to prevent stale cache on navigation
+            // Update cache immediately with new value
             setCachedCredits(user.id, {
               credits: data.credits,
               isLow: data.isLow
