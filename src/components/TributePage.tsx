@@ -468,32 +468,115 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
       console.log('✅ [CREDITS] Checkout popup opened');
       
       // Watch for the close button and add click listener
-      const watchForCloseButton = () => {
-        const closeButton = document.getElementById('close-payment-modal');
+      let closeButtonListenerAttached = false;
+      const attachCloseButtonListener = () => {
+        if (closeButtonListenerAttached) {
+          console.log('⚠️ [CREDITS] Close button listener already attached, skipping');
+          return true;
+        }
+        
+        // Try multiple ways to find the button
+        let closeButton = document.getElementById('close-payment-modal');
+        if (!closeButton) {
+          // Try querySelector as fallback
+          closeButton = document.querySelector('#close-payment-modal') as HTMLButtonElement;
+        }
+        if (!closeButton) {
+          // Try finding by class or other attributes
+          closeButton = document.querySelector('button[aria-label="Close"]') as HTMLButtonElement;
+        }
+        if (!closeButton) {
+          // Try finding in iframe if it exists
+          const iframes = document.querySelectorAll('iframe');
+          for (const iframe of iframes) {
+            try {
+              const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+              if (iframeDoc) {
+                closeButton = iframeDoc.getElementById('close-payment-modal') as HTMLButtonElement;
+                if (closeButton) {
+                  console.log('✅ [CREDITS] Close button found in iframe');
+                  break;
+                }
+              }
+            } catch (e) {
+              // Cross-origin iframe, can't access
+              console.log('⚠️ [CREDITS] Cannot access iframe content (cross-origin)');
+            }
+          }
+        }
+        
         if (closeButton) {
-          console.log('✅ [CREDITS] Close button found, adding click listener');
-          const handleCloseClick = () => {
-            console.log('🚪 [CREDITS] Close button clicked');
+          console.log('✅ [CREDITS] Close button found!', closeButton);
+          console.log('✅ [CREDITS] Button element:', {
+            id: closeButton.id,
+            className: closeButton.className,
+            tagName: closeButton.tagName,
+            ariaLabel: closeButton.getAttribute('aria-label')
+          });
+          
+          const handleCloseClick = (e: Event) => {
+            console.log('🚪🚪🚪 [CREDITS] CLOSE BUTTON CLICKED! Event:', e);
+            console.log('🚪 [CREDITS] Hiding overlay immediately');
             setIsPurchasing(null);
             setShowPurchaseOverlay(false);
             closeButton.removeEventListener('click', handleCloseClick);
+            console.log('✅ [CREDITS] Close button listener removed');
           };
-          closeButton.addEventListener('click', handleCloseClick);
-          return true; // Found and set up
+          
+          closeButton.addEventListener('click', handleCloseClick, true); // Use capture phase
+          closeButtonListenerAttached = true;
+          console.log('✅ [CREDITS] Close button click listener attached successfully');
+          return true;
         }
-        return false; // Not found yet
+        
+        return false;
       };
       
-      // Try immediately, then poll if needed
-      if (!watchForCloseButton()) {
-        const closeButtonInterval = setInterval(() => {
-          if (watchForCloseButton()) {
-            clearInterval(closeButtonInterval);
-          }
-        }, 100); // Check every 100ms
+      // Try immediately
+      console.log('🔍 [CREDITS] Looking for close button immediately...');
+      if (!attachCloseButtonListener()) {
+        console.log('⚠️ [CREDITS] Close button not found immediately, starting to watch...');
         
-        // Stop watching after 5 seconds (button should appear by then)
-        setTimeout(() => clearInterval(closeButtonInterval), 5000);
+        // Use MutationObserver for better detection
+        const observer = new MutationObserver((mutations) => {
+          if (!closeButtonListenerAttached) {
+            console.log('🔍 [CREDITS] DOM changed, checking for close button...');
+            if (attachCloseButtonListener()) {
+              observer.disconnect();
+              console.log('✅ [CREDITS] Close button found via MutationObserver, observer disconnected');
+            }
+          }
+        });
+        
+        // Observe the entire document
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true
+        });
+        
+        // Also poll as fallback
+        const closeButtonInterval = setInterval(() => {
+          if (!closeButtonListenerAttached) {
+            console.log('🔍 [CREDITS] Polling for close button...');
+            if (attachCloseButtonListener()) {
+              clearInterval(closeButtonInterval);
+              observer.disconnect();
+              console.log('✅ [CREDITS] Close button found via polling, interval cleared');
+            }
+          } else {
+            clearInterval(closeButtonInterval);
+            observer.disconnect();
+          }
+        }, 200); // Check every 200ms
+        
+        // Stop watching after 10 seconds
+        setTimeout(() => {
+          if (!closeButtonListenerAttached) {
+            console.log('⏰ [CREDITS] Timeout: Close button not found after 10 seconds');
+            clearInterval(closeButtonInterval);
+            observer.disconnect();
+          }
+        }, 10000);
       }
 
     } catch (error) {
