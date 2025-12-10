@@ -45,11 +45,11 @@ export function useCredits(options: UseCreditsOptions = {}) {
     
     // Check cache first for instant display (unless forcing refresh)
     if (!forceRefresh) {
-      const cached = getCachedCredits(userId);
-      if (cached) {
-        setCredits({ credits: cached.credits, isLow: cached.isLow });
-        setIsLoading(false);
-        // Continue to fetch fresh data in background
+    const cached = getCachedCredits(userId);
+    if (cached) {
+      setCredits({ credits: cached.credits, isLow: cached.isLow });
+      setIsLoading(false);
+      // Continue to fetch fresh data in background
       }
     }
 
@@ -71,9 +71,9 @@ export function useCredits(options: UseCreditsOptions = {}) {
       // If we have cached data, keep using it
       if (!forceRefresh) {
         const cached = getCachedCredits(userId);
-        if (!cached) {
-          // Only set default if we have no cache
-          setCredits({ credits: 150, isLow: false });
+      if (!cached) {
+        // Only set default if we have no cache
+        setCredits({ credits: 150, isLow: false });
         }
       }
     } finally {

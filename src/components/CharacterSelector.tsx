@@ -59,6 +59,7 @@ export default function CharacterSelector({
   const [tempName, setTempName] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [isPurchasingSlot, setIsPurchasingSlot] = useState(false);
+  const [showPurchaseOverlay, setShowPurchaseOverlay] = useState(false);
   const nameEditRef = useRef<HTMLDivElement>(null);
   const inputContainerRef = useRef<HTMLDivElement>(null);
   const checkButtonRef = useRef<HTMLDivElement>(null);
@@ -182,6 +183,7 @@ export default function CharacterSelector({
   const handlePurchaseCharacterSlot = async () => {
     console.log('🛒 [SLOTS] Starting character slot purchase');
     setIsPurchasingSlot(true);
+    setShowPurchaseOverlay(true); // Show loading overlay
     const slotsBeforePurchase = user.characterSlots; // Capture current slots for comparison
     const pollingIntervals: NodeJS.Timeout[] = [];
     const timeouts: NodeJS.Timeout[] = [];
@@ -244,6 +246,7 @@ export default function CharacterSelector({
               console.log('✅ [SLOTS] Character slots increased! Purchase completed via polling');
               isStillPurchasing = false;
               setIsPurchasingSlot(false);
+              setShowPurchaseOverlay(false); // Hide overlay when purchase detected
               if (onUserRefresh) {
                 await onUserRefresh();
               }
@@ -291,9 +294,10 @@ export default function CharacterSelector({
                 
                 // If slots increased, order completed successfully
                 if (updatedUser && updatedUser.characterSlots > slotsBeforePurchase) {
-                  console.log('Character slots increased, state refreshed');
+                  console.log('✅ [SLOTS] Character slots increased, state refreshed');
+                  setShowPurchaseOverlay(false); // Hide overlay when purchase detected
                 } else {
-                  console.log('Popup closed, state refreshed (slots may not have increased yet)');
+                  console.log('🔄 [SLOTS] Popup closed, state refreshed (slots may not have increased yet)');
                 }
               } else {
                 // If API call fails, just reset the button and try refresh
@@ -323,12 +327,26 @@ export default function CharacterSelector({
         // First refresh attempt after 3 seconds
         setTimeout(refreshAfterClose, 3000);
         // Additional follow-up refresh after 5.5 seconds to catch slow webhooks
-        setTimeout(refreshAfterClose, 5500);
+        setTimeout(() => {
+          refreshAfterClose();
+          // Hide overlay after final refresh completes
+          setShowPurchaseOverlay(false);
+          console.log('✅ [SLOTS] Loading overlay hidden after popup close final refresh');
+        }, 5500);
       };
 
       const handleOrderComplete = async () => {
         console.log('✅ [SLOTS] fsc:order.complete event fired');
         console.log('🔄 [SLOTS] Checkout finished - resetting button and cleaning up...');
+        
+        // Log checkout completion server-side
+        fetch('/api/fastspring/checkout/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            purchaseType: 'character-slot' 
+          })
+        }).catch(err => console.error('❌ [SLOTS] Failed to log checkout completion:', err));
         
         // Mark as no longer purchasing
         isStillPurchasing = false;
@@ -393,6 +411,11 @@ export default function CharacterSelector({
           refreshWithRetry(); // First attempt immediately
           // Schedule an extra follow-up refresh a bit later to catch slow webhooks
           setTimeout(() => refreshWithRetry(2), 2500);
+          // Hide overlay after final refresh completes (5.5s total)
+          setTimeout(() => {
+            setShowPurchaseOverlay(false);
+            console.log('✅ [SLOTS] Loading overlay hidden after final refresh (5.5s)');
+          }, 5500);
         } else {
           // Fallback to page reload if no refresh callback
           console.log('⚠️ [SLOTS] No refresh callback, reloading page');
@@ -570,6 +593,27 @@ export default function CharacterSelector({
         background: colors ? `linear-gradient(to bottom, ${colors.background}, ${colors.primary}, ${colors.secondary})` : 'linear-gradient(to bottom, #581c87, #1e3a8a, #312e81)'
       }}
     >
+      {/* Purchase Loading Overlay */}
+      {showPurchaseOverlay && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/80 flex flex-col items-center justify-center z-[10000]"
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="w-16 h-16 border-4 border-yellow-400 border-t-transparent pixelated mb-4"
+          />
+          <p className="font-pixel text-yellow-300 text-lg mb-2">
+            Processing your purchase...
+          </p>
+          <p className="font-pixel text-gray-400 text-sm">
+            Please wait while we confirm your transaction
+          </p>
+        </motion.div>
+      )}
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div

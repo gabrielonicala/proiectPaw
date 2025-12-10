@@ -38,17 +38,17 @@ export async function POST(request: NextRequest) {
 
     // Check if user has enough credits for story generation (unless skipping deduction)
     if (!skipCreditDeduction) {
-      const creditCheck = await canAffordEntry(session.user.id, 'text');
-      if (!creditCheck.allowed) {
-        return NextResponse.json(
-          { 
-            error: 'Insufficient credits', 
-            message: creditCheck.reason,
-            currentCredits: creditCheck.currentCredits,
-            requiredCredits: creditCheck.requiredCredits
-          }, 
-          { status: 403 }
-        );
+    const creditCheck = await canAffordEntry(session.user.id, 'text');
+    if (!creditCheck.allowed) {
+      return NextResponse.json(
+        { 
+          error: 'Insufficient credits', 
+          message: creditCheck.reason,
+          currentCredits: creditCheck.currentCredits,
+          requiredCredits: creditCheck.requiredCredits
+        }, 
+        { status: 403 }
+      );
       }
     }
 
@@ -311,8 +311,8 @@ Return exactly this JSON shape:
     if (!skipCreditDeduction) {
       deductResult = await deductCredits(session.user.id, 'text');
       if (!deductResult.success && deductResult.error) {
-        console.error('Failed to deduct credits after story generation:', deductResult.error);
-        // Continue anyway - the story was already generated
+      console.error('Failed to deduct credits after story generation:', deductResult.error);
+      // Continue anyway - the story was already generated
       }
     } else {
       // Get current credits for response (without deducting)

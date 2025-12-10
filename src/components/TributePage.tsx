@@ -60,6 +60,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
   const [isLowOnCredits, setIsLowOnCredits] = useState(false);
   
   const [isPurchasing, setIsPurchasing] = useState<string | null>(null);
+  const [showPurchaseOverlay, setShowPurchaseOverlay] = useState(false);
   // Character slot purchase moved to CharacterSelector
   // const [isPurchasingSlot, setIsPurchasingSlot] = useState(false);
   
@@ -230,6 +231,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
   const handlePurchaseCredits = async (packageKey: keyof typeof CREDIT_PACKAGES) => {
     console.log('🛒 [CREDITS] Starting purchase for package:', packageKey);
     setIsPurchasing(packageKey);
+    setShowPurchaseOverlay(true); // Show loading overlay
     const creditsBeforePurchase = credits; // Capture for comparison
     const pollingIntervals: NodeJS.Timeout[] = [];
     const timeouts: NodeJS.Timeout[] = [];
@@ -291,16 +293,17 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
             const newCredits = data.credits;
             console.log(`💰 [CREDITS] Current balance: ${newCredits} (was ${creditsBeforePurchase})`);
             
-            // If credits increased, purchase likely completed
-            if (newCredits > creditsBeforePurchase) {
-              console.log('✅ [CREDITS] Credits increased! Purchase completed via polling');
-              isStillPurchasing = false;
-              setIsPurchasing(null);
-              setCredits(newCredits);
-              setIsLowOnCredits(data.isLow);
-              window.dispatchEvent(new CustomEvent('credits:purchase'));
-              cleanup();
-            }
+              // If credits increased, purchase likely completed
+              if (newCredits > creditsBeforePurchase) {
+                console.log('✅ [CREDITS] Credits increased! Purchase completed via polling');
+                isStillPurchasing = false;
+                setIsPurchasing(null);
+                setCredits(newCredits);
+                setIsLowOnCredits(data.isLow);
+                window.dispatchEvent(new CustomEvent('credits:purchase'));
+                setShowPurchaseOverlay(false); // Hide overlay when purchase detected
+                cleanup();
+              }
           }
         } catch (error) {
           console.error('❌ [CREDITS] Error during polling:', error);
@@ -321,6 +324,16 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
       const handleOrderComplete = () => {
         console.log('✅ [CREDITS] fsc:order.complete event fired for package:', packageKey);
         console.log('🔄 [CREDITS] Checkout finished - resetting button and cleaning up...');
+        
+        // Log checkout completion server-side
+        fetch('/api/fastspring/checkout/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            packageKey, 
+            purchaseType: 'credits' 
+          })
+        }).catch(err => console.error('❌ [CREDITS] Failed to log checkout completion:', err));
         
         // Mark as no longer purchasing
         isStillPurchasing = false;
@@ -358,7 +371,15 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
         // First refresh attempt after 2 seconds
         setTimeout(refreshCredits, 2000);
         // Additional follow-up refresh after 4.5 seconds to catch slow webhooks
-        setTimeout(refreshCredits, 4500);
+        // Hide overlay after final refresh completes (4.5s total)
+        setTimeout(() => {
+          refreshCredits();
+          setShowPurchaseOverlay(false);
+          console.log('✅ [CREDITS] Loading overlay hidden after final refresh (4.5s)');
+        }, 4500);
+        
+        // Also hide overlay immediately if order completes (but keep it visible for a bit to show processing)
+        // The 4.5s timeout above will handle the final hide
       };
 
       const handlePopupClosed = () => {
@@ -401,6 +422,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
                 
                 // Stop polling if credits increased
                 isStillPurchasing = false;
+                setShowPurchaseOverlay(false); // Hide overlay when purchase detected
                 cleanup();
               } else {
                 console.log('💰 [CREDITS] Credits unchanged, but button reset (checkout finished)');
@@ -417,7 +439,12 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
         // First refresh attempt after 3 seconds
         setTimeout(refreshCreditsAfterClose, 3000);
         // Additional follow-up refresh after 5.5 seconds to catch slow webhooks
-        setTimeout(refreshCreditsAfterClose, 5500);
+        setTimeout(() => {
+          refreshCreditsAfterClose();
+          // Hide overlay after final refresh completes
+          setShowPurchaseOverlay(false);
+          console.log('✅ [CREDITS] Loading overlay hidden after popup close final refresh');
+        }, 5500);
       };
 
       console.log('👂 [CREDITS] Setting up FastSpring event listeners...');
@@ -549,6 +576,27 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
         background: colors ? `linear-gradient(to bottom, ${colors.background}, ${colors.primary}, ${colors.secondary})` : 'linear-gradient(to bottom, #581c87, #1e3a8a, #312e81)'
       }}
     >
+      {/* Purchase Loading Overlay */}
+      {showPurchaseOverlay && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/80 flex flex-col items-center justify-center z-[10000]"
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="w-16 h-16 border-4 border-yellow-400 border-t-transparent pixelated mb-4"
+          />
+          <p className="font-pixel text-yellow-300 text-lg mb-2">
+            Processing your purchase...
+          </p>
+          <p className="font-pixel text-gray-400 text-sm">
+            Please wait while we confirm your transaction
+          </p>
+        </motion.div>
+      )}
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
