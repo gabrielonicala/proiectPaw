@@ -327,6 +327,10 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
         orderCompleteFired = true; // Mark that order completed
         console.log('🔄 [CREDITS] Checkout finished - resetting button and cleaning up...');
         
+        // Show overlay again if it was hidden (in case popup closed before order.complete fired)
+        setShowPurchaseOverlay(true);
+        console.log('✅ [CREDITS] Overlay shown for purchase completion');
+        
         // Log checkout completion server-side
         fetch('/api/fastspring/checkout/complete', {
           method: 'POST',
@@ -415,19 +419,22 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
         window.removeEventListener('fsc:popup.closed', handlePopupClosed);
         window.removeEventListener('fsc:checkout.closed', handlePopupClosed);
         
+        // Immediately hide overlay and reset button when popup closes
+        // If order.complete fires, it will show overlay again and handle purchase
+        setIsPurchasing(null);
+        setShowPurchaseOverlay(false);
+        console.log('✅ [CREDITS] Overlay hidden immediately on popup close');
+        
         // Wait a short time to see if order.complete fires
-        // If it does, it will handle the overlay. If not, hide it.
+        // If it does, it will show overlay again and handle the purchase
         setTimeout(() => {
           // Remove order.complete listener after waiting
           window.removeEventListener('fsc:order.complete', handleOrderComplete);
           
-          // If order.complete didn't fire, hide overlay (user closed without purchasing)
-          if (!orderCompleteFired) {
-            setIsPurchasing(null);
-            setShowPurchaseOverlay(false);
-            console.log('✅ [CREDITS] Overlay hidden after popup close (no purchase detected)');
+          if (orderCompleteFired) {
+            console.log('✅ [CREDITS] Order completed detected after popup close');
           } else {
-            console.log('✅ [CREDITS] Order completed, overlay will be handled by order.complete handler');
+            console.log('✅ [CREDITS] No order completed, overlay remains hidden');
           }
         }, 1000); // Wait 1 second for order.complete to fire
       };
