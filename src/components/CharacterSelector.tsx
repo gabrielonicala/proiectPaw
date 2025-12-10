@@ -279,7 +279,7 @@ export default function CharacterSelector({
         
         // If popup closed, check if order completed by checking user data after a delay
         // This handles cases where order completes but event doesn't fire
-        const refreshAfterClose = async () => {
+        const refreshAfterClose = async (isFinalRefresh: boolean = false) => {
           if (onUserRefresh) {
             try {
               // Check if slots increased by fetching fresh user data
@@ -290,24 +290,37 @@ export default function CharacterSelector({
                 
                 // Always refresh to get latest data
                 await onUserRefresh();
-                setIsPurchasingSlot(false);
                 
                 // If slots increased, order completed successfully
                 if (updatedUser && updatedUser.characterSlots > slotsBeforePurchase) {
                   console.log('✅ [SLOTS] Character slots increased, state refreshed');
+                  setIsPurchasingSlot(false);
                   setShowPurchaseOverlay(false); // Hide overlay when purchase detected
+                  return;
                 } else {
                   console.log('🔄 [SLOTS] Popup closed, state refreshed (slots may not have increased yet)');
+                  // Only reset button state on final refresh if slots still haven't increased
+                  if (isFinalRefresh) {
+                    setIsPurchasingSlot(false);
+                    setShowPurchaseOverlay(false);
+                    console.log('✅ [SLOTS] Final refresh complete, hiding overlay');
+                  }
                 }
               } else {
                 // If API call fails, just reset the button and try refresh
-                setIsPurchasingSlot(false);
+                if (isFinalRefresh) {
+                  setIsPurchasingSlot(false);
+                  setShowPurchaseOverlay(false);
+                }
                 await onUserRefresh();
               }
             } catch (error) {
               console.error('Error checking slots after popup close:', error);
-              // Always reset button state on error to prevent it from being stuck
-              setIsPurchasingSlot(false);
+              // On final refresh, always reset button state and hide overlay
+              if (isFinalRefresh) {
+                setIsPurchasingSlot(false);
+                setShowPurchaseOverlay(false);
+              }
               // Try to refresh anyway
               try {
                 await onUserRefresh();
@@ -319,20 +332,56 @@ export default function CharacterSelector({
             }
           } else {
             // No refresh callback, just reset button and reload
-            setIsPurchasingSlot(false);
+            if (isFinalRefresh) {
+              setIsPurchasingSlot(false);
+              setShowPurchaseOverlay(false);
+            }
             setTimeout(() => window.location.reload(), 2000);
           }
         };
         
-        // First refresh attempt after 3 seconds
-        setTimeout(refreshAfterClose, 3000);
+        // First refresh attempt after 3 seconds (don't hide overlay yet)
+        setTimeout(() => refreshAfterClose(false), 3000);
         // Additional follow-up refresh after 5.5 seconds to catch slow webhooks
+        // This is the final refresh - hide overlay after it completes (only if slots haven't increased)
         setTimeout(() => {
-          refreshAfterClose();
-          // Hide overlay after final refresh completes
-          setShowPurchaseOverlay(false);
-          console.log('✅ [SLOTS] Loading overlay hidden after popup close final refresh');
+          refreshAfterClose(true);
         }, 5500);
+        
+        // Also keep checking periodically until slots increase or we hit a max timeout
+        // This ensures overlay stays visible until slots actually update
+        let checkCount = 0;
+        const maxChecks = 10; // Check for up to 10 seconds (10 checks * 1s)
+        const keepChecking = setInterval(async () => {
+          checkCount++;
+          if (checkCount > maxChecks) {
+            clearInterval(keepChecking);
+            // Final fallback - hide overlay after max checks
+            setShowPurchaseOverlay(false);
+            console.log('⏰ [SLOTS] Max checks reached, hiding overlay');
+            return;
+          }
+          
+          try {
+            const response = await fetch('/api/user/preferences');
+            if (response.ok) {
+              const data = await response.json();
+              const updatedUser = data.user;
+              const newSlots = updatedUser?.characterSlots || 0;
+              
+              if (newSlots > slotsBeforePurchase) {
+                console.log('✅ [SLOTS] Slots increased during periodic check, hiding overlay');
+                setShowPurchaseOverlay(false);
+                clearInterval(keepChecking);
+              }
+            }
+          } catch (error) {
+            console.error('❌ [SLOTS] Error during periodic slot check:', error);
+          }
+        }, 1000); // Check every second
+        
+        // Store interval for cleanup if needed
+        pollingIntervals.push(keepChecking);
       };
 
       const handleOrderComplete = async () => {
@@ -354,9 +403,10 @@ export default function CharacterSelector({
         // Clean up polling and timeouts
         cleanup();
         
-        // Reset button state immediately
+        // Don't reset button state or hide overlay yet - wait until slots actually update
+        // Reset button state immediately (but keep overlay visible)
         setIsPurchasingSlot(false);
-        console.log('✅ [SLOTS] Button state reset to false');
+        console.log('✅ [SLOTS] Button state reset to false (overlay still visible)');
         
         // Remove all event listeners
         window.removeEventListener('fsc:popup.closed', handlePopupClosed);
@@ -380,9 +430,10 @@ export default function CharacterSelector({
                 const newSlots = updatedUser?.characterSlots || 0;
                 console.log(`💰 [SLOTS] Current slots: ${newSlots} (was ${slotsBeforePurchase})`);
                 
-                // If slots increased, we're done
+                // If slots increased, we're done - hide overlay now
                 if (updatedUser && newSlots > slotsBeforePurchase) {
                   console.log('✅ [SLOTS] Character slots updated successfully');
+                  setShowPurchaseOverlay(false); // Hide overlay when slots actually increase
                   return;
                 }
               }
@@ -411,10 +462,26 @@ export default function CharacterSelector({
           refreshWithRetry(); // First attempt immediately
           // Schedule an extra follow-up refresh a bit later to catch slow webhooks
           setTimeout(() => refreshWithRetry(2), 2500);
-          // Hide overlay after final refresh completes (5.5s total)
+          // Hide overlay after final refresh completes (5.5s total) if slots still haven't increased
           setTimeout(() => {
-            setShowPurchaseOverlay(false);
-            console.log('✅ [SLOTS] Loading overlay hidden after final refresh (5.5s)');
+            // Check one more time if slots increased
+            fetch('/api/user/preferences')
+              .then(res => res.json())
+              .then(data => {
+                const updatedUser = data.user;
+                const newSlots = updatedUser?.characterSlots || 0;
+                if (newSlots > slotsBeforePurchase) {
+                  console.log('✅ [SLOTS] Slots increased on final check, hiding overlay');
+                } else {
+                  console.log('⚠️ [SLOTS] Slots still not increased after 5.5s, hiding overlay anyway');
+                }
+                setShowPurchaseOverlay(false);
+                console.log('✅ [SLOTS] Loading overlay hidden after final refresh (5.5s)');
+              })
+              .catch(() => {
+                setShowPurchaseOverlay(false);
+                console.log('✅ [SLOTS] Loading overlay hidden after final refresh (5.5s) - error checking');
+              });
           }, 5500);
         } else {
           // Fallback to page reload if no refresh callback
