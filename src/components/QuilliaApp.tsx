@@ -656,6 +656,7 @@ export default function QuilliaApp() {
               user={user}
               activeCharacter={activeCharacter}
               onBack={handleTributeBack}
+              onUserUpdate={handleUserRefresh}
             />
           </motion.div>
         )}

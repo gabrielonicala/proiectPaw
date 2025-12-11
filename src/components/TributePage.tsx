@@ -42,9 +42,10 @@ interface TributePageProps {
   user: User;
   activeCharacter: Character;
   onBack: () => void;
+  onUserUpdate?: () => Promise<void>;
 }
 
-export default function TributePage({ user, activeCharacter, onBack }: TributePageProps) {
+export default function TributePage({ user, activeCharacter, onBack, onUserUpdate }: TributePageProps) {
   // SUBSCRIPTION CODE - COMMENTED OUT FOR CREDITS MIGRATION - Variables kept for commented-out UI code
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
@@ -305,6 +306,11 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
                 // Update all storage locations (cache, localStorage, dispatch event)
                 updateCreditsEverywhere(user.id, newCredits, data.isLow);
                 
+                // Refresh user object from database to ensure it's up to date
+                if (onUserUpdate) {
+                  await onUserUpdate();
+                }
+                
                 window.dispatchEvent(new CustomEvent('credits:purchase'));
                 setShowPurchaseOverlay(false); // Hide overlay when purchase detected
                 cleanup();
@@ -385,6 +391,11 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
             
             // Update all storage locations (cache, localStorage, dispatch event)
             updateCreditsEverywhere(user.id, data.credits, data.isLow);
+            
+            // Refresh user object from database to ensure it's up to date
+            if (onUserUpdate) {
+              await onUserUpdate();
+            }
             
             // Hide overlay when credits actually increase
             if (data.credits > creditsBeforePurchase) {
