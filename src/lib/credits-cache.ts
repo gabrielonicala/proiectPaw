@@ -4,6 +4,7 @@
  */
 
 import { LOW_CREDITS_THRESHOLD } from './credits';
+import { loadUser, saveUser } from './client-utils';
 
 interface CreditsCacheData {
   credits: number;
@@ -154,5 +155,45 @@ export function isCacheUpdatedAfterPurchase(userId: string): boolean {
   
   // Cache was updated after purchase - it has the correct value
   return cached.lastUpdated >= purchaseTime;
+}
+
+/**
+ * Update credits in ALL storage locations (cache, localStorage, and dispatch event)
+ * This ensures consistency across all storage mechanisms and prevents flash issues
+ */
+export function updateCreditsEverywhere(
+  userId: string,
+  newCredits: number,
+  isLow?: boolean
+): void {
+  // Calculate isLow if not provided
+  const calculatedIsLow = isLow !== undefined ? isLow : newCredits <= LOW_CREDITS_THRESHOLD;
+  
+  // 1. Update module-level cache
+  setCachedCredits(userId, {
+    credits: newCredits,
+    isLow: calculatedIsLow
+  });
+  
+  // 2. Update localStorage user object (if available)
+  if (typeof window !== 'undefined') {
+    try {
+      const localUser = loadUser();
+      if (localUser && localUser.id === userId) {
+        localUser.credits = newCredits;
+        saveUser(localUser);
+      }
+    } catch (error) {
+      // localStorage might not be available (SSR, private browsing, etc.)
+      console.warn('Failed to update credits in localStorage:', error);
+    }
+  }
+  
+  // 3. Dispatch event for React components to update their state
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('credits:updated', {
+      detail: { credits: newCredits, isLow: calculatedIsLow }
+    }));
+  }
 }
 

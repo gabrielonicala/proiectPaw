@@ -20,7 +20,7 @@ import { isPaidPlan, hasPremiumAccess } from '@/lib/fastspring';
 import { CREDIT_PACKAGES, CHARACTER_SLOT_PRICE, CHARACTER_SLOT_PRODUCT_PATH, INK_VIAL_COSTS, LOW_CREDITS_THRESHOLD, STARTER_KIT_ELIGIBILITY_DAYS } from '@/lib/credits';
 import { useCredits } from '@/hooks/useCredits';
 import { useStarterKitEligibility } from '@/hooks/useStarterKitEligibility';
-import { setCachedCredits, markPurchaseCompleted } from '@/lib/credits-cache';
+import { setCachedCredits, markPurchaseCompleted, updateCreditsEverywhere } from '@/lib/credits-cache';
 // import Footer from './Footer';
 
 interface SubscriptionData {
@@ -302,11 +302,8 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
                 setCredits(newCredits);
                 setIsLowOnCredits(data.isLow);
                 
-                // Update cache immediately with new value
-                setCachedCredits(user.id, {
-                  credits: newCredits,
-                  isLow: data.isLow
-                });
+                // Update all storage locations (cache, localStorage, dispatch event)
+                updateCreditsEverywhere(user.id, newCredits, data.isLow);
                 
                 window.dispatchEvent(new CustomEvent('credits:purchase'));
                 setShowPurchaseOverlay(false); // Hide overlay when purchase detected
@@ -386,11 +383,8 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
             setCredits(data.credits);
             setIsLowOnCredits(data.isLow);
             
-            // Update cache immediately with new value
-            setCachedCredits(user.id, {
-              credits: data.credits,
-              isLow: data.isLow
-            });
+            // Update all storage locations (cache, localStorage, dispatch event)
+            updateCreditsEverywhere(user.id, data.credits, data.isLow);
             
             // Hide overlay when credits actually increase
             if (data.credits > creditsBeforePurchase) {
@@ -442,7 +436,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
         // If it does, it will show overlay again and handle the purchase
         setTimeout(() => {
           // Remove order.complete listener after waiting
-          window.removeEventListener('fsc:order.complete', handleOrderComplete);
+        window.removeEventListener('fsc:order.complete', handleOrderComplete);
           
           if (orderCompleteFired) {
             console.log('✅ [CREDITS] Order completed detected after popup close');
@@ -485,7 +479,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
               });
               if (!orderCompleteFired && isPurchasing === packageKey) {
                 console.log('🚪🚪🚪 [CREDITS] Closing detected via iframe removal - FORCING overlay hide');
-                setIsPurchasing(null);
+            setIsPurchasing(null);
                 setShowPurchaseOverlay(false);
                 console.log('✅ [CREDITS] Overlay state updated - should be hidden now');
                 iframeObserver.disconnect();
@@ -536,7 +530,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
                 console.log('✅ [CREDITS] Overlay state updated - should be hidden now');
                 clearInterval(iframeCheckInterval);
                 iframeObserver.disconnect();
-              } else {
+            } else {
                 console.log('⚠️ [CREDITS] Condition not met for polling, overlay not hidden:', {
                   orderCompleteFired,
                   isPurchasing,
@@ -546,7 +540,7 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
                 if (!orderCompleteFired) {
                   console.log('🔧 [CREDITS] Force hiding overlay since iframe is gone and no order completed');
                   setIsPurchasing(null);
-                  setShowPurchaseOverlay(false);
+                setShowPurchaseOverlay(false);
                   clearInterval(iframeCheckInterval);
                   iframeObserver.disconnect();
                 }
@@ -564,8 +558,8 @@ export default function TributePage({ user, activeCharacter, onBack }: TributePa
                 });
                 if (!orderCompleteFired && isPurchasing === packageKey) {
                   console.log('🚪 [CREDITS] Closing detected via iframe visibility - hiding overlay');
-                  setIsPurchasing(null);
-                  setShowPurchaseOverlay(false);
+            setIsPurchasing(null);
+              setShowPurchaseOverlay(false);
                   clearInterval(iframeCheckInterval);
                   iframeObserver.disconnect();
                 } else if (!orderCompleteFired) {

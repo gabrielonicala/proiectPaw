@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
-import { getCachedCredits, setCachedCredits, updateCachedCredits, invalidateCreditsCache } from '@/lib/credits-cache';
+import { getCachedCredits, setCachedCredits, updateCachedCredits, invalidateCreditsCache, updateCreditsEverywhere } from '@/lib/credits-cache';
 
 interface CreditsData {
   credits: number;
@@ -45,11 +45,11 @@ export function useCredits(options: UseCreditsOptions = {}) {
     
     // Check cache first for instant display (unless forcing refresh)
     if (!forceRefresh) {
-      const cached = getCachedCredits(userId);
-      if (cached) {
-        setCredits({ credits: cached.credits, isLow: cached.isLow });
-        setIsLoading(false);
-        // Continue to fetch fresh data in background
+    const cached = getCachedCredits(userId);
+    if (cached) {
+      setCredits({ credits: cached.credits, isLow: cached.isLow });
+      setIsLoading(false);
+      // Continue to fetch fresh data in background
       }
     }
 
@@ -60,11 +60,8 @@ export function useCredits(options: UseCreditsOptions = {}) {
       if (response.ok) {
         const data = await response.json();
         setCredits({ credits: data.credits, isLow: data.isLow });
-        // Update cache with fresh data
-        setCachedCredits(userId, {
-          credits: data.credits,
-          isLow: data.isLow
-        });
+        // Update all storage locations (cache, localStorage, dispatch event)
+        updateCreditsEverywhere(userId, data.credits, data.isLow);
       }
     } catch (error) {
       console.error('Error fetching credits:', error);
@@ -155,15 +152,26 @@ export function useCredits(options: UseCreditsOptions = {}) {
       fetchCredits(true);
     };
 
+    // Listen for the centralized credits:updated event (includes new value)
+    const handleCreditsUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent<{ credits: number; isLow: boolean } | undefined>;
+      if (customEvent.detail) {
+        // Update state immediately from event data
+        setCredits({ credits: customEvent.detail.credits, isLow: customEvent.detail.isLow });
+      }
+    };
+
     // Listen for custom events that indicate credits might have changed
     window.addEventListener('credits:invalidate', handleCreditEvent);
     window.addEventListener('credits:purchase', handleCreditEvent);
     window.addEventListener('credits:deduct', handleCreditEvent);
+    window.addEventListener('credits:updated', handleCreditsUpdated);
 
     return () => {
       window.removeEventListener('credits:invalidate', handleCreditEvent);
       window.removeEventListener('credits:purchase', handleCreditEvent);
       window.removeEventListener('credits:deduct', handleCreditEvent);
+      window.removeEventListener('credits:updated', handleCreditsUpdated);
     };
   }, [(session as { user: { id: string } } | null)?.user?.id, fetchCredits]);
 
@@ -171,9 +179,11 @@ export function useCredits(options: UseCreditsOptions = {}) {
   const updateCredits = useCallback((newCredits: number) => {
     const userId = (session as { user: { id: string } } | null)?.user?.id;
     if (!userId) return;
-    updateCachedCredits(userId, newCredits);
     
-    // Get updated cache to get isLow value
+    // Update all storage locations (cache, localStorage, dispatch event)
+    updateCreditsEverywhere(userId, newCredits);
+    
+    // Update local state from cache
     const updated = getCachedCredits(userId);
     if (updated) {
       setCredits({ credits: updated.credits, isLow: updated.isLow });
