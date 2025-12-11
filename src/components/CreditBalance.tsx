@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const ADMIN_EMAILS = ['admin@quillia.app', 'gabrielonicala@gmail.com'];
 
@@ -64,16 +65,23 @@ export default function CreditBalance({ credits, isLow, onClick, userEmail }: Cr
           transition: 'filter 0.3s ease'
         }}
       />
-      <span 
-        className="whitespace-nowrap font-pixel"
-        style={{
-          paddingTop: '4px',
-          position: 'relative',
-          fontSize: '1.425rem' // 18px - slightly bigger than text-base (16px)
-        }}
-      >
-        {credits}
-      </span>
+      <AnimatePresence mode="wait">
+        <motion.span
+          key={credits}
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 10 }}
+          transition={{ duration: 0.3, ease: 'easeInOut' }}
+          className="whitespace-nowrap font-pixel"
+          style={{
+            paddingTop: '4px',
+            position: 'relative',
+            fontSize: '1.425rem' // 18px - slightly bigger than text-base (16px)
+          }}
+        >
+          {credits}
+        </motion.span>
+      </AnimatePresence>
     </button>
   );
 }

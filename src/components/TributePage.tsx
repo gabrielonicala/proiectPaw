@@ -311,6 +311,9 @@ export default function TributePage({ user, activeCharacter, onBack, onUserUpdat
                   await onUserUpdate();
                 }
                 
+                // Wait a bit for UI to update with new user object
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
                 window.dispatchEvent(new CustomEvent('credits:purchase'));
                 setShowPurchaseOverlay(false); // Hide overlay when purchase detected
                 cleanup();
@@ -396,6 +399,9 @@ export default function TributePage({ user, activeCharacter, onBack, onUserUpdat
             if (onUserUpdate) {
               await onUserUpdate();
             }
+            
+            // Wait a bit for UI to update with new user object
+            await new Promise(resolve => setTimeout(resolve, 500));
             
             // Hide overlay when credits actually increase
             if (data.credits > creditsBeforePurchase) {
