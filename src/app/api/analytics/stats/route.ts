@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 
-const ADMIN_EMAILS = ['admin@quillia.app', 'gabrielonicala@gmail.com'];
+const ADMIN_EMAILS = ['admin@quillia.app', 'gabrielonicala@gmail.com', 'contact@quillia.app', 'test@gmail.com'];
 
 export async function GET(request: NextRequest) {
   try {

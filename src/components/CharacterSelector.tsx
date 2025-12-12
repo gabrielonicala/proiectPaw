@@ -18,7 +18,7 @@ import { queueOfflineChange } from '@/lib/offline-sync';
 import { CHARACTER_SLOT_PRICE, CHARACTER_SLOT_PRODUCT_PATH } from '@/lib/credits';
 // import Footer from './Footer';
 
-const ADMIN_EMAILS = ['admin@quillia.app', 'gabrielonicala@gmail.com'];
+const ADMIN_EMAILS = ['admin@quillia.app', 'gabrielonicala@gmail.com', 'contact@quillia.app', 'test@gmail.com'];
 
 interface CharacterSelectorProps {
   characters: Character[];

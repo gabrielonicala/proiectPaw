@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const ADMIN_EMAILS = ['admin@quillia.app', 'gabrielonicala@gmail.com'];
+const ADMIN_EMAILS = ['admin@quillia.app', 'gabrielonicala@gmail.com', 'contact@quillia.app', 'test@gmail.com'];
 
 interface CreditBalanceProps {
   credits: number;
