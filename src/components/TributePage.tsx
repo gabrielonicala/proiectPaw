@@ -938,10 +938,10 @@ export default function TributePage({ user, activeCharacter, onBack, onUserUpdat
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
             className="w-16 h-16 border-4 border-yellow-400 border-t-transparent pixelated mb-4"
           />
-          <p className="font-pixel text-yellow-300 text-lg mb-2">
+          <p className="font-pixel text-yellow-300 text-lg mb-2 text-center">
             Processing your purchase...
           </p>
-          <p className="font-pixel text-gray-400 text-sm">
+          <p className="font-pixel text-gray-400 text-sm text-center">
             Please wait while we confirm your transaction
           </p>
         </motion.div>
