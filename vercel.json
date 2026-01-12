@@ -1,0 +1,9 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/daily-recharge",
+      "schedule": "0 0 * * *"
+    }
+  ]
+}
+
