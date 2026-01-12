@@ -48,6 +48,9 @@ export const LOW_CREDITS_THRESHOLD = 50;
 // Starter Kit eligibility: first 30 days after account creation
 export const STARTER_KIT_ELIGIBILITY_DAYS = 30;
 
+// Daily recharge amount
+export const DAILY_RECHARGE_AMOUNT = 10;
+
 /**
  * Get the cost for a specific output type
  */
@@ -286,6 +289,144 @@ export async function addCharacterSlot(
       success: false,
       newSlotCount: 0,
       error: error instanceof Error ? error.message : 'Failed to add character slot'
+    };
+  }
+}
+
+/**
+ * Check if user is eligible for daily recharge (24 hours have passed since last recharge)
+ */
+export async function isEligibleForDailyRecharge(userId: string): Promise<boolean> {
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { lastDailyRecharge: true, createdAt: true }
+  });
+
+  if (!user) {
+    return false;
+  }
+
+  // If user has never received a daily recharge, use account creation date
+  const lastRechargeDate = user.lastDailyRecharge || user.createdAt;
+  const now = new Date();
+  const hoursSinceLastRecharge = (now.getTime() - lastRechargeDate.getTime()) / (1000 * 60 * 60);
+
+  // Eligible if 24 hours or more have passed
+  return hoursSinceLastRecharge >= 24;
+}
+
+/**
+ * Process daily recharge for a single user
+ * Returns true if recharge was applied, false if not eligible
+ */
+export async function processDailyRecharge(userId: string): Promise<{ 
+  success: boolean; 
+  recharged: boolean; 
+  newBalance: number; 
+  error?: string 
+}> {
+  try {
+    // Check eligibility
+    if (!(await isEligibleForDailyRecharge(userId))) {
+      return {
+        success: true,
+        recharged: false,
+        newBalance: await getUserCredits(userId)
+      };
+    }
+
+    // Add daily recharge credits
+    const updatedUser = await db.user.update({
+      where: { id: userId },
+      data: {
+        credits: {
+          increment: DAILY_RECHARGE_AMOUNT
+        },
+        lastDailyRecharge: new Date()
+      },
+      select: { credits: true }
+    });
+
+    // Record as a credit purchase with special package name for tracking
+    await db.creditPurchase.create({
+      data: {
+        userId,
+        packageName: 'daily-recharge',
+        inkVials: DAILY_RECHARGE_AMOUNT,
+        price: 0, // Free daily recharge
+        transactionId: null,
+        metadata: {
+          type: 'daily_recharge',
+          rechargedAt: new Date().toISOString()
+        }
+      }
+    });
+
+    console.log(`✅ Daily recharge applied to user ${userId}: +${DAILY_RECHARGE_AMOUNT} credits (new balance: ${updatedUser.credits})`);
+
+    return {
+      success: true,
+      recharged: true,
+      newBalance: updatedUser.credits
+    };
+  } catch (error) {
+    console.error('Error processing daily recharge:', error);
+    return {
+      success: false,
+      recharged: false,
+      newBalance: await getUserCredits(userId),
+      error: error instanceof Error ? error.message : 'Failed to process daily recharge'
+    };
+  }
+}
+
+/**
+ * Process daily recharge for all eligible users
+ * This is meant to be called by a cron job
+ */
+export async function processDailyRechargeForAllUsers(): Promise<{
+  success: boolean;
+  totalUsers: number;
+  rechargedUsers: number;
+  errors: number;
+  error?: string;
+}> {
+  try {
+    // Get all users
+    const allUsers = await db.user.findMany({
+      select: { id: true }
+    });
+
+    let rechargedCount = 0;
+    let errorCount = 0;
+
+    // Process each user
+    for (const user of allUsers) {
+      const result = await processDailyRecharge(user.id);
+      if (result.success && result.recharged) {
+        rechargedCount++;
+      } else if (!result.success) {
+        errorCount++;
+        console.error(`❌ Failed to recharge user ${user.id}:`, result.error);
+      }
+    }
+
+    console.log(`✅ Daily recharge completed: ${rechargedCount}/${allUsers.length} users recharged`);
+
+    return {
+      success: true,
+      totalUsers: allUsers.length,
+      rechargedUsers: rechargedCount,
+      errors: errorCount
+    };
+  } catch (error) {
+    console.error('Error processing daily recharge for all users:', error);
+    return {
+      success: false,
+      totalUsers: 0,
+      rechargedUsers: 0,
+      errors: 0,
+      error: error instanceof Error ? error.message : 'Failed to process daily recharge for all users'
     };
   }
 }

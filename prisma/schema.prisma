@@ -31,6 +31,7 @@ model User {
   timezone                String?        @default("UTC")
   credits                 Int            @default(150)
   hasPurchasedStarterKit  Boolean        @default(false)
+  lastDailyRecharge       DateTime?
   accounts                Account[]
   characters              Character[]
   entries                 JournalEntry[]
